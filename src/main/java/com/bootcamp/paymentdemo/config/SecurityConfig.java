@@ -62,10 +62,12 @@ public class SecurityConfig {
                     // 3) 공개 API
                     .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
 
-                    // 4) 인증 API
-                    .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
+                    // 4) 인증 API (회원가입, 로그인)
+                    .requestMatchers(HttpMethod.POST, "/api/login", "/api/signup").permitAll()
 
                     // 5) 그 외 API는 인증 필요
+                    .requestMatchers(HttpMethod.POST, "/api/logout").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/me").authenticated()
                     .requestMatchers("/api/**").authenticated()
 
                     // 6) 나머지 전부 인증 필요
