@@ -62,6 +62,20 @@ public class PointService {
 //        updateBalance(userId);
     }
 
+    // TODO User, Order 엔티티 연결 -> cancelEarnedPoints(User user, Order order)로 변경
+    // 포인트 적립 취소
+    @Transactional
+    public void cancelEarnedPoints(Long userId, Long orderId, int earnedPoints) {
+//        PointTransaction earnedPointTransaction = pointRepository.findByOrderIdAndType(order.getId(), PointType.EARNED).orElseThrow(
+//                () -> new IllegalArgumentException("적립금이 존재하지 않습니다.")
+//        );
+//        int earnedPoints = earnedPointTransaction.getAmount();
+        PointTransaction pointTransaction = new PointTransaction(
+                userId, orderId, -earnedPoints, PointType.CANCELED, null);
+        pointRepository.save(pointTransaction);
+//        updateBalance(userId);
+    }
+
     // 스냅샷 업데이트
     // TODO UserPointBalance 한비님이 구현
 //    private void updateBalance(Long userId) {
