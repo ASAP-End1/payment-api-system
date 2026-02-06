@@ -4,10 +4,7 @@ import com.bootcamp.paymentdemo.membership.entity.Membership;
 import com.bootcamp.paymentdemo.membership.entity.MembershipGrade;
 import com.bootcamp.paymentdemo.membership.repository.MembershipRepository;
 import com.bootcamp.paymentdemo.security.JwtTokenProvider;
-import com.bootcamp.paymentdemo.user.dto.LoginRequest;
-import com.bootcamp.paymentdemo.user.dto.LoginResponse;
-import com.bootcamp.paymentdemo.user.dto.SignupRequest;
-import com.bootcamp.paymentdemo.user.dto.SignupResponse;
+import com.bootcamp.paymentdemo.user.dto.*;
 import com.bootcamp.paymentdemo.user.entity.RefreshToken;
 import com.bootcamp.paymentdemo.user.entity.User;
 import com.bootcamp.paymentdemo.user.entity.UserPointBalance;
@@ -65,11 +62,11 @@ public class UserService {
     @Transactional
     public TokenPair login(@Valid LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
-                () -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.")
+                () -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다")
         );
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다");
         }
 
         // 기존 Refresh Token 모두 무효화
@@ -96,6 +93,21 @@ public class UserService {
     public LoginResponse createLoginResponse(String email) {
 
         return LoginResponse.success(email);
+    }
+
+    // 로그아웃 - Refresh Token 무효화
+    @Transactional
+    public LogoutResponse logout(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new IllegalArgumentException("사용자가 존재하지 않습니다")
+        );
+
+        // 해당 사용자의 모든 Refresh Token 무효화
+        refreshTokenRepository.revokeAllByUserId(user.getUserId());
+
+        log.info("로그아웃 완료: email={}, userId={}", user.getEmail(), user.getUserId());
+
+        return LogoutResponse.success();
     }
 
 

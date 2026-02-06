@@ -1,10 +1,7 @@
 package com.bootcamp.paymentdemo.controller;
 
 import com.bootcamp.paymentdemo.security.JwtTokenProvider;
-import com.bootcamp.paymentdemo.user.dto.LoginRequest;
-import com.bootcamp.paymentdemo.user.dto.LoginResponse;
-import com.bootcamp.paymentdemo.user.dto.SignupRequest;
-import com.bootcamp.paymentdemo.user.dto.SignupResponse;
+import com.bootcamp.paymentdemo.user.dto.*;
 import com.bootcamp.paymentdemo.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -91,17 +88,39 @@ public class AuthController {
 
         UserService.TokenPair tokenPair = userService.login(request);
 
-        //정적 팩토리 메서드 사용 방법
         LoginResponse response = LoginResponse.success(tokenPair.email);
 
         // Authorization 헤더에 Access Token 포함
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + tokenPair.accessToken);
 
-        // Refresh Token은 별도 쿠키나 응답 헤더로 전달 가능 (여기서는 헤더 사용)
+        // Refresh Token은 별도 쿠키나 응답 헤더로 전달 가능
         headers.set("X-Refresh-Token", tokenPair.refreshToken);
 
         return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response);
+    }
+
+    /**
+     * 로그아웃 API
+     * POST /api/logout
+     *
+     * Headers:
+     * Authorization: Bearer {accessToken}
+     *
+     * Response Body:
+     * {
+     *   "success": true,
+     *   "message": "로그아웃되었습니다."
+     * }
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<LogoutResponse> logout(Principal principal) {
+        log.info("로그아웃 요청: email={}", principal.getName());
+
+        // LogoutResponse 반환
+        LogoutResponse response = userService.logout(principal.getName());
+
+        return ResponseEntity.ok(response);
     }
 
 

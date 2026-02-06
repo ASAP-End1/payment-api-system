@@ -57,6 +57,22 @@ api:
               required: false
               description: 로그인한 사용자 이메일
 
+    logout:
+      url: /api/logout
+      method: POST
+      description: 로그아웃
+      response:
+        body:
+          fields:
+            - name: success
+              type: boolean
+              required: true
+              description: 로그아웃 성공 여부
+            - name: message
+              type: string
+              required: false
+              description: 로그아웃 메시지
+
     register:
       url: /api/signup
       method: POST
