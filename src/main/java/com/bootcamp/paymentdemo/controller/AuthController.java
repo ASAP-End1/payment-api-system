@@ -1,12 +1,15 @@
 package com.bootcamp.paymentdemo.controller;
 
 import com.bootcamp.paymentdemo.security.JwtTokenProvider;
+import com.bootcamp.paymentdemo.user.dto.LoginRequest;
+import com.bootcamp.paymentdemo.user.dto.LoginResponse;
 import com.bootcamp.paymentdemo.user.dto.SignupRequest;
 import com.bootcamp.paymentdemo.user.dto.SignupResponse;
 import com.bootcamp.paymentdemo.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -64,7 +67,7 @@ public class AuthController {
 
     /**
      * 로그인 API
-     * POST /api/auth/login
+     * POST /api/login
      *
      * 요청 본문:
      * {
@@ -81,37 +84,26 @@ public class AuthController {
      *   "email": "user@example.com"
      * }
      */
-//    @PostMapping("/login")
-//    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> request) {
-//        String email = request.get("email");
-//        String password = request.get("password");
-//
-//        Map<String, Object> response = new HashMap<>();
-//
-//        try {
-//            // 1. 인증 시도
-//            authenticationManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(email, password)
-//            );
-//
-//            // 2. JWT 토큰 생성
-//            String token = jwtTokenProvider.createToken(email);
-//
-//            // 3. 응답
-//            response.put("success", true);
-//            response.put("email", email);
-//
-//            return ResponseEntity.ok()
-//                .header("Authorization", "Bearer " + token)
-//                .body(response);
-//
-//        } catch (AuthenticationException e) {
-//            // 인증 실패
-//            response.put("success", false);
-//            response.put("message", "이메일 또는 비밀번호가 올바르지 않습니다.");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//        }
-//    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        log.info("로그인 요청: email={}", request.getEmail());
+
+        UserService.TokenPair tokenPair = userService.login(request);
+
+        //정적 팩토리 메서드 사용 방법
+        LoginResponse response = LoginResponse.success(tokenPair.email);
+
+        // Authorization 헤더에 Access Token 포함
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + tokenPair.accessToken);
+
+        // Refresh Token은 별도 쿠키나 응답 헤더로 전달 가능 (여기서는 헤더 사용)
+        headers.set("X-Refresh-Token", tokenPair.refreshToken);
+
+        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response);
+    }
+
 
     /**
      * 현재 로그인한 사용자 정보 조회 API
@@ -127,6 +119,7 @@ public class AuthController {
      *
      * 중요: customerUid는 PortOne 빌링키 발급 시 활용!
      */
+    /*
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> getCurrentUser(Principal principal) {
 
@@ -146,4 +139,6 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
+
+     */
 }

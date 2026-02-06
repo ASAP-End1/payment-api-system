@@ -47,7 +47,7 @@ public class JwtTokenProvider {
      */
 
     // Access Token 생성
-    public String createToken(String email) {
+    public String createAccessToken(String email) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
 
