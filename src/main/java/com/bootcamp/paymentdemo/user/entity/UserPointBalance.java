@@ -3,11 +3,13 @@ package com.bootcamp.paymentdemo.user.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "user_point_balances")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
