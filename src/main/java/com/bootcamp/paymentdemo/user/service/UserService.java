@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -109,6 +111,22 @@ public class UserService {
 
         return LogoutResponse.success();
     }
+
+    // 내 정보 조회
+    public UserSearchResponse getCurrentUser(String email) {
+        User user = userRepository.findByEmailWithGrade(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        UserPointBalance pointBalance = pointBalanceRepository.findByUserId(user.getUserId())
+                .orElseGet(() -> {
+                    // 포인트 잔액이 없는 경우 기본값 생성
+                    UserPointBalance newBalance = UserPointBalance.createDefault(user);
+                    return pointBalanceRepository.save(newBalance);
+                });
+
+        return UserSearchResponse.from(user, pointBalance);
+    }
+
 
 
     // Token Pair
