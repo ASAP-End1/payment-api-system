@@ -39,13 +39,10 @@ public class PointService {
         return balance != null ? balance.intValue() : 0;
     }
 
-    // TODO Order 엔티티 연결하면 usedPoints 파라미터, 주석 제거
+    // TODO User, Order 엔티티 연결 -> usePoint(User user, Order order)로 변경
     // 포인트 사용
     @Transactional
     public void usePoints(Long userId, Long orderId, int usedPoints) {
-//        Order order = orderRepository.findById(orderId).orElseThrow(
-//                () -> new IllegalArgumentException("주문을 찾을 수 없습니다.")
-//        );
 //        int usedPoints = order.getUsedPoints();
         PointTransaction pointTransaction = new PointTransaction(
                 userId, orderId, -usedPoints, PointType.SPENT, null);
