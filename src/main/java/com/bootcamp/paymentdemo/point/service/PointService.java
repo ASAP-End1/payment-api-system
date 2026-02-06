@@ -65,11 +65,11 @@ public class PointService {
     // TODO User, Order 엔티티 연결 -> cancelEarnedPoints(User user, Order order)로 변경
     // 포인트 적립 취소
     @Transactional
-    public void cancelEarnedPoints(Long userId, Long orderId, int earnedPoints) {
-//        PointTransaction earnedPointTransaction = pointRepository.findByOrderIdAndType(order.getId(), PointType.EARNED).orElseThrow(
-//                () -> new IllegalArgumentException("적립금이 존재하지 않습니다.")
-//        );
-//        int earnedPoints = earnedPointTransaction.getAmount();
+    public void cancelEarnedPoints(Long userId, Long orderId) {
+        PointTransaction earnedPointTransaction = pointRepository.findByOrderIdAndType(orderId, PointType.EARNED).orElseThrow(
+                () -> new IllegalArgumentException("적립금이 존재하지 않습니다.")
+        );
+        int earnedPoints = earnedPointTransaction.getAmount();
         PointTransaction pointTransaction = new PointTransaction(
                 userId, orderId, -earnedPoints, PointType.CANCELED, null);
         pointRepository.save(pointTransaction);
