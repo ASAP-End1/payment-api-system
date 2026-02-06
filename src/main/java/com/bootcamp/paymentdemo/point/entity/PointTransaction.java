@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.point.entity;
 
+import com.bootcamp.paymentdemo.order.entity.Order;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -26,11 +27,9 @@ public class PointTransaction {
 //    private User user;
     private Long userId;
 
-    // TODO Order 엔티티 연결
-//    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-//    @JoinColumn(name = "order_id", nullable = true)
-//    private Order order;
-    private Long orderId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "order_id", nullable = true)
+    private Order order;
 
     private int amount;
 
@@ -43,10 +42,10 @@ public class PointTransaction {
 
     private LocalDateTime expiresAt;
 
-    // TODO User, Order 객체로 변경
-    public PointTransaction(Long userId, Long orderId, int amount, PointType type, LocalDateTime expiresAt) {
+    // TODO User 객체로 변경
+    public PointTransaction(Long userId, Order order, int amount, PointType type, LocalDateTime expiresAt) {
         this.userId = userId;
-        this.orderId = orderId;
+        this.order = order;
         this.amount = amount;
         this.type = type;
         this.expiresAt = expiresAt;

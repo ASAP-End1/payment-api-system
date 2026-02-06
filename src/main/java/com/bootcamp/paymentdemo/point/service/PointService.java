@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.point.service;
 
+import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
 import com.bootcamp.paymentdemo.point.entity.PointType;
@@ -25,7 +26,7 @@ public class PointService {
         return pointTransactions.stream()
                 .map(pointTransaction -> new PointGetResponse(
                         pointTransaction.getId(),
-                        pointTransaction.getOrderId(),
+                        pointTransaction.getOrder().getId(),
                         pointTransaction.getAmount(),
                         pointTransaction.getType(),
                         pointTransaction.getCreatedAt(),
@@ -40,38 +41,38 @@ public class PointService {
         return balance != null ? balance.intValue() : 0;
     }
 
-    // TODO User, Order 엔티티 연결 -> usePoints(User user, Order order)로 변경
+    // TODO User 엔티티 연결 -> usePoints(User user, Order order)로 변경
     // 포인트 사용
     @Transactional
-    public void usePoints(Long userId, Long orderId, int usedPoints) {
-//        int usedPoints = order.getUsedPoints();
+    public void usePoints(Long userId, Order order) {
+        int usedPoints = order.getUsedPoints();
         PointTransaction pointTransaction = new PointTransaction(
-                userId, orderId, -usedPoints, PointType.SPENT, null);
+                userId, order, -usedPoints, PointType.SPENT, null);
         pointRepository.save(pointTransaction);
 //        updateBalance(userId);
     }
 
-    // TODO User, Order 엔티티 연결 -> earnPoints(User user, Order order)로 변경
+    // TODO User 엔티티 연결 -> earnPoints(User user, Order order)로 변경
     // 포인트 적립
     @Transactional
-    public void earnPoints(Long userId, Long orderId, int pointsToEarn) {
+    public void earnPoints(Long userId, Order order, int pointsToEarn) {
 //        int pointsToEarn = order.getFinalAmount() * user.getCurrentGradeId().getAccRate() / 100;
         PointTransaction pointTransaction = new PointTransaction(
-                userId, orderId, pointsToEarn, PointType.EARNED, LocalDateTime.now().plusYears(1));
+                userId, order, pointsToEarn, PointType.EARNED, LocalDateTime.now().plusYears(1));
         pointRepository.save(pointTransaction);
 //        updateBalance(userId);
     }
 
-    // TODO User, Order 엔티티 연결 -> cancelEarnedPoints(User user, Order order)로 변경
+    // TODO User 엔티티 연결 -> cancelEarnedPoints(User user, Order order)로 변경
     // 포인트 적립 취소
     @Transactional
-    public void cancelEarnedPoints(Long userId, Long orderId) {
-        PointTransaction earnedPointTransaction = pointRepository.findByOrderIdAndType(orderId, PointType.EARNED).orElseThrow(
+    public void cancelEarnedPoints(Long userId, Order order) {
+        PointTransaction earnedPointTransaction = pointRepository.findByOrderIdAndType(order.getId(), PointType.EARNED).orElseThrow(
                 () -> new IllegalArgumentException("적립금이 존재하지 않습니다.")
         );
         int earnedPoints = earnedPointTransaction.getAmount();
         PointTransaction pointTransaction = new PointTransaction(
-                userId, orderId, -earnedPoints, PointType.CANCELED, null);
+                userId, order, -earnedPoints, PointType.CANCELED, null);
         pointRepository.save(pointTransaction);
 //        updateBalance(userId);
     }
