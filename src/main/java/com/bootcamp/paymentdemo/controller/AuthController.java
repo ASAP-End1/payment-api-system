@@ -1,7 +1,12 @@
 package com.bootcamp.paymentdemo.controller;
 
 import com.bootcamp.paymentdemo.security.JwtTokenProvider;
+import com.bootcamp.paymentdemo.user.dto.SignupRequest;
+import com.bootcamp.paymentdemo.user.dto.SignupResponse;
+import com.bootcamp.paymentdemo.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,15 +24,43 @@ import java.util.Map;
 
 /**
  * 인증 관련 API 컨트롤러
- * 구현할 API 엔드포인트 템플릿
+ * client-api-config.yml의 API 계약을 따름
  */
+@Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
+    //private final AuthenticationManager authenticationManager;
+    //private final JwtTokenProvider jwtTokenProvider;
+    private final UserService userService;
+
+    /**
+     * 회원가입 API
+     * POST /api/signup
+     *
+     * Request Body:
+     * {
+     *   "name": "홍길동",
+     *   "email": "user@example.com",
+     *   "password": "password123",
+     *   "phone": "010-1234-5678"
+     * }
+     *
+     * Response Body:
+     * {
+     *   "success": true,
+     *   "message": null
+     * }
+     */
+    @PostMapping("/signup")
+    public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
+        log.info("회원가입 요청: email={}", request.getEmail());
+        SignupResponse response = userService.signup(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
 
     /**
      * 로그인 API
@@ -48,37 +81,37 @@ public class AuthController {
      *   "email": "user@example.com"
      * }
      */
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String password = request.get("password");
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            // 1. 인증 시도
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-            );
-
-            // 2. JWT 토큰 생성
-            String token = jwtTokenProvider.createToken(email);
-
-            // 3. 응답
-            response.put("success", true);
-            response.put("email", email);
-
-            return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + token)
-                .body(response);
-
-        } catch (AuthenticationException e) {
-            // 인증 실패
-            response.put("success", false);
-            response.put("message", "이메일 또는 비밀번호가 올바르지 않습니다.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-    }
+//    @PostMapping("/login")
+//    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> request) {
+//        String email = request.get("email");
+//        String password = request.get("password");
+//
+//        Map<String, Object> response = new HashMap<>();
+//
+//        try {
+//            // 1. 인증 시도
+//            authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(email, password)
+//            );
+//
+//            // 2. JWT 토큰 생성
+//            String token = jwtTokenProvider.createToken(email);
+//
+//            // 3. 응답
+//            response.put("success", true);
+//            response.put("email", email);
+//
+//            return ResponseEntity.ok()
+//                .header("Authorization", "Bearer " + token)
+//                .body(response);
+//
+//        } catch (AuthenticationException e) {
+//            // 인증 실패
+//            response.put("success", false);
+//            response.put("message", "이메일 또는 비밀번호가 올바르지 않습니다.");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//        }
+//    }
 
     /**
      * 현재 로그인한 사용자 정보 조회 API
