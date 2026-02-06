@@ -30,4 +30,11 @@ public class PointService {
                         pointTransaction.getExpiresAt()
                 )).toList();
     }
+
+    // 포인트 잔액 조회
+    @Transactional(readOnly = true)
+    public int checkPointBalance(Long userId) {
+        Long balance = pointRepository.calculateBalance(userId);
+        return balance != null ? balance.intValue() : 0;
+    }
 }
