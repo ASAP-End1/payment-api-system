@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -39,13 +40,24 @@ public class PointService {
         return balance != null ? balance.intValue() : 0;
     }
 
-    // TODO User, Order 엔티티 연결 -> usePoint(User user, Order order)로 변경
+    // TODO User, Order 엔티티 연결 -> usePoints(User user, Order order)로 변경
     // 포인트 사용
     @Transactional
     public void usePoints(Long userId, Long orderId, int usedPoints) {
 //        int usedPoints = order.getUsedPoints();
         PointTransaction pointTransaction = new PointTransaction(
                 userId, orderId, -usedPoints, PointType.SPENT, null);
+        pointRepository.save(pointTransaction);
+//        updateBalance(userId);
+    }
+
+    // TODO User, Order 엔티티 연결 -> earnPoints(User user, Order order)로 변경
+    // 포인트 적립
+    @Transactional
+    public void earnPoints(Long userId, Long orderId, int pointsToEarn) {
+//        int pointsToEarn = order.getFinalAmount() * user.getCurrentGradeId().getAccRate() / 100;
+        PointTransaction pointTransaction = new PointTransaction(
+                userId, orderId, pointsToEarn, PointType.EARNED, LocalDateTime.now().plusYears(1));
         pointRepository.save(pointTransaction);
 //        updateBalance(userId);
     }
