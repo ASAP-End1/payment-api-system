@@ -64,24 +64,22 @@ public class UserService {
     // 로그인
     @Transactional
     public TokenPair login(@Valid LoginRequest request) {
-        // 1. 사용자 조회
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
                 () -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.")
         );
 
-        // 2. 비밀번호 검증
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        // 3. 기존 Refresh Token 모두 무효화
+        // 기존 Refresh Token 모두 무효화
         refreshTokenRepository.revokeAllByUserId(user.getUserId());
 
-        // 4. Access Token & Refresh Token 생성
+        // Access Token & Refresh Token 생성
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
 
-        // 5. Refresh Token DB 저장
+        // Refresh Token DB 저장
         RefreshToken refreshTokenEntity = RefreshToken.createToken(
                 user,
                 refreshToken,
@@ -94,9 +92,9 @@ public class UserService {
         return new TokenPair(accessToken, refreshToken, user.getEmail());
     }
 
-    // LoginResponse 생성 헬퍼 메서드 (정적 팩토리 메서드 사용)
+    // LoginResponse 생성 헬퍼 메서드
     public LoginResponse createLoginResponse(String email) {
-        // 정적 팩토리 메서드 사용
+
         return LoginResponse.success(email);
     }
 
