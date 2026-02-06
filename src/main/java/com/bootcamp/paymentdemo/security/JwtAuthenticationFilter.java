@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +23,7 @@ import java.util.Collections;
  * - 역할(Role) 정보를 토큰에서 추출
  * - 예외 처리 개선
  */
+@Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -44,24 +46,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 2. 토큰 유효성 검증
             if (token != null && jwtTokenProvider.validateToken(token)) {
-                // 3. 토큰에서 사용자 정보 추출
-                String email = jwtTokenProvider.getEmail(token);
+                // 3. Access Token인지 확인
+                String tokenType = jwtTokenProvider.getTokenType(token);
+                if ("access".equals(tokenType)) {
+                    // 4. 토큰에서 사용자 정보 추출
+                    String email = jwtTokenProvider.getEmail(token);
 
-                // 4. 인증 객체 생성
-                UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            email,
-                        null,
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-                    );
+                    if (email != null) {
+                        // 5. 인증 객체 생성
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        email,
+                                        null,
+                                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                                );
 
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // 5. SecurityContext에 인증 정보 설정
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                        // 6. SecurityContext에 인증 정보 설정
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                        log.debug("JWT 인증 성공: email={}", email);
+                    }
+                } else {
+                    log.warn("Refresh Token은 인증에 사용할 수 없습니다.");
+                }
             }
         } catch (Exception e) {
-            logger.error("JWT 인증 실패", e);
+            log.error("JWT 인증 실패", e);
             // TODO: 구현 - 적절한 에러 응답
         }
 
