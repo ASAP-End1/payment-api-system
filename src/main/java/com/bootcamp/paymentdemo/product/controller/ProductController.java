@@ -1,6 +1,6 @@
 package com.bootcamp.paymentdemo.product.controller;
 
-import com.bootcamp.paymentdemo.product.dto.GetProductResponse;
+import com.bootcamp.paymentdemo.product.dto.ProductGetResponse;
 import com.bootcamp.paymentdemo.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +22,11 @@ public class ProductController {
 
     // 상품 전체 조회
     @GetMapping
-    public ResponseEntity<List<GetProductResponse>> getAllProducts()
+    public ResponseEntity<List<ProductGetResponse>> getAllProducts()
     {
         log.info("상품 목록 조회"); // 요청 시작 로그
 
-        List<GetProductResponse> products = productService.findAllProducts();
+        List<ProductGetResponse> products = productService.findAllProducts();
 
         log.info("상품 목록 조회 완료 - 개수: {}개", products.size()); // 결과 로그
 
@@ -38,10 +38,10 @@ public class ProductController {
 
     // 상품 단건 조회 (productId 경로 변수로 전달받은 상품)
     @GetMapping("/{productId}")
-    public ResponseEntity<GetProductResponse> getProductById(@PathVariable Long productId)
+    public ResponseEntity<ProductGetResponse> getProductById(@PathVariable Long productId)
     {
         log.info("상품 단건 조회 - ID: {}", productId);
-        GetProductResponse response = productService.findOneProduct(productId);
+        ProductGetResponse response = productService.findOneProduct(productId);
         return ResponseEntity.ok(response);
     }
 }
