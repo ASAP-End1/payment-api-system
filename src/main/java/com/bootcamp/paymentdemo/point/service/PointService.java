@@ -4,12 +4,14 @@ import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
 import com.bootcamp.paymentdemo.point.entity.PointType;
+import com.bootcamp.paymentdemo.point.entity.PointUsage;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
+import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -17,6 +19,7 @@ import java.util.List;
 public class PointService {
 
     private final PointRepository pointRepository;
+    private final PointUsageRepository pointUsageRepository;
 
     // TODO 페이징 적용
     // 포인트 내역 조회
@@ -46,6 +49,18 @@ public class PointService {
     @Transactional
     public void usePoints(Long userId, Order order) {
         int usedPoints = order.getUsedPoints();
+
+        // 사용 가능한 적립 포인트 조회
+        List<PointTransaction> earnedPointsList = pointRepository
+                .findByUserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfter(userId, PointType.EARNED, 0, LocalDate.now());
+
+        // 조회한 포인트 PointUsage에 저장, 잔액 차감
+        for (PointTransaction earnedPoints : earnedPointsList) {
+            PointUsage pointUsage = new PointUsage(earnedPoints, order, earnedPoints.getRemainingAmount());
+            pointUsageRepository.save(pointUsage);
+            earnedPoints.deduct(earnedPoints.getRemainingAmount());
+        }
+
         PointTransaction pointTransaction = new PointTransaction(
                 userId, order, -usedPoints, PointType.SPENT);
         pointRepository.save(pointTransaction);

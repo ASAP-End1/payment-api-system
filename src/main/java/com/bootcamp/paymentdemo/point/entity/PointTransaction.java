@@ -57,4 +57,8 @@ public class PointTransaction {
             this.expiresAt = LocalDate.now().plusYears(1);
         }
     }
+
+    public void deduct(int amount) {
+        this.remainingAmount -= amount;
+    }
 }
