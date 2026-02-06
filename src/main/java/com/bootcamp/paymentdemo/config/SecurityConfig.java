@@ -1,9 +1,11 @@
 package com.bootcamp.paymentdemo.config;
 
 import com.bootcamp.paymentdemo.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -49,6 +51,34 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
+
+                // 인증/인가 예외처리
+                .exceptionHandling(exceptions -> exceptions
+                        // 인증 실패 시 (401)
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write(
+                                    "{\"code\":\"UNAUTHORIZED\"," +
+                                            "\"message\":\"Authentication required\"," +
+                                            "\"status\":401," +
+                                            "\"timestamp\":" + System.currentTimeMillis() + "}"
+                            );
+                        })
+                        // 권한 없음 시 (403)
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write(
+                                    "{\"code\":\"FORBIDDEN\"," +
+                                            "\"message\":\"Access denied\"," +
+                                            "\"status\":403," +
+                                            "\"timestamp\":" + System.currentTimeMillis() + "}"
+                            );
+                        })
+                )
 
             // 요청 권한 설정
             .authorizeHttpRequests(authorize -> authorize
