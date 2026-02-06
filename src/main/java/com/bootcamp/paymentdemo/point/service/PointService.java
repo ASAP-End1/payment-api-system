@@ -2,6 +2,7 @@ package com.bootcamp.paymentdemo.point.service;
 
 import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
+import com.bootcamp.paymentdemo.point.entity.PointType;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,4 +38,26 @@ public class PointService {
         Long balance = pointRepository.calculateBalance(userId);
         return balance != null ? balance.intValue() : 0;
     }
+
+    // TODO Order 엔티티 연결하면 usedPoints 파라미터, 주석 제거
+    // 포인트 사용
+    @Transactional
+    public void usePoints(Long userId, Long orderId, int usedPoints) {
+//        Order order = orderRepository.findById(orderId).orElseThrow(
+//                () -> new IllegalArgumentException("주문을 찾을 수 없습니다.")
+//        );
+//        int usedPoints = order.getUsedPoints();
+        PointTransaction pointTransaction = new PointTransaction(
+                userId, orderId, -usedPoints, PointType.SPENT, null);
+        pointRepository.save(pointTransaction);
+//        updateBalance(userId);
+    }
+
+    // 스냅샷 업데이트
+    // TODO UserPointBalance 한비님이 구현
+//    private void updateBalance(Long userId) {
+//        int balance = checkPointBalance(userId);
+//        UserPointBalance userPointBalance = userPointBalanceRepository.findByUserId(userId);
+//        userPointBalance.updateBlance(balance);
+//    }
 }
