@@ -47,7 +47,7 @@ public class PointService {
     public void usePoints(Long userId, Order order) {
         int usedPoints = order.getUsedPoints();
         PointTransaction pointTransaction = new PointTransaction(
-                userId, order, -usedPoints, PointType.SPENT, null);
+                userId, order, -usedPoints, PointType.SPENT);
         pointRepository.save(pointTransaction);
 //        updateBalance(userId);
     }
@@ -58,7 +58,7 @@ public class PointService {
     public void earnPoints(Long userId, Order order, int pointsToEarn) {
 //        int pointsToEarn = order.getFinalAmount() * user.getCurrentGradeId().getAccRate() / 100;
         PointTransaction pointTransaction = new PointTransaction(
-                userId, order, pointsToEarn, PointType.EARNED, LocalDateTime.now().plusYears(1));
+                userId, order, pointsToEarn, PointType.EARNED);
         pointRepository.save(pointTransaction);
 //        updateBalance(userId);
     }
@@ -72,7 +72,7 @@ public class PointService {
         );
         int earnedPoints = earnedPointTransaction.getAmount();
         PointTransaction pointTransaction = new PointTransaction(
-                userId, order, -earnedPoints, PointType.CANCELED, null);
+                userId, order, -earnedPoints, PointType.CANCELED);
         pointRepository.save(pointTransaction);
 //        updateBalance(userId);
     }

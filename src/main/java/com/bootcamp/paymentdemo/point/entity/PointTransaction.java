@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -32,6 +33,7 @@ public class PointTransaction {
     private Order order;
 
     private int amount;
+    private int remainingAmount;
 
     @Enumerated(EnumType.STRING)
     private PointType type;
@@ -40,14 +42,19 @@ public class PointTransaction {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    private LocalDateTime expiresAt;
+    private LocalDate expiresAt;
 
     // TODO User 객체로 변경
-    public PointTransaction(Long userId, Order order, int amount, PointType type, LocalDateTime expiresAt) {
+    public PointTransaction(Long userId, Order order, int amount, PointType type) {
         this.userId = userId;
         this.order = order;
         this.amount = amount;
         this.type = type;
-        this.expiresAt = expiresAt;
+
+        // 적립일 때 남은 금액 자동 설정
+        if (type == PointType.EARNED) {
+            this.remainingAmount = amount;
+            this.expiresAt = LocalDate.now().plusYears(1);
+        }
     }
 }
