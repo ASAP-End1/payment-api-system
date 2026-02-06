@@ -91,6 +91,7 @@ public class SecurityConfig {
     /**
      * Admin 계정 (InMemory - 데모용)
      */
+    /*
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
         UserDetails admin = User.builder()
@@ -101,6 +102,7 @@ public class SecurityConfig {
 
         return new InMemoryUserDetailsManager(admin);
     }
+     */
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
