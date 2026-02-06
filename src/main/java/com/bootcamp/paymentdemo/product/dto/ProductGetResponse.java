@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.math.BigDecimal;
 
 @Getter
-public class GetProductResponse {
+public class ProductGetResponse {
 
     private final Long id;
     private final String name;
@@ -14,7 +14,7 @@ public class GetProductResponse {
     private final String category;
     private final String status;
 
-    public GetProductResponse(Long id, String name, BigDecimal price, int stock, String category, String status) {
+    public ProductGetResponse(Long id, String name, BigDecimal price, int stock, String category, String status) {
         this.id = id;
         this.name = name;
         this.price = price;
