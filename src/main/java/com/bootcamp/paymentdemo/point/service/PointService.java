@@ -8,6 +8,7 @@ import com.bootcamp.paymentdemo.point.entity.PointUsage;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -134,6 +135,24 @@ public class PointService {
                 userId, order, -earnedPoints, PointType.CANCELED);
         pointRepository.save(pointTransaction);
 //        updateBalance(userId);
+    }
+
+    // 포인트 소멸 (매일 00시 실행)
+    @Transactional
+    @Scheduled(cron = "0 0 0 * * *")
+    public void expirePoints() {
+        // remainingAmount가 0보다 크고, 만료일이 지난 포인트 조회
+        List<PointTransaction> expirePointList = pointRepository.findByRemainingAmountGreaterThanAndExpiresAtBefore(0, LocalDate.now());
+
+        // PointTransaction에 저장, remainingAmount 0으로 변경
+        for (PointTransaction expirePoint : expirePointList) {
+            PointTransaction pointTransaction = new PointTransaction(
+                    expirePoint.getUserId(), expirePoint.getOrder(), -expirePoint.getRemainingAmount(), PointType.EXPIRED);
+            pointRepository.save(pointTransaction);
+
+            expirePoint.deduct(expirePoint.getRemainingAmount());
+//            updateBalance(expirePoint.getUserId());
+        }
     }
 
     // 스냅샷 업데이트
