@@ -107,26 +107,12 @@ public class JwtTokenProvider {
      * - 토큰 갱신 로직
      * - 상세한 예외 처리
      */
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser()
+    public void validateToken(String token) {
+        Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token);
-            return true;
-        } catch (ExpiredJwtException e) {
-            log.warn("만료된 토큰: {}", e.getMessage());
-            return false;
-        } catch (MalformedJwtException e) {
-            log.warn("잘못된 형식의 토큰: {}", e.getMessage());
-            return false;
-        } catch (SignatureException e) {
-            log.warn("서명 검증 실패: {}", e.getMessage());
-            return false;
-        } catch (Exception e) {
-            log.error("토큰 검증 중 예외 발생", e);
-            return false;
-        }
+
     }
 
     // 토큰 타입 확인 (access/refresh)

@@ -53,8 +53,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 1. Request Header에서 JWT 토큰 추출
             String token = getJwtFromRequest(request);
 
-            // 2. 토큰 유효성 검증
-            if (token != null && jwtTokenProvider.validateToken(token)) {
+            if (token != null) {
+                // 2. 토큰 유효성 검증
+                jwtTokenProvider.validateToken(token);
+
                 // 3. Access Token인지 확인
                 String tokenType = jwtTokenProvider.getTokenType(token);
                 if ("access".equals(tokenType)) {
@@ -91,10 +93,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             "Refresh Token cannot be used for API authentication"
                     );
                     return;  // 필터 체인 중단
+                } else {
+                    log.warn("알 수 없는 토큰 타입: type={}, uri={}", tokenType, request.getRequestURI());
                 }
-            } else if (token != null) {
-                // 토큰은 있지만 유효하지 않음
-                log.warn("유효하지 않은 토큰: {}", request.getRequestURI());
             }
 
         } catch (ExpiredJwtException e) {
