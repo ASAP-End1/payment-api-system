@@ -51,17 +51,19 @@ public class PointTransaction {
         this.amount = amount;
         this.type = type;
 
-        // 적립일 때 남은 금액 자동 설정
+        // 적립일 때 남은 금액, 만료일 자동 설정
         if (type == PointType.EARNED) {
             this.remainingAmount = amount;
             this.expiresAt = LocalDate.now().plusYears(1);
         }
     }
 
+    // 잔여 포인트 차감 메서드
     public void deduct(int amount) {
         this.remainingAmount -= amount;
     }
 
+    // 잔여 포인트 복구 메서드
     public void restore(int amount) {
         this.remainingAmount += amount;
     }

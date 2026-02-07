@@ -83,6 +83,7 @@ public class PointService {
 //        updateBalance(userId);
     }
 
+    // TODO User 엔티티 연결 -> refundPoints(User user, Order order)로 변경
     // 포인트 복구
     @Transactional
     public void refundPoints(Long userId, Order order) {
@@ -98,13 +99,17 @@ public class PointService {
         PointTransaction pointTransaction = new PointTransaction(
                 userId, order, order.getUsedPoints(), PointType.REFUNDED);
         pointRepository.save(pointTransaction);
+//        updateBalance(userId);
     }
 
     // TODO User 엔티티 연결 -> earnPoints(User user, Order order)로 변경
     // 포인트 적립
     @Transactional
     public void earnPoints(Long userId, Order order, int pointsToEarn) {
+        // 사용자의 멤버십 등급에 따라 적립할 포인트 계산
 //        int pointsToEarn = order.getFinalAmount() * user.getCurrentGradeId().getAccRate() / 100;
+
+        // 적립 포인트 내역 PointTransaction에 저장
         PointTransaction pointTransaction = new PointTransaction(
                 userId, order, pointsToEarn, PointType.EARNED);
         pointRepository.save(pointTransaction);
@@ -115,10 +120,16 @@ public class PointService {
     // 포인트 적립 취소
     @Transactional
     public void cancelEarnedPoints(Long userId, Order order) {
+        // 해당 주문에서 적립된 포인트 조회
         PointTransaction earnedPointTransaction = pointRepository.findByOrderIdAndType(order.getId(), PointType.EARNED).orElseThrow(
                 () -> new IllegalArgumentException("적립금이 존재하지 않습니다.")
         );
         int earnedPoints = earnedPointTransaction.getAmount();
+
+        // remainingAmount 0으로 변경
+        earnedPointTransaction.deduct(earnedPointTransaction.getRemainingAmount());
+
+        // 적립 취소 내역 PointTransaction에 저장
         PointTransaction pointTransaction = new PointTransaction(
                 userId, order, -earnedPoints, PointType.CANCELED);
         pointRepository.save(pointTransaction);
