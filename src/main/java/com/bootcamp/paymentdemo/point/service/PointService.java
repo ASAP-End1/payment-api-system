@@ -8,6 +8,7 @@ import com.bootcamp.paymentdemo.point.entity.PointUsage;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PointService {
@@ -26,8 +28,8 @@ public class PointService {
     // 포인트 내역 조회
     @Transactional(readOnly = true)
     public List<PointGetResponse> getPointHistory(Long userId) {
-        List<PointTransaction> pointTransactions = pointRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        return pointTransactions.stream()
+        List<PointTransaction> pointTransactionList = pointRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return pointTransactionList.stream()
                 .map(pointTransaction -> new PointGetResponse(
                         pointTransaction.getId(),
                         pointTransaction.getOrder().getId(),
@@ -42,6 +44,9 @@ public class PointService {
     @Transactional(readOnly = true)
     public int checkPointBalance(Long userId) {
         Long balance = pointRepository.calculateBalance(userId);
+
+        log.info("포인트 잔액 조회: userId={}, 잔액={}", userId, balance);
+
         return balance != null ? balance.intValue() : 0;
     }
 
@@ -53,7 +58,7 @@ public class PointService {
 
         // 사용 가능한 적립 포인트 조회
         // 만료일 임박한 포인트부터 사용
-        List<PointTransaction> earnedPointsList = pointRepository
+        List<PointTransaction> earnedTransactionList = pointRepository
                 .findByUserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAsc(
                         userId, PointType.EARNED, 0, LocalDate.now());
 
@@ -61,27 +66,29 @@ public class PointService {
         int remaining = usedPoints;
 
         // 조회한 포인트 PointUsage에 저장, 잔액 차감
-        for (PointTransaction earnedPoints : earnedPointsList) {
+        for (PointTransaction earnedTransaction : earnedTransactionList) {
             int deductAmount;
-            if (remaining >= earnedPoints.getRemainingAmount()) {
-                deductAmount = earnedPoints.getRemainingAmount();
+            if (remaining >= earnedTransaction.getRemainingAmount()) {
+                deductAmount = earnedTransaction.getRemainingAmount();
             } else {
                 deductAmount = remaining;
             }
 
-            PointUsage pointUsage = new PointUsage(earnedPoints, order, deductAmount);
+            PointUsage pointUsage = new PointUsage(earnedTransaction, order, deductAmount);
             pointUsageRepository.save(pointUsage);
-            earnedPoints.deduct(deductAmount);
+            earnedTransaction.deduct(deductAmount);
 
             remaining -= deductAmount;
             if (remaining == 0 ) break;
         }
 
         // 사용 포인트 내역 PointTransaction에 저장
-        PointTransaction pointTransaction = new PointTransaction(
+        PointTransaction spentTransaction = new PointTransaction(
                 userId, order, -usedPoints, PointType.SPENT);
-        pointRepository.save(pointTransaction);
+        pointRepository.save(spentTransaction);
 //        updateBalance(userId);
+
+        log.info("포인트 사용 완료: userId={}, orderId={}, 사용 포인트={}", userId, order.getId(), usedPoints);
     }
 
     // TODO User 엔티티 연결 -> refundPoints(User user, Order order)로 변경
@@ -97,10 +104,12 @@ public class PointService {
         }
 
         // 환불 포인트 내역 PointTransaction에 저장
-        PointTransaction pointTransaction = new PointTransaction(
+        PointTransaction refundedTransaction = new PointTransaction(
                 userId, order, order.getUsedPoints(), PointType.REFUNDED);
-        pointRepository.save(pointTransaction);
+        pointRepository.save(refundedTransaction);
 //        updateBalance(userId);
+
+        log.info("포인트 환불 완료: userId={}, orderId={}, 환불 포인트={}", userId, order.getId(), order.getUsedPoints());
     }
 
     // TODO User 엔티티 연결 -> earnPoints(User user, Order order)로 변경
@@ -111,10 +120,12 @@ public class PointService {
 //        int pointsToEarn = order.getFinalAmount() * user.getCurrentGradeId().getAccRate() / 100;
 
         // 적립 포인트 내역 PointTransaction에 저장
-        PointTransaction pointTransaction = new PointTransaction(
+        PointTransaction earnedTransaction = new PointTransaction(
                 userId, order, pointsToEarn, PointType.EARNED);
-        pointRepository.save(pointTransaction);
+        pointRepository.save(earnedTransaction);
 //        updateBalance(userId);
+
+        log.info("포인트 적립 완료: userId={}, orderId={}, 적립 포인트={}", userId, order.getId(), pointsToEarn);
     }
 
     // TODO User 엔티티 연결 -> cancelEarnedPoints(User user, Order order)로 변경
@@ -122,19 +133,21 @@ public class PointService {
     @Transactional
     public void cancelEarnedPoints(Long userId, Order order) {
         // 해당 주문에서 적립된 포인트 조회
-        PointTransaction earnedPointTransaction = pointRepository.findByOrderIdAndType(order.getId(), PointType.EARNED).orElseThrow(
+        PointTransaction earnedTransaction = pointRepository.findByOrderIdAndType(order.getId(), PointType.EARNED).orElseThrow(
                 () -> new IllegalArgumentException("적립금이 존재하지 않습니다.")
         );
-        int earnedPoints = earnedPointTransaction.getAmount();
+        int earnedPoints = earnedTransaction.getAmount();
 
         // remainingAmount 0으로 변경
-        earnedPointTransaction.deduct(earnedPointTransaction.getRemainingAmount());
+        earnedTransaction.deduct(earnedTransaction.getRemainingAmount());
 
         // 적립 취소 내역 PointTransaction에 저장
-        PointTransaction pointTransaction = new PointTransaction(
+        PointTransaction canceledTransaction = new PointTransaction(
                 userId, order, -earnedPoints, PointType.CANCELED);
-        pointRepository.save(pointTransaction);
+        pointRepository.save(canceledTransaction);
 //        updateBalance(userId);
+
+        log.info("포인트 적립 취소 완료: userId={}, orderId={}, 취소 포인트={}", userId, order.getId(), earnedPoints);
     }
 
     // 포인트 소멸 (매일 00시 실행)
@@ -142,16 +155,20 @@ public class PointService {
     @Scheduled(cron = "0 0 0 * * *")
     public void expirePoints() {
         // remainingAmount가 0보다 크고, 만료일이 지난 포인트 조회
-        List<PointTransaction> expirePointList = pointRepository.findByRemainingAmountGreaterThanAndExpiresAtBefore(0, LocalDate.now());
+        List<PointTransaction> earnedTransactionList = pointRepository
+                .findByTypeAndRemainingAmountGreaterThanAndExpiresAtBefore(PointType.EARNED, 0, LocalDate.now());
 
         // PointTransaction에 저장, remainingAmount 0으로 변경
-        for (PointTransaction expirePoint : expirePointList) {
-            PointTransaction pointTransaction = new PointTransaction(
-                    expirePoint.getUserId(), expirePoint.getOrder(), -expirePoint.getRemainingAmount(), PointType.EXPIRED);
-            pointRepository.save(pointTransaction);
+        for (PointTransaction earnedTransaction : earnedTransactionList) {
+            int remaining = earnedTransaction.getRemainingAmount();
+            PointTransaction expiredTransaction = new PointTransaction(
+                    earnedTransaction.getUserId(), earnedTransaction.getOrder(), -remaining, PointType.EXPIRED);
+            pointRepository.save(expiredTransaction);
 
-            expirePoint.deduct(expirePoint.getRemainingAmount());
-//            updateBalance(expirePoint.getUserId());
+            earnedTransaction.deduct(remaining);
+//            updateBalance(earnedTransaction.getUserId());
+
+            log.info("포인트 소멸 완료: userId={}, 소멸 포인트={}", expiredTransaction.getUserId(), remaining);
         }
     }
 
