@@ -56,12 +56,36 @@ function displayUserInfo() {
 /**
  * 로그아웃 처리
  */
-function handleLogout() {
-    // 쿠키에서 토큰 제거
-    if (typeof removeToken === 'function') removeToken();
+async function handleLogout() {
+    try {
+        const token = getToken();
 
-    // 로그인 페이지로 이동
-    window.location.href = '/pages/login';
+        // buildApiUrl 사용
+        const logoutUrl = await buildApiUrl('logout');
+
+        const response = await fetch(logoutUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('로그아웃 성공:', data);
+
+            // 자동 검증
+            validateApiResponse('logout', data);
+        }
+    } catch (error) {
+        console.error('로그아웃 실패:', error);
+    } finally {
+        // 쿠키에서 토큰 제거
+        removeToken();
+        //
+        window.location.href = '/pages/login';
+    }
 }
 
 // 페이지 로드 시 인증 체크

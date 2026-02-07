@@ -2,6 +2,18 @@ spring:
   application:
     name: payment-demo
 
+  profiles:
+    active: local    # application-local.yml 파일 생성해 local에서 DB연결
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true      # (선택사항 - SQL 로그 확인)
+    properties:
+      hibernate:
+        format_sql: true  # (선택사항 - SQL 포맷팅)
+
+
   # 클라이언트 API 계약 설정 파일 import
   config:
     import: optional:classpath:client-api-config.yml
@@ -35,7 +47,7 @@ portone:
     toss: ${PORTONE_CHANNEL_TOSS:your-toss-channel-key}
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:commercehub-secret-key-for-demo-please-change-this-in-production-environment}
+  secret: ${JWT_SECRET:UjGDxgrzCb9XBOmnXPF6eruETQamJKYSacLEXUz7VV8=}
   token-validity-in-seconds: ${JWT_VALIDITY:86400}  # 24 hours
 
 

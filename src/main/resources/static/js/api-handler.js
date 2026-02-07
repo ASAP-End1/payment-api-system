@@ -49,7 +49,8 @@ async function makeApiRequest(endpointKey, options = {}) {
             method,
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include' // Refresh Token 쿠키 전송
         };
 
         // JWT 토큰이 있으면 Authorization 헤더 추가
@@ -63,6 +64,16 @@ async function makeApiRequest(endpointKey, options = {}) {
         }
 
         const response = await fetch(url, fetchOptions);
+
+        // 응답 헤더에서 새 Access Token 확인 및 저장
+        const authHeader = response.headers.get('Authorization');
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const newToken = authHeader.substring(7);
+            if (typeof saveToken === 'function') {
+                saveToken(newToken);
+                console.log('Access Token 자동 갱신됨');
+            }
+        }
 
         // 401 Unauthorized 응답 시 로그인 페이지로 이동 (쿠키 삭제)
         if (response.status === 401) {
