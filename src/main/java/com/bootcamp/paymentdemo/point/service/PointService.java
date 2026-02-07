@@ -83,6 +83,23 @@ public class PointService {
 //        updateBalance(userId);
     }
 
+    // 포인트 복구
+    @Transactional
+    public void refundPoints(Long userId, Order order) {
+        // 주문 id로 사용한 포인트 내역 조회
+        List<PointUsage> pointUsageList = pointUsageRepository.findByOrderId(order.getId());
+
+        // remainingAmount 복구
+        for (PointUsage pointUsage : pointUsageList) {
+            pointUsage.getPointTransaction().restore(pointUsage.getAmount());
+        }
+
+        // 환불 포인트 내역 PointTransaction에 저장
+        PointTransaction pointTransaction = new PointTransaction(
+                userId, order, order.getUsedPoints(), PointType.REFUNDED);
+        pointRepository.save(pointTransaction);
+    }
+
     // TODO User 엔티티 연결 -> earnPoints(User user, Order order)로 변경
     // 포인트 적립
     @Transactional

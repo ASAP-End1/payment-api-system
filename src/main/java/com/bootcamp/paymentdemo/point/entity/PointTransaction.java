@@ -61,4 +61,8 @@ public class PointTransaction {
     public void deduct(int amount) {
         this.remainingAmount -= amount;
     }
+
+    public void restore(int amount) {
+        this.remainingAmount += amount;
+    }
 }
