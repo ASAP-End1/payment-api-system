@@ -20,5 +20,5 @@ public interface PointRepository extends JpaRepository<PointTransaction, Long> {
 
     Optional<PointTransaction> findByOrderIdAndType(Long orderId, PointType pointType);
 
-    List<PointTransaction> findByUserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfter(Long userId, PointType pointType, int i, LocalDate now);
+    List<PointTransaction> findByUserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAsc(Long userId, PointType pointType, int i, LocalDate now);
 }

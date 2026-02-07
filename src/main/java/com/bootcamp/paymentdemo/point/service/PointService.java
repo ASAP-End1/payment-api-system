@@ -51,16 +51,32 @@ public class PointService {
         int usedPoints = order.getUsedPoints();
 
         // 사용 가능한 적립 포인트 조회
+        // 만료일 임박한 포인트부터 사용
         List<PointTransaction> earnedPointsList = pointRepository
-                .findByUserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfter(userId, PointType.EARNED, 0, LocalDate.now());
+                .findByUserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAsc(
+                        userId, PointType.EARNED, 0, LocalDate.now());
+
+        // 차감하고 남은 포인트
+        int remaining = usedPoints;
 
         // 조회한 포인트 PointUsage에 저장, 잔액 차감
         for (PointTransaction earnedPoints : earnedPointsList) {
-            PointUsage pointUsage = new PointUsage(earnedPoints, order, earnedPoints.getRemainingAmount());
+            int deductAmount;
+            if (remaining >= earnedPoints.getRemainingAmount()) {
+                deductAmount = earnedPoints.getRemainingAmount();
+            } else {
+                deductAmount = remaining;
+            }
+
+            PointUsage pointUsage = new PointUsage(earnedPoints, order, deductAmount);
             pointUsageRepository.save(pointUsage);
-            earnedPoints.deduct(earnedPoints.getRemainingAmount());
+            earnedPoints.deduct(deductAmount);
+
+            remaining -= deductAmount;
+            if (remaining == 0 ) break;
         }
 
+        // 사용 포인트 내역 PointTransaction에 저장
         PointTransaction pointTransaction = new PointTransaction(
                 userId, order, -usedPoints, PointType.SPENT);
         pointRepository.save(pointTransaction);
