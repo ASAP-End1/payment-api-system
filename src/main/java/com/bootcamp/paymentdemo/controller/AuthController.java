@@ -2,6 +2,7 @@ package com.bootcamp.paymentdemo.controller;
 
 import com.bootcamp.paymentdemo.security.JwtTokenProvider;
 import com.bootcamp.paymentdemo.user.dto.*;
+import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
 import com.bootcamp.paymentdemo.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import java.util.Map;
 public class AuthController {
 
     private final UserService userService;
+    private final AuthenticationManager authenticationManager;
 
     /**
      * 회원가입 API
@@ -85,28 +87,47 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         log.info("로그인 요청: email={}", request.getEmail());
 
-        UserService.TokenPair tokenPair = userService.login(request);
+        try {
+            // Spring Security - AuthenticationManager 사용
+            // 내부적으로 CustomUserDetailsService.loadUserByUsername() 호출됨
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
 
-        LoginResponse response = LoginResponse.success(tokenPair.email);
+            // 인증 성공 시 토큰 생성
+            String email = authentication.getName();
 
-        // Authorization 헤더에 Access Token 포함
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + tokenPair.accessToken);
+            // UserService에 토큰 생성 위임
+            UserService.TokenPair tokenPair = userService.login(email);
 
-        // Refresh Token은 HttpOnly 쿠키로 저장
-        ResponseCookie refreshCookie = ResponseCookie
-                .from("refreshToken", tokenPair.refreshToken)
-                .httpOnly(true)      // JavaScript 접근 불가 (XSS 방지)
-                .secure(false)      // HTTPS만 (프로덕션: true, 개발: false)
-                .path("/")          // 모든 경로에서 전송
-                .maxAge(7 * 24 * 60 * 60)    // 7일
-                .sameSite("Lax")   // CSRF 방지
-                .build();
+            LoginResponse response = LoginResponse.success(tokenPair.email);
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .headers(headers)
-                .body(response);
+            // Authorization 헤더에 Access Token 포함
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + tokenPair.accessToken);
+
+            // Refresh Token은 HttpOnly 쿠키로 저장
+            ResponseCookie refreshCookie = ResponseCookie
+                    .from("refreshToken", tokenPair.refreshToken)
+                    .httpOnly(true)      // JavaScript 접근 불가 (XSS 방지)
+                    .secure(false)      // HTTPS만 (프로덕션: true, 개발: false)
+                    .path("/")          // 모든 경로에서 전송
+                    .maxAge(7 * 24 * 60 * 60)    // 7일
+                    .sameSite("Lax")   // CSRF 방지
+                    .build();
+
+            return ResponseEntity.status(HttpStatus.OK)
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                    .headers(headers)
+                    .body(response);
+
+        } catch (AuthenticationException e) {
+            // 인증 실패
+            log.warn("로그인 실패: email={}", request.getEmail());
+            throw new InvalidCredentialsException(
+                    "이메일 또는 비밀번호가 올바르지 않습니다"
+            );
+        }
     }
 
     /**

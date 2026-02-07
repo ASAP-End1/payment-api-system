@@ -62,16 +62,12 @@ public class UserService {
     }
 
 
-    // 로그인
+    // 로그인 - 인증은 이미 AuthenticationManager가 수행
     @Transactional
-    public TokenPair login(@Valid LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
-                () -> new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다")
+    public TokenPair login(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new UserNotFoundException("사용자가 존재하지 않습니다")
         );
-
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다");
-        }
 
         // 기존 Refresh Token 모두 무효화
         refreshTokenRepository.revokeAllByUserId(user.getUserId());
