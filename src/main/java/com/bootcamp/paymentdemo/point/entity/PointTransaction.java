@@ -20,6 +20,7 @@ public class PointTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "point_id")
     private Long id;
 
     // TODO User 엔티티 연결
@@ -36,6 +37,7 @@ public class PointTransaction {
     private int remainingAmount;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private PointType type;
 
     @CreatedDate

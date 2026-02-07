@@ -19,6 +19,7 @@ public class PointUsage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "point_usage_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
