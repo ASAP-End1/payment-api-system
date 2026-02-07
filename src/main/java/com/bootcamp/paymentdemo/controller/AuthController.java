@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,8 +33,6 @@ import java.util.Map;
 @RequestMapping("/api")
 public class AuthController {
 
-    //private final AuthenticationManager authenticationManager;
-    //private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
 
     /**
@@ -94,10 +93,20 @@ public class AuthController {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + tokenPair.accessToken);
 
-        // Refresh Token은 별도 쿠키나 응답 헤더로 전달 가능
-        headers.set("X-Refresh-Token", tokenPair.refreshToken);
+        // Refresh Token은 HttpOnly 쿠키로 저장
+        ResponseCookie refreshCookie = ResponseCookie
+                .from("refreshToken", tokenPair.refreshToken)
+                .httpOnly(true)      // JavaScript 접근 불가 (XSS 방지)
+                .secure(false)      // HTTPS만 (프로덕션: true, 개발: false)
+                .path("/")          // 모든 경로에서 전송
+                .maxAge(7 * 24 * 60 * 60)    // 7일
+                .sameSite("Lax")   // CSRF 방지
+                .build();
 
-        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response);
+        return ResponseEntity.status(HttpStatus.OK)
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .headers(headers)
+                .body(response);
     }
 
     /**
@@ -120,7 +129,16 @@ public class AuthController {
         // LogoutResponse 반환
         LogoutResponse response = userService.logout(principal.getName());
 
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        // Refresh Token 쿠키 삭제
+        ResponseCookie deleteCookie = ResponseCookie
+                .from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)  // 즉시 삭제
+                .build();
+
+        return ResponseEntity.status(HttpStatus.OK).header(HttpHeaders.SET_COOKIE, deleteCookie.toString()).body(response);
     }
 
 

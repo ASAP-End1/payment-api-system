@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import static org.springframework.boot.security.autoconfigure.web.servlet.PathRequest.toStaticResources;
 
@@ -36,9 +37,11 @@ import static org.springframework.boot.security.autoconfigure.web.servlet.PathRe
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CorsConfigurationSource corsConfigurationSource) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
@@ -46,6 +49,9 @@ public class SecurityConfig {
         http
             // CSRF 비활성화 (JWT 사용 시 불필요)
             .csrf(AbstractHttpConfigurer::disable)
+
+            // CORS 적용
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
             // Session 사용 안 함 (Stateless)
             .sessionManagement(session -> session

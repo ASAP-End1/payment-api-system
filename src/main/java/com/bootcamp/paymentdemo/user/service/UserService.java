@@ -7,13 +7,11 @@ import com.bootcamp.paymentdemo.user.dto.*;
 import com.bootcamp.paymentdemo.user.entity.RefreshToken;
 import com.bootcamp.paymentdemo.user.entity.User;
 import com.bootcamp.paymentdemo.user.entity.UserPointBalance;
-import com.bootcamp.paymentdemo.user.exception.DuplicateEmailException;
-import com.bootcamp.paymentdemo.user.exception.GradeNotFoundException;
-import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
-import com.bootcamp.paymentdemo.user.exception.UserNotFoundException;
+import com.bootcamp.paymentdemo.user.exception.*;
 import com.bootcamp.paymentdemo.user.repository.RefreshTokenRepository;
 import com.bootcamp.paymentdemo.user.repository.UserPointBalanceRepository;
 import com.bootcamp.paymentdemo.user.repository.UserRepository;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -116,6 +115,7 @@ public class UserService {
     }
 
     // 내 정보 조회
+    @Transactional(readOnly = true)
     public UserSearchResponse getCurrentUser(String email) {
         User user = userRepository.findByEmailWithGrade(email).orElseThrow(
                 () -> new UserNotFoundException("사용자를 찾을 수 없습니다")
