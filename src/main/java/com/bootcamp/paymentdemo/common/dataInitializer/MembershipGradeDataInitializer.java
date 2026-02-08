@@ -3,6 +3,7 @@ package com.bootcamp.paymentdemo.common.dataInitializer;
 // 멤버십 등급 데이터베이스 초기 데이터 설정
 
 import com.bootcamp.paymentdemo.membership.entity.Membership;
+import com.bootcamp.paymentdemo.membership.entity.MembershipGrade;
 import com.bootcamp.paymentdemo.membership.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,19 +29,19 @@ public class MembershipGradeDataInitializer implements CommandLineRunner {
             log.info("멤버십 등급 데이터 초기화 시작");
 
             Membership normal = Membership.builder()
-                    .gradeName("NORMAL")
+                    .gradeName(MembershipGrade.NORMAL)
                     .accRate(new BigDecimal("1.00"))
                     .minAmount(BigDecimal.ZERO)
                     .build();
 
             Membership vip = Membership.builder()
-                    .gradeName("VIP")
+                    .gradeName(MembershipGrade.VIP)
                     .accRate(new BigDecimal("5.00"))
                     .minAmount(new BigDecimal("50001.00"))
                     .build();
 
             Membership vvip = Membership.builder()
-                    .gradeName("VVIP")
+                    .gradeName(MembershipGrade.VVIP)
                     .accRate(new BigDecimal("10.00"))
                     .minAmount(new BigDecimal("150000.00"))
                     .build();

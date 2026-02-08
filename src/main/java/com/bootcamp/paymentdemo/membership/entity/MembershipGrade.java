@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum MembershipGrade {
-    NORMAL("normal")
-    , VIP("vip")
-    , VVIP("vvip");
+    NORMAL("일반 회원")
+    , VIP("VIP 회원")
+    , VVIP("VVIP 회원");
 
     private final String gradeDescription;
 

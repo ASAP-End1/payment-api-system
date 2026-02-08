@@ -1,9 +1,6 @@
 package com.bootcamp.paymentdemo.membership.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -17,8 +14,9 @@ import java.math.BigDecimal;
 public class Membership {
 
     @Id
+    @Enumerated(EnumType.STRING)
     @Column(name = "grade_name", length = 20)
-    private String gradeName;
+    private MembershipGrade gradeName;
 
     @Column(name = "acc_rate", nullable = false, precision = 5, scale = 2)
     private BigDecimal accRate;
