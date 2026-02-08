@@ -52,4 +52,22 @@ public class UserGradeHistory {
         return history;
     }
 
+    // 결제/환불로 인한 등급 변경 이력
+    public static UserGradeHistory createChange(
+            User user,
+            Membership fromGrade,
+            Membership toGrade,
+            Long triggerPaymentId,
+            String reason
+    ) {
+        UserGradeHistory history = new UserGradeHistory();
+        history.user = user;
+        history.fromGrade = fromGrade;
+        history.toGrade = toGrade;
+        history.updatedAt = LocalDateTime.now();
+        history.triggerPaymentId = triggerPaymentId;
+        history.reason = reason;
+        return history;
+    }
+
 }

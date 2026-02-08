@@ -41,5 +41,15 @@ public class UserPaidAmount {
         return paidAmount;
     }
 
+    // payments.status = 'PAID' (결제 완료) 시
+    // 결제 금액 합산 (결제 요청 금액 -> totalAmount)
+    public void addPaidAmount(BigDecimal paymentAmount) {
+        if(paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0){
+            throw new IllegalArgumentException("결제 금액은 0보다 커야 합니다");
+        }
+        this.totalPaidAmount = this.totalPaidAmount.add(paymentAmount);
+        this.updatedAt = LocalDateTime.now();
+    }
+
 
 }
