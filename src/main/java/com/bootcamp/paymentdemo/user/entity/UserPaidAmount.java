@@ -1,0 +1,45 @@
+package com.bootcamp.paymentdemo.user.entity;
+
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+// 사용자별 총 결제 금액 집계 테이블
+@Entity
+@Table(name = "user_paid_amounts")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class UserPaidAmount {
+
+    @Id
+    @Column(name = "user_id")
+    private Long userId;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "total_paid_amount", nullable = false, precision = 18, scale = 2)
+    private BigDecimal totalPaidAmount;  // 사용자의 총 결제 금액
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // 사용자 회원가입시 0원 설정
+    public static UserPaidAmount createDefault(User user) {
+        UserPaidAmount paidAmount = new UserPaidAmount();
+
+        paidAmount.user = user;
+        paidAmount.totalPaidAmount = BigDecimal.ZERO;
+        paidAmount.updatedAt = LocalDateTime.now();
+
+        return paidAmount;
+    }
+
+
+}
