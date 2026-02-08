@@ -182,7 +182,7 @@ public class PointService {
         for (PointTransaction earnedTransaction : earnedTransactionList) {
             int remaining = earnedTransaction.getRemainingAmount();
             PointTransaction expiredTransaction = new PointTransaction(
-                    earnedTransaction.getUser(), earnedTransaction.getOrder(), -remaining, PointType.EXPIRED);
+                    earnedTransaction.getUser(), null, -remaining, PointType.EXPIRED);
             pointRepository.save(expiredTransaction);
 
             earnedTransaction.deduct(remaining);
