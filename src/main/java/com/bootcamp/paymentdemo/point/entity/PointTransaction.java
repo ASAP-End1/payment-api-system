@@ -45,7 +45,6 @@ public class PointTransaction {
 
     private LocalDate expiresAt;
 
-    // TODO User 객체로 변경
     public PointTransaction(User user, Order order, int amount, PointType type) {
         this.user = user;
         this.order = order;

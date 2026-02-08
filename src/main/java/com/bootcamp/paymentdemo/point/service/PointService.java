@@ -8,7 +8,9 @@ import com.bootcamp.paymentdemo.point.entity.PointUsage;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;
 import com.bootcamp.paymentdemo.user.entity.User;
+import com.bootcamp.paymentdemo.user.entity.UserPointBalance;
 import com.bootcamp.paymentdemo.user.exception.UserNotFoundException;
+import com.bootcamp.paymentdemo.user.repository.UserPointBalanceRepository;
 import com.bootcamp.paymentdemo.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class PointService {
     private final PointRepository pointRepository;
     private final PointUsageRepository pointUsageRepository;
     private final UserRepository userRepository;
+    private final UserPointBalanceRepository userPointBalanceRepository;
 
     // TODO 페이징 적용
     // 포인트 내역 조회
@@ -96,7 +99,9 @@ public class PointService {
         PointTransaction spentTransaction = new PointTransaction(
                 user, order, -usedPoints, PointType.SPENT);
         pointRepository.save(spentTransaction);
-//        updateBalance(userId);
+
+        // 스냅샷 업데이트
+        updateBalance(user, -usedPoints);
 
         log.info("포인트 사용 완료: userId={}, orderId={}, 사용 포인트={}", user.getUserId(), order.getId(), usedPoints);
     }
@@ -117,7 +122,9 @@ public class PointService {
         PointTransaction refundedTransaction = new PointTransaction(
                 user, order, order.getUsedPoints().intValue(), PointType.REFUNDED);
         pointRepository.save(refundedTransaction);
-//        updateBalance(userId);
+
+        // 스냅샷 업데이트
+        updateBalance(user, order.getUsedPoints().intValue());
 
         log.info("포인트 환불 완료: userId={}, orderId={}, 환불 포인트={}", user.getUserId(), order.getId(), order.getUsedPoints());
     }
@@ -133,7 +140,9 @@ public class PointService {
         PointTransaction earnedTransaction = new PointTransaction(
                 user, order, pointsToEarn, PointType.EARNED);
         pointRepository.save(earnedTransaction);
-//        updateBalance(userId);
+
+        // 스냅샷 업데이트
+        updateBalance(user, pointsToEarn);
 
         log.info("포인트 적립 완료: userId={}, orderId={}, 적립 포인트={}", user.getUserId(), order.getId(), pointsToEarn);
     }
@@ -154,7 +163,9 @@ public class PointService {
         PointTransaction canceledTransaction = new PointTransaction(
                 user, order, -earnedPoints, PointType.CANCELED);
         pointRepository.save(canceledTransaction);
-//        updateBalance(userId);
+
+        // 스냅샷 업데이트
+        updateBalance(user, -earnedPoints);
 
         log.info("포인트 적립 취소 완료: userId={}, orderId={}, 취소 포인트={}", user.getUserId(), order.getId(), earnedPoints);
     }
@@ -175,17 +186,17 @@ public class PointService {
             pointRepository.save(expiredTransaction);
 
             earnedTransaction.deduct(remaining);
-//            updateBalance(earnedTransaction.getUserId());
+
+            // 스냅샷 업데이트
+            updateBalance(earnedTransaction.getUser(), -remaining);
 
             log.info("포인트 소멸 완료: userId={}, 소멸 포인트={}", expiredTransaction.getUser().getUserId(), remaining);
         }
     }
 
     // 스냅샷 업데이트
-    // TODO UserPointBalance 한비님이 구현
-//    private void updateBalance(Long userId) {
-//        int balance = checkPointBalance(userId);
-//        UserPointBalance userPointBalance = userPointBalanceRepository.findByUserId(userId);
-//        userPointBalance.updateBlance(balance);
-//    }
+    private void updateBalance(User user, int amount) {
+        UserPointBalance userPointBalance = userPointBalanceRepository.findByUserId(user.getUserId()).get();
+        userPointBalance.updateBalance(amount);
+    }
 }

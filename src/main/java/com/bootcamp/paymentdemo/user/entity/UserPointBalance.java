@@ -42,4 +42,10 @@ public class UserPointBalance {
                 .currentPoints(BigDecimal.ZERO)
                 .build();
     }
+
+    // TODO point 타입 int로 할지 decimal로 할지 의논 필요
+    // 잔여 포인트 스냅샷 업데이트
+    public void updateBalance(int amount) {
+        this.currentPoints = this.currentPoints.add(BigDecimal.valueOf(amount));
+    }
 }
