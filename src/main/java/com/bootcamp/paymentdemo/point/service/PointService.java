@@ -56,7 +56,7 @@ public class PointService {
     // 포인트 잔액 조회
     @Transactional(readOnly = true)
     public int checkPointBalance(User user) {
-        Long balance = pointRepository.calculateBalance(user.getUserId());
+        Long balance = pointRepository.calculatePointBalance(user.getUserId());
 
         log.info("포인트 잔액 조회: userId={}, 잔액={}", user.getUserId(), balance);
 
@@ -204,11 +204,12 @@ public class PointService {
 
         // UserPointBalance의 currentPoints와 실제 포인트가 다르면 보정
         for (UserPointBalance userPointBalance : userPointBalanceList) {
-            int actualPointBalance = checkPointBalance(userPointBalance.getUser());
+            Long balance = pointRepository.calculatePointBalance(userPointBalance.getUserId());
+            int actualPointBalance = balance != null ? balance.intValue() : 0;
             if (actualPointBalance != userPointBalance.getCurrentPoints().intValue()) {
                 userPointBalance.syncPointBalance(actualPointBalance);
 
-                log.info("포인트 정합성 보정: userId={}, 실제 포인트 잔액={}", userPointBalance.getUser().getUserId(), actualPointBalance);
+                log.info("포인트 정합성 보정: userId={}, 실제 포인트 잔액={}", userPointBalance.getUserId(), actualPointBalance);
             }
         }
     }

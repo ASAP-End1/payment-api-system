@@ -15,7 +15,7 @@ public interface PointRepository extends JpaRepository<PointTransaction, Long> {
     List<PointTransaction> findByUser_UserIdOrderByCreatedAtDesc(Long userId);
 
     @Query("SELECT SUM(p.amount) FROM PointTransaction p WHERE p.user.userId = :userId")
-    Long calculateBalance(@Param("userId") Long userId);
+    Long calculatePointBalance(@Param("userId") Long userId);
 
     Optional<PointTransaction> findByOrderIdAndType(Long orderId, PointType pointType);
 
