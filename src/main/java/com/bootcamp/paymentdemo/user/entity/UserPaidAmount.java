@@ -51,5 +51,18 @@ public class UserPaidAmount {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // 환불 시
+    // 결제 금액 감소 (환불 요청 금액 -> refundAmount)
+    public void subtractPaidAmount(BigDecimal refundAmount) {
+        if(refundAmount == null || refundAmount.compareTo(BigDecimal.ZERO) <= 0){
+            throw new IllegalArgumentException("환불 금액은 0보다 커야 합니다");
+        }
+        BigDecimal newAmount = this.totalPaidAmount.subtract(refundAmount);
+
+        // 총 결제 금액이 음수가 되지 않도록함
+        this.totalPaidAmount = newAmount.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : newAmount;
+        this.updatedAt = LocalDateTime.now();
+    }
+
 
 }

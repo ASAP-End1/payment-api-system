@@ -136,4 +136,30 @@ public class MembershipService {
         }
     }
 
+    // 환불 완료 시 총 결제 금액 차감 & 등급 업데이트
+    // userId, refundAmount(환불 금액), paymentId(등급 변경을 발생시킨 결제 id)
+    @Transactional
+    public void handleRefund(Long userId, BigDecimal refundAmount, Long paymentId) {
+
+        UserPaidAmount userPaidAmount = userPaidAmountRepository.findByUserId(userId).orElseThrow(
+                () -> new IllegalStateException("총 결제 금액 정보를 찾을 수 없습니다")
+        );
+
+        userPaidAmount.subtractPaidAmount(refundAmount);
+        userPaidAmountRepository.save(userPaidAmount);
+
+        log.info("총 결제 금액 감소: userId={}, 이전={}, 환불={}, 합계={}",
+                userId,
+                userPaidAmount.getTotalPaidAmount().add(refundAmount),
+                refundAmount,
+                userPaidAmount.getTotalPaidAmount());
+
+        // 등급 업데이트
+        boolean gradeChanged = updateUserGrade(userId, paymentId, "환불");
+
+        if (gradeChanged) {
+            log.warn("환불 후 등급 하락: userId={}, paymentId={}", userId, paymentId);
+        }
+    }
+
 }
