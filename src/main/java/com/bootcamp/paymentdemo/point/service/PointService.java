@@ -55,10 +55,10 @@ public class PointService {
 
     // 포인트 잔액 조회
     @Transactional(readOnly = true)
-    public int checkPointBalance(Long userId) {
-        Long balance = pointRepository.calculateBalance(userId);
+    public int checkPointBalance(User user) {
+        Long balance = pointRepository.calculateBalance(user.getUserId());
 
-        log.info("포인트 잔액 조회: userId={}, 잔액={}", userId, balance);
+        log.info("포인트 잔액 조회: userId={}, 잔액={}", user.getUserId(), balance);
 
         return balance != null ? balance.intValue() : 0;
     }
@@ -101,7 +101,7 @@ public class PointService {
         pointRepository.save(spentTransaction);
 
         // 스냅샷 업데이트
-        updateBalance(user, -usedPoints);
+        updatePointBalance(user, -usedPoints);
 
         log.info("포인트 사용 완료: userId={}, orderId={}, 사용 포인트={}", user.getUserId(), order.getId(), usedPoints);
     }
@@ -124,7 +124,7 @@ public class PointService {
         pointRepository.save(refundedTransaction);
 
         // 스냅샷 업데이트
-        updateBalance(user, order.getUsedPoints().intValue());
+        updatePointBalance(user, order.getUsedPoints().intValue());
 
         log.info("포인트 환불 완료: userId={}, orderId={}, 환불 포인트={}", user.getUserId(), order.getId(), order.getUsedPoints());
     }
@@ -142,7 +142,7 @@ public class PointService {
         pointRepository.save(earnedTransaction);
 
         // 스냅샷 업데이트
-        updateBalance(user, pointsToEarn);
+        updatePointBalance(user, pointsToEarn);
 
         log.info("포인트 적립 완료: userId={}, orderId={}, 적립 포인트={}", user.getUserId(), order.getId(), pointsToEarn);
     }
@@ -165,7 +165,7 @@ public class PointService {
         pointRepository.save(canceledTransaction);
 
         // 스냅샷 업데이트
-        updateBalance(user, -earnedPoints);
+        updatePointBalance(user, -earnedPoints);
 
         log.info("포인트 적립 취소 완료: userId={}, orderId={}, 취소 포인트={}", user.getUserId(), order.getId(), earnedPoints);
     }
@@ -188,15 +188,34 @@ public class PointService {
             earnedTransaction.deduct(remaining);
 
             // 스냅샷 업데이트
-            updateBalance(earnedTransaction.getUser(), -remaining);
+            updatePointBalance(earnedTransaction.getUser(), -remaining);
 
             log.info("포인트 소멸 완료: userId={}, 소멸 포인트={}", expiredTransaction.getUser().getUserId(), remaining);
         }
     }
 
+    // TODO point 타입 int로 할지 decimal로 할지 의논 필요
+    // 스냅샷 정합성 보정 (매일 00시 30분 실행 - 소멸 후)
+    @Transactional
+    @Scheduled(cron = "0 30 0 * * *")
+    public void syncPointBalance() {
+        // UserPointBalance 리스트 조회
+        List<UserPointBalance> userPointBalanceList = userPointBalanceRepository.findAll();
+
+        // UserPointBalance의 currentPoints와 실제 포인트가 다르면 보정
+        for (UserPointBalance userPointBalance : userPointBalanceList) {
+            int actualPointBalance = checkPointBalance(userPointBalance.getUser());
+            if (actualPointBalance != userPointBalance.getCurrentPoints().intValue()) {
+                userPointBalance.syncPointBalance(actualPointBalance);
+
+                log.info("포인트 정합성 보정: userId={}, 실제 포인트 잔액={}", userPointBalance.getUser().getUserId(), actualPointBalance);
+            }
+        }
+    }
+
     // 스냅샷 업데이트
-    private void updateBalance(User user, int amount) {
+    private void updatePointBalance(User user, int amount) {
         UserPointBalance userPointBalance = userPointBalanceRepository.findByUserId(user.getUserId()).get();
-        userPointBalance.updateBalance(amount);
+        userPointBalance.updatePointBalance(amount);
     }
 }
