@@ -8,6 +8,8 @@ import com.bootcamp.paymentdemo.point.entity.PointUsage;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;
 import com.bootcamp.paymentdemo.user.entity.User;
+import com.bootcamp.paymentdemo.user.exception.UserNotFoundException;
+import com.bootcamp.paymentdemo.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,12 +28,16 @@ public class PointService {
 
     private final PointRepository pointRepository;
     private final PointUsageRepository pointUsageRepository;
+    private final UserRepository userRepository;
 
     // TODO 페이징 적용
     // 포인트 내역 조회
     @Transactional(readOnly = true)
-    public List<PointGetResponse> getPointHistory(Long userId) {
-        List<PointTransaction> pointTransactionList = pointRepository.findByUser_UserIdOrderByCreatedAtDesc(userId);
+    public List<PointGetResponse> getPointHistory(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () ->new UserNotFoundException("사용자가 존재하지 않습니다")
+        );
+        List<PointTransaction> pointTransactionList = pointRepository.findByUser_UserIdOrderByCreatedAtDesc(user.getUserId());
         return pointTransactionList.stream()
                 .map(pointTransaction -> new PointGetResponse(
                         pointTransaction.getId(),
