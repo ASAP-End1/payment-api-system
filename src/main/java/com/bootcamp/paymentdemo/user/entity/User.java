@@ -58,6 +58,10 @@ public class User extends Base {
         return String.format("CUST_%d_%d", this.userId, random6);
     }
 
+    // 사용자 멤버십 등급 업데이트
+    public void updateGrade(Membership grade) {
+        this.currentGrade = grade;
+    }
 
 }
 
