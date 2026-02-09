@@ -7,6 +7,7 @@ import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
 import com.bootcamp.paymentdemo.point.entity.PointType;
+import com.bootcamp.paymentdemo.point.entity.PointUsage;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;
 import com.bootcamp.paymentdemo.user.entity.User;
@@ -148,6 +149,7 @@ class PointServiceTest {
         assertThat(result).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
+
     // 포인트 사용 테스트
     @Test
     @DisplayName("포인트 사용")
@@ -167,5 +169,31 @@ class PointServiceTest {
         // Then
         assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(earned2.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(100));
+    }
+
+
+    // 포인트 복구 테스트
+    @Test
+    @DisplayName("포인트 복구")
+    void refundPoints_성공() {
+        // Given
+        PointTransaction earned1 = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(200), PointType.EARNED);
+        PointTransaction earned2 = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(300), PointType.EARNED);
+
+        earned1.deduct(BigDecimal.valueOf(200));
+        earned2.deduct(BigDecimal.valueOf(200));
+
+        PointUsage usage1 = new PointUsage(earned1, testOrder, BigDecimal.valueOf(200));
+        PointUsage usage2 = new PointUsage(earned2, testOrder, BigDecimal.valueOf(200));
+
+        when(pointUsageRepository.findByOrderId(1L)).thenReturn(List.of(usage1, usage2));
+        when(userPointBalanceRepository.findByUserId(1L)).thenReturn(Optional.of(testUserPointBalance));
+
+        // When
+        pointService.refundPoints(testUser, testOrder);
+
+        // Then
+        assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
+        assertThat(earned2.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(300));
     }
 }
