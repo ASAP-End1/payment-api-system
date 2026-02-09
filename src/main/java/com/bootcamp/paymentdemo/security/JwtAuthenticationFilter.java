@@ -1,7 +1,7 @@
 package com.bootcamp.paymentdemo.security;
 
-import com.bootcamp.paymentdemo.domain.user.entity.RefreshToken;
-import com.bootcamp.paymentdemo.domain.user.repository.RefreshTokenRepository;
+import com.bootcamp.paymentdemo.user.entity.RefreshToken;
+import com.bootcamp.paymentdemo.user.repository.RefreshTokenRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;

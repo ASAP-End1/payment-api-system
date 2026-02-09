@@ -1,8 +1,8 @@
 package com.bootcamp.paymentdemo.controller;
 
-import com.bootcamp.paymentdemo.domain.user.dto.*;
-import com.bootcamp.paymentdemo.domain.user.exception.InvalidCredentialsException;
-import com.bootcamp.paymentdemo.domain.user.service.UserService;
+import com.bootcamp.paymentdemo.user.dto.*;
+import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
+import com.bootcamp.paymentdemo.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,10 +1,10 @@
 package com.bootcamp.paymentdemo.common.exception;
 
 import com.bootcamp.paymentdemo.common.dto.ErrorResponse;
-import com.bootcamp.paymentdemo.domain.user.exception.DuplicateEmailException;
-import com.bootcamp.paymentdemo.domain.user.exception.GradeNotFoundException;
-import com.bootcamp.paymentdemo.domain.user.exception.InvalidCredentialsException;
-import com.bootcamp.paymentdemo.domain.user.exception.UserNotFoundException;
+import com.bootcamp.paymentdemo.user.exception.DuplicateEmailException;
+import com.bootcamp.paymentdemo.user.exception.GradeNotFoundException;
+import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
+import com.bootcamp.paymentdemo.user.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

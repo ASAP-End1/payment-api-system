@@ -1,7 +1,7 @@
 package com.bootcamp.paymentdemo.security;
 
-import com.bootcamp.paymentdemo.domain.user.entity.User;
-import com.bootcamp.paymentdemo.domain.user.repository.UserRepository;
+import com.bootcamp.paymentdemo.user.entity.User;
+import com.bootcamp.paymentdemo.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
