@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -145,5 +146,26 @@ class PointServiceTest {
 
         // Then
         assertThat(result).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    // 포인트 사용 테스트
+    @Test
+    @DisplayName("포인트 사용")
+    void usePoints_성공() {
+        // Given
+        PointTransaction earned1 = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(200), PointType.EARNED);
+        PointTransaction earned2 = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(300), PointType.EARNED);
+
+        when(pointRepository.findByUser_UserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAsc(
+                1L, PointType.EARNED, BigDecimal.ZERO, LocalDate.now())).thenReturn(List.of(earned1, earned2));
+
+        when(userPointBalanceRepository.findByUserId(1L)).thenReturn(Optional.of(testUserPointBalance));
+
+        // When
+        pointService.usePoints(testUser, testOrder);
+
+        // Then
+        assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(earned2.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(100));
     }
 }
