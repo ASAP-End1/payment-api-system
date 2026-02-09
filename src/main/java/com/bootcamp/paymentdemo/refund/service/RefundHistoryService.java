@@ -16,9 +16,9 @@ public class RefundHistoryService {
 
     // 환불 요청 이력 저장
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void saveRequestHistory(Payment payment, String reason) {
+    public void saveRequestHistory(Payment payment, String reason, String refundGroupId) {
         Refund requestRefund = Refund.createRequest(
-                payment, payment.getTotalAmount(), reason
+                payment, payment.getTotalAmount(), reason,  refundGroupId
         );
 
         refundRepository.save(requestRefund);
@@ -26,9 +26,9 @@ public class RefundHistoryService {
 
     // 환불 실패 이력 저장
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void saveFailHistory(Payment payment, String reason, String portOneRefundId) {
+    public void saveFailHistory(Payment payment, String reason, String portOneRefundId, String refundGroupId) {
         Refund failedRefund = Refund.createFailed(
-                payment, payment.getTotalAmount(), reason,  portOneRefundId
+                payment, payment.getTotalAmount(), reason,  portOneRefundId,  refundGroupId
         );
 
         refundRepository.save(failedRefund);

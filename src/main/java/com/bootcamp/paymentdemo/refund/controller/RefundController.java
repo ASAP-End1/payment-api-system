@@ -15,8 +15,8 @@ public class RefundController {
 
     private final RefundService refundService;
 
-    @PostMapping("/{paymentId}")
-    public ResponseEntity<RefundResponse> refundAll(@PathVariable Long paymentId, @Valid @RequestBody RefundRequest refundRequest) {
-        return ResponseEntity.ok(refundService.refundAll(paymentId, refundRequest));
+    @PostMapping("/{id}")
+    public ResponseEntity<RefundResponse> refundAll(@PathVariable Long id, @Valid @RequestBody RefundRequest refundRequest) {
+        return ResponseEntity.ok(refundService.refundAll(id, refundRequest));
     }
 }

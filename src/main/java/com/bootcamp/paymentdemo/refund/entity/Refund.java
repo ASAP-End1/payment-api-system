@@ -37,50 +37,57 @@ public class Refund {
     @Column(name = "portone_refund_id")
     private String portOneRefundId;
 
+    @Column(name = "refund_group_id", nullable = false)
+    private String refundGroupId;
+
     @Column(name = "refunded_at")
     private LocalDateTime refundedAt;
 
 
     @Builder(access = AccessLevel.PRIVATE)
-    private Refund(Payment payment, BigDecimal refundAmount, String reason, RefundStatus status, String portOneRefundId) {
+    private Refund(Payment payment, BigDecimal refundAmount, String reason, RefundStatus status, String portOneRefundId,  String refundGroupId) {
         this.payment = payment;
         this.refundAmount = refundAmount;
         this.reason = reason;
         this.status = status;
         this.portOneRefundId = portOneRefundId;
+        this.refundGroupId = refundGroupId;
         this.refundedAt = LocalDateTime.now();
     }
 
     // 환불 요청 이력 생성
-    public static Refund createRequest(Payment payment, BigDecimal refundAmount, String reason) {
+    public static Refund createRequest(Payment payment, BigDecimal refundAmount, String reason, String refundGroupId) {
         return Refund.builder()
                 .payment(payment)
                 .refundAmount(refundAmount)
                 .reason(reason)
                 .portOneRefundId(null)
+                .refundGroupId(refundGroupId)
                 .status(RefundStatus.PENDING)
                 .build();
     }
 
     // 환불 완료 이력 생성
-    public static Refund createCompleted(Payment payment, BigDecimal refundAmount, String reason, String portOneRefundId) {
+    public static Refund createCompleted(Payment payment, BigDecimal refundAmount, String reason, String portOneRefundId, String refundGroupId) {
         return Refund.builder()
                 .payment(payment)
                 .refundAmount(refundAmount)
                 .reason(reason)
                 .portOneRefundId(portOneRefundId)
+                .refundGroupId(refundGroupId)
                 .status(RefundStatus.COMPLETED)
                 .build();
     }
 
 
     // 환불 실패 이력 생성
-    public static Refund createFailed(Payment payment, BigDecimal refundAmount, String reason, String portOneRefundId) {
+    public static Refund createFailed(Payment payment, BigDecimal refundAmount, String reason, String portOneRefundId, String refundGroupId) {
         return Refund.builder()
                 .payment(payment)
                 .refundAmount(refundAmount)
                 .reason(reason)
                 .portOneRefundId(portOneRefundId)
+                .refundGroupId(refundGroupId)
                 .status(RefundStatus.FAILED)
                 .build();
     }
