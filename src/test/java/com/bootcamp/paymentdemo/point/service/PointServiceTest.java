@@ -160,7 +160,6 @@ class PointServiceTest {
 
         when(pointRepository.findByUser_UserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAsc(
                 1L, PointType.EARNED, BigDecimal.ZERO, LocalDate.now())).thenReturn(List.of(earned1, earned2));
-
         when(userPointBalanceRepository.findByUserId(1L)).thenReturn(Optional.of(testUserPointBalance));
 
         // When
@@ -169,6 +168,7 @@ class PointServiceTest {
         // Then
         assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(earned2.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(100));
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(600));
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.SPENT && transaction.getAmount().compareTo(BigDecimal.valueOf(400).negate()) == 0));
@@ -199,6 +199,7 @@ class PointServiceTest {
         // Then
         assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
         assertThat(earned2.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(300));
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(1400));
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.REFUNDED && transaction.getAmount().compareTo(BigDecimal.valueOf(400)) == 0));
@@ -216,6 +217,8 @@ class PointServiceTest {
         pointService.earnPoints(testUser, testOrder);
 
         // Then
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(1096));
+
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.EARNED && transaction.getAmount().compareTo(BigDecimal.valueOf(96)) == 0));
     }
@@ -227,6 +230,7 @@ class PointServiceTest {
     void cancelEarnedPoints_성공() {
         // Given
         PointTransaction earned = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(96), PointType.EARNED);
+
         when(pointRepository.findByOrderIdAndType(1L, PointType.EARNED)).thenReturn(Optional.of(earned));
         when(userPointBalanceRepository.findByUserId(1L)).thenReturn(Optional.of(testUserPointBalance));
 
@@ -234,6 +238,8 @@ class PointServiceTest {
         pointService.cancelEarnedPoints(testUser, testOrder);
 
         // Then
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(904));
+
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.CANCELED && transaction.getAmount().compareTo(BigDecimal.valueOf(96).negate()) == 0));
     }
@@ -247,5 +253,28 @@ class PointServiceTest {
         // When & Then
         assertThrows(IllegalArgumentException.class,
                 () -> pointService.cancelEarnedPoints(testUser, testOrder));
+    }
+
+
+    // 포인트 소멸 테스트
+    @Test
+    @DisplayName("포인트 소멸")
+    void expirePoints() {
+        // Given
+        PointTransaction earned = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(200), PointType.EARNED);
+        ReflectionTestUtils.setField(earned, "expiresAt", LocalDate.now().minusDays(1));
+
+        when(pointRepository.findByTypeAndRemainingAmountGreaterThanAndExpiresAtBefore(
+                PointType.EARNED, BigDecimal.ZERO, LocalDate.now())).thenReturn(List.of(earned));
+        when(userPointBalanceRepository.findByUserId(1L)).thenReturn(Optional.of(testUserPointBalance));
+
+        // When
+        pointService.expirePoints();
+
+        // Then
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(800));
+
+        verify(pointRepository, times(1)).save(argThat(transaction ->
+                transaction.getType() == PointType.EXPIRED && transaction.getAmount().compareTo(BigDecimal.valueOf(200).negate()) == 0));
     }
 }
