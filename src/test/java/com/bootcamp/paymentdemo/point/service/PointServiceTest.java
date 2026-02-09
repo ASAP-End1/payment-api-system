@@ -259,7 +259,7 @@ class PointServiceTest {
     // 포인트 소멸 테스트
     @Test
     @DisplayName("포인트 소멸")
-    void expirePoints() {
+    void expirePoints_성공() {
         // Given
         PointTransaction earned = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(200), PointType.EARNED);
         ReflectionTestUtils.setField(earned, "expiresAt", LocalDate.now().minusDays(1));
@@ -276,5 +276,35 @@ class PointServiceTest {
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.EXPIRED && transaction.getAmount().compareTo(BigDecimal.valueOf(200).negate()) == 0));
+    }
+
+
+    // 스냅샷 정합성 보정 테스트
+    @Test
+    @DisplayName("스냅샷 정합성 보정 테스트 - 일치")
+    void syncPointBalance_일치() {
+        // Given
+        when(userPointBalanceRepository.findAll()).thenReturn(List.of(testUserPointBalance));
+        when(pointRepository.calculatePointBalance(1L)).thenReturn(BigDecimal.valueOf(1000));
+
+        // When
+        pointService.syncPointBalance();
+
+        // Then
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(1000));
+    }
+
+    @Test
+    @DisplayName("스냅샷 정합성 보정 테스트 - 불일치")
+    void syncPointBalance_불일치() {
+        // Given
+        when(userPointBalanceRepository.findAll()).thenReturn(List.of(testUserPointBalance));
+        when(pointRepository.calculatePointBalance(1L)).thenReturn(BigDecimal.valueOf(500));
+
+        // When
+        pointService.syncPointBalance();
+
+        // Then
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(500));
     }
 }
