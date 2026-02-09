@@ -116,4 +116,34 @@ class PointServiceTest {
         assertThrows(UserNotFoundException.class,
                 () -> pointService.getPointHistory("fail@test.com"));
     }
+
+
+    // 포인트 잔액 조회 테스트
+    @Test
+    @DisplayName("포인트 잔액 조회 - 잔액 O")
+    void checkPointBalance_잔액O() {
+        // Given
+        when(pointRepository.calculatePointBalance(1L))
+                .thenReturn(BigDecimal.valueOf(1000));
+
+        // When
+        BigDecimal result = pointService.checkPointBalance(testUser);
+
+        // Then
+        assertThat(result).isEqualByComparingTo(BigDecimal.valueOf(1000));
+    }
+
+    @Test
+    @DisplayName("포인트 잔액 조회 - 잔액 X")
+    void checkPointBalance_잔액X() {
+        // Given
+        when(pointRepository.calculatePointBalance(1L))
+                .thenReturn(null);
+
+        // When
+        BigDecimal result = pointService.checkPointBalance(testUser);
+
+        // Then
+        assertThat(result).isEqualByComparingTo(BigDecimal.ZERO);
+    }
 }
