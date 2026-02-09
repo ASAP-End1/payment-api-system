@@ -169,6 +169,10 @@ class PointServiceTest {
         // Then
         assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(earned2.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(100));
+
+        verify(pointRepository, times(1)).save(argThat(transaction ->
+                transaction.getType() == PointType.SPENT && transaction.getAmount().compareTo(BigDecimal.valueOf(400).negate()) == 0));
+        verify(pointUsageRepository, times(2)).save(any(PointUsage.class));
     }
 
 
@@ -195,5 +199,24 @@ class PointServiceTest {
         // Then
         assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
         assertThat(earned2.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(300));
+
+        verify(pointRepository, times(1)).save(argThat(transaction ->
+                transaction.getType() == PointType.REFUNDED && transaction.getAmount().compareTo(BigDecimal.valueOf(400)) == 0));
+    }
+
+
+    // 포인트 적립 테스트
+    @Test
+    @DisplayName("포인트 적립")
+    void earnPoints_성공() {
+        // Given
+        when(userPointBalanceRepository.findByUserId(1L)).thenReturn(Optional.of(testUserPointBalance));
+
+        // When
+        pointService.earnPoints(testUser, testOrder);
+
+        // Then
+        verify(pointRepository, times(1)).save(argThat(transaction ->
+                transaction.getType() == PointType.EARNED && transaction.getAmount().compareTo(BigDecimal.valueOf(96)) == 0));
     }
 }
