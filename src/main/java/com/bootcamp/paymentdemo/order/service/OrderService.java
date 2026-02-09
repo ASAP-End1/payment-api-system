@@ -1,8 +1,7 @@
 package com.bootcamp.paymentdemo.order.service;
 
 import com.bootcamp.paymentdemo.order.consts.OrderStatus;
-import com.bootcamp.paymentdemo.order.dto.OrderCreateRequest;
-import com.bootcamp.paymentdemo.order.dto.OrderCreateResponse;
+import com.bootcamp.paymentdemo.order.dto.*;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.order.repository.OrderRepository;
 import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
@@ -113,6 +112,57 @@ public class OrderService {
         );
     }
 
+    // 주문 내역 조회
+    @Transactional(readOnly = true)
+    public List<OrderGetResponse> findAllOrders() {
+        List<Order> orders = orderRepository.findAll();
+        List<OrderGetResponse> orderGetResponses = new ArrayList<>();
+        for (Order order : orders) {
+            OrderGetResponse orderGetResponse = new OrderGetResponse(
+                    order.getId(),
+                    order.getOrderNumber(),
+                    order.getOrderStatus().name(),
+                    order.getCreatedAt()
+            );
+            orderGetResponses.add(orderGetResponse);
+        }
+        return orderGetResponses;
+    }
+
+    // 주문 상세 조회
+    @Transactional(readOnly = true)
+    public OrderGetDetailResponse findOrderDetail(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+
+        List<OrderProduct> orderProducts = orderProductRepository.findByOrderId(orderId);
+
+        // OrderProduct 변환
+        List<OrderProductGetResponse> orderProductGetResponses = orderProducts.stream()
+                .map(op -> new OrderProductGetResponse(
+                        op.getProductId(),
+                        op.getProductName(),
+                        op.getOrderPrice(),
+                        op.getCount()
+                ))
+                .toList();
+
+        log.info("주문 상세 조회: orderId={}, 주문상품 수={}", orderId, orderProductGetResponses.size());
+
+        return new OrderGetDetailResponse(
+                order.getId(),
+                order.getOrderNumber(),
+                order.getOrderStatus().name(),
+                order.getCreatedAt(),
+                order.getTotalAmount(),
+                order.getUsedPoints(),
+                order.getFinalAmount(),
+                order.getEarnedPoints(),
+                orderProductGetResponses
+        );
+    }
+
+    // ----------
     // 주문 번호 생성
     private String generateOrderNumber() {
         // 1. 오늘 날짜 (yyyyMMdd)
@@ -170,6 +220,7 @@ public class OrderService {
 
         return earnedPoints;
     }
+
 
     // 임시 저장
     private record TempProductInfo(Product product, int count) {}
