@@ -1,6 +1,5 @@
 package com.bootcamp.paymentdemo.payment.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
@@ -9,7 +8,7 @@ public class PaymentConfirmResponse {
     private final String orderId;
     private final String status;
 
-    PaymentConfirmResponse(boolean success, String orderId, String status) {
+    public PaymentConfirmResponse(boolean success, String orderId, String status) {
         this.success = success;
         this.orderId = orderId;
         this.status = status;
