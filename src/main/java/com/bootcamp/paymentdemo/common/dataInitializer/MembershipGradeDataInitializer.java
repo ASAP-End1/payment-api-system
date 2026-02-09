@@ -2,8 +2,8 @@ package com.bootcamp.paymentdemo.common.dataInitializer;
 
 // 멤버십 등급 데이터베이스 초기 데이터 설정
 
-import com.bootcamp.paymentdemo.membership.entity.Membership;
-import com.bootcamp.paymentdemo.membership.repository.MembershipRepository;
+import com.bootcamp.paymentdemo.domain.membership.entity.Membership;
+import com.bootcamp.paymentdemo.domain.membership.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

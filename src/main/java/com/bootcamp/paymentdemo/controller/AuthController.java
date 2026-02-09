@@ -1,9 +1,8 @@
 package com.bootcamp.paymentdemo.controller;
 
-import com.bootcamp.paymentdemo.security.JwtTokenProvider;
-import com.bootcamp.paymentdemo.user.dto.*;
-import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
-import com.bootcamp.paymentdemo.user.service.UserService;
+import com.bootcamp.paymentdemo.domain.user.dto.*;
+import com.bootcamp.paymentdemo.domain.user.exception.InvalidCredentialsException;
+import com.bootcamp.paymentdemo.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,14 +14,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 인증 관련 API 컨트롤러
