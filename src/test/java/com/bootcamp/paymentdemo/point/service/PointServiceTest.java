@@ -219,4 +219,33 @@ class PointServiceTest {
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.EARNED && transaction.getAmount().compareTo(BigDecimal.valueOf(96)) == 0));
     }
+
+
+    // 포인트 적립 취소 테스트
+    @Test
+    @DisplayName("포인트 적립 취소 - 성공")
+    void cancelEarnedPoints_성공() {
+        // Given
+        PointTransaction earned = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(96), PointType.EARNED);
+        when(pointRepository.findByOrderIdAndType(1L, PointType.EARNED)).thenReturn(Optional.of(earned));
+        when(userPointBalanceRepository.findByUserId(1L)).thenReturn(Optional.of(testUserPointBalance));
+
+        // When
+        pointService.cancelEarnedPoints(testUser, testOrder);
+
+        // Then
+        verify(pointRepository, times(1)).save(argThat(transaction ->
+                transaction.getType() == PointType.CANCELED && transaction.getAmount().compareTo(BigDecimal.valueOf(96).negate()) == 0));
+    }
+
+    @Test
+    @DisplayName("포인트 적립 취소 - 실패")
+    void cancelEarnedPoints_실패() {
+        // Given
+        when(pointRepository.findByOrderIdAndType(1L, PointType.EARNED)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class,
+                () -> pointService.cancelEarnedPoints(testUser, testOrder));
+    }
 }
