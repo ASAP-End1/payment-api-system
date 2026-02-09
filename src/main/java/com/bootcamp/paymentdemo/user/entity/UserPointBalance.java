@@ -43,15 +43,13 @@ public class UserPointBalance {
                 .build();
     }
 
-    // TODO point 타입 int로 할지 decimal로 할지 의논 필요
     // 잔여 포인트 스냅샷 정합성 보정
-    public void syncPointBalance(int amount) {
-        this.currentPoints = BigDecimal.valueOf(amount);
+    public void syncPointBalance(BigDecimal amount) {
+        this.currentPoints = amount;
     }
 
-    // TODO point 타입 int로 할지 decimal로 할지 의논 필요
     // 잔여 포인트 스냅샷 업데이트
-    public void updatePointBalance(int amount) {
-        this.currentPoints = this.currentPoints.add(BigDecimal.valueOf(amount));
+    public void updatePointBalance(BigDecimal amount) {
+        this.currentPoints = this.currentPoints.add(amount);
     }
 }
