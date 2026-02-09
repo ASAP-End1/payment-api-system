@@ -141,18 +141,20 @@ public class OrderService {
         }
 
         // 현재 포인트 잔액 조회
-        int currentBalance = pointService.checkPointBalance(user);
+        BigDecimal currentBalance = pointService.checkPointBalance(user);
 
         // 잔액 부족 시 예외 발생
-        if (pointsToUse.intValue() > currentBalance) {
+        // BigDecimal 비교: compareTo() 사용
+        // compareTo 반환값: 0 (같음), 1 (pointsToUse가 더 큼), -1 (pointsToUse가 더 작음)
+        if (pointsToUse.compareTo(currentBalance) > 0) {
             throw new IllegalArgumentException(
-                String.format("포인트 잔액이 부족합니다. (보유: %d, 사용 요청: %d)",
-                    currentBalance, pointsToUse.intValue())
+                String.format("포인트 잔액이 부족합니다. (보유: %s, 사용 요청: %s)",
+                    currentBalance, pointsToUse)
             );
         }
 
         log.info("포인트 잔액 검증 완료: userId={}, 보유={}, 사용={}",
-            user.getUserId(), currentBalance, pointsToUse.intValue());
+            user.getUserId(), currentBalance, pointsToUse);
     }
 
 
