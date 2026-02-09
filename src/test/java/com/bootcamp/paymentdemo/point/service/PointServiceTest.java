@@ -239,6 +239,7 @@ class PointServiceTest {
 
         // Then
         assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(904));
+        assertThat(earned.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.CANCELED && transaction.getAmount().compareTo(BigDecimal.valueOf(96).negate()) == 0));
@@ -273,6 +274,7 @@ class PointServiceTest {
 
         // Then
         assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(800));
+        assertThat(earned.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.EXPIRED && transaction.getAmount().compareTo(BigDecimal.valueOf(200).negate()) == 0));
