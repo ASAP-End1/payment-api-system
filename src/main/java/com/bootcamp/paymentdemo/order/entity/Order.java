@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.order.entity;
 
+import com.bootcamp.paymentdemo.common.BaseEntity;
 import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -13,7 +14,7 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "orders")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Order {
+public class Order extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

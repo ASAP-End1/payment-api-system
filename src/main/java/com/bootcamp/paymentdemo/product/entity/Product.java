@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.product.entity;
 
+import com.bootcamp.paymentdemo.common.BaseEntity;
 import com.bootcamp.paymentdemo.product.consts.ProductStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -12,7 +13,7 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "products")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Product {
+public class Product extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,5 +33,4 @@ public class Product {
         this.category = category;
         this.status = status;
     }
-
 }

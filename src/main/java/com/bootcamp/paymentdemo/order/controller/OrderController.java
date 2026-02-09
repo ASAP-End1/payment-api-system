@@ -1,0 +1,42 @@
+package com.bootcamp.paymentdemo.order.controller;
+
+import com.bootcamp.paymentdemo.order.dto.OrderCreateRequest;
+import com.bootcamp.paymentdemo.order.dto.OrderCreateResponse;
+import com.bootcamp.paymentdemo.order.dto.OrderGetDetailResponse;
+import com.bootcamp.paymentdemo.order.dto.OrderGetResponse;
+import com.bootcamp.paymentdemo.order.service.OrderService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/orders")
+@Slf4j
+public class OrderController {
+
+    private final OrderService orderService;
+
+    @PostMapping
+    public ResponseEntity<OrderCreateResponse> createOrder(@RequestBody OrderCreateRequest request)
+    {
+        log.info("주문 생성 요청 - 사용자: {}", request.getUserId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(request));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<OrderGetResponse>> getAllOrders(){
+        log.info("주문 목록 조회 요청");
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.findAllOrders());
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderGetDetailResponse> getOntOrder(@PathVariable("orderId") Long orderId){
+        log.info("주문 상세 조회 요청 - 주문번호: {}", orderId);
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.findOrderDetail(orderId));
+    }
+}

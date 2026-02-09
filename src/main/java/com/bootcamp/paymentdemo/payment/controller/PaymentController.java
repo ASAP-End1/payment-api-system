@@ -16,17 +16,20 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-
+    // 1. 결제 준비 (장부 생성)
     @PostMapping
     public PaymentCreateResponse createPayment(@RequestBody PaymentCreateRequest request) {
         log.info("결제 생성 요청: OrderID={}", request.getOrderId());
         return paymentService.createPayment(request);
     }
-//
-//    @PostMapping("/{paymentId}/confirm")
-//    public PaymentConfirmResponse confirmPayment(@PathVariable String paymentId) {
-//        log.info("결제 확정 요청: PaymentID(imp_uid)={}", paymentId);
-//        return paymentService.confirmPayment(paymentId);
-//    }
 
+    // 2. 결제 확정 (검증 및 상태 변경)
+    @PostMapping("/{dbPaymentId}/confirm")
+    public PaymentConfirmResponse confirmPayment(
+            @PathVariable String dbPaymentId,
+            @RequestParam String paymentId) { // 포트원의 imp_uid를 파라미터로 받음
+
+        log.info("결제 확정 요청: DB_ID={}, PortOne_ID={}", dbPaymentId, paymentId);
+        return paymentService.confirmPayment(dbPaymentId, paymentId);
+    }
 }
