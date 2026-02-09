@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -30,13 +31,13 @@ public class PointUsage {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    private int amount;
+    private BigDecimal amount;
 
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime usedAt;
 
-    public PointUsage(PointTransaction pointTransaction, Order order, int amount) {
+    public PointUsage(PointTransaction pointTransaction, Order order, BigDecimal amount) {
         this.pointTransaction = pointTransaction;
         this.order = order;
         this.amount = amount;

@@ -3,6 +3,7 @@ package com.bootcamp.paymentdemo.point.dto;
 import com.bootcamp.paymentdemo.point.entity.PointType;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -11,12 +12,12 @@ public class PointGetResponse {
 
     private final Long id;
     private final Long orderId;
-    private final int amount;
+    private final BigDecimal amount;
     private final PointType pointType;
     private final LocalDateTime createdAt;
     private final LocalDate expiresAt;
 
-    public PointGetResponse(Long id, Long orderId, int amount, PointType pointType, LocalDateTime createdAt, LocalDate expiresAt) {
+    public PointGetResponse(Long id, Long orderId, BigDecimal amount, PointType pointType, LocalDateTime createdAt, LocalDate expiresAt) {
         this.id = id;
         this.orderId = orderId;
         this.amount = amount;

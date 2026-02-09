@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -32,8 +33,8 @@ public class PointTransaction {
     @JoinColumn(name = "order_id", nullable = true)
     private Order order;
 
-    private int amount;
-    private int remainingAmount;
+    private BigDecimal amount;
+    private BigDecimal remainingAmount;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
@@ -45,7 +46,7 @@ public class PointTransaction {
 
     private LocalDate expiresAt;
 
-    public PointTransaction(User user, Order order, int amount, PointType type) {
+    public PointTransaction(User user, Order order, BigDecimal amount, PointType type) {
         this.user = user;
         this.order = order;
         this.amount = amount;
@@ -59,12 +60,12 @@ public class PointTransaction {
     }
 
     // 잔여 포인트 차감 메서드
-    public void deduct(int amount) {
-        this.remainingAmount -= amount;
+    public void deduct(BigDecimal amount) {
+        this.remainingAmount = this.remainingAmount.subtract(amount);
     }
 
     // 잔여 포인트 복구 메서드
-    public void restore(int amount) {
-        this.remainingAmount += amount;
+    public void restore(BigDecimal amount) {
+        this.remainingAmount = this.remainingAmount.add(amount);
     }
 }

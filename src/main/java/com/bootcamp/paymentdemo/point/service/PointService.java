@@ -55,33 +55,32 @@ public class PointService {
 
     // 포인트 잔액 조회
     @Transactional(readOnly = true)
-    public int checkPointBalance(User user) {
-        Long balance = pointRepository.calculatePointBalance(user.getUserId());
+    public BigDecimal checkPointBalance(User user) {
+        BigDecimal balance = pointRepository.calculatePointBalance(user.getUserId());
 
         log.info("포인트 잔액 조회: userId={}, 잔액={}", user.getUserId(), balance);
 
-        return balance != null ? balance.intValue() : 0;
+        return balance != null ? balance : BigDecimal.ZERO;
     }
 
-    // TODO point 타입 int로 할지 decimal로 할지 의논 필요
     // 포인트 사용
     @Transactional
     public void usePoints(User user, Order order) {
-        int usedPoints = order.getUsedPoints().intValue();
+        BigDecimal usedPoints = order.getUsedPoints();
 
         // 사용 가능한 적립 포인트 조회
         // 만료일 임박한 포인트부터 사용
         List<PointTransaction> earnedTransactionList = pointRepository
                 .findByUser_UserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAsc(
-                        user.getUserId(), PointType.EARNED, 0, LocalDate.now());
+                        user.getUserId(), PointType.EARNED, BigDecimal.ZERO, LocalDate.now());
 
         // 차감하고 남은 포인트
-        int remaining = usedPoints;
+        BigDecimal remaining = usedPoints;
 
         // 조회한 포인트 PointUsage에 저장, 잔액 차감
         for (PointTransaction earnedTransaction : earnedTransactionList) {
-            int deductAmount;
-            if (remaining >= earnedTransaction.getRemainingAmount()) {
+            BigDecimal deductAmount;
+            if (remaining.compareTo(earnedTransaction.getRemainingAmount()) >= 0) {
                 deductAmount = earnedTransaction.getRemainingAmount();
             } else {
                 deductAmount = remaining;
@@ -91,22 +90,21 @@ public class PointService {
             pointUsageRepository.save(pointUsage);
             earnedTransaction.deduct(deductAmount);
 
-            remaining -= deductAmount;
-            if (remaining == 0 ) break;
+            remaining = remaining.subtract(deductAmount);
+            if (remaining.compareTo(BigDecimal.ZERO) == 0) break;
         }
 
         // 사용 포인트 내역 PointTransaction에 저장
         PointTransaction spentTransaction = new PointTransaction(
-                user, order, -usedPoints, PointType.SPENT);
+                user, order, usedPoints.negate(), PointType.SPENT);
         pointRepository.save(spentTransaction);
 
         // 스냅샷 업데이트
-        updatePointBalance(user, -usedPoints);
+        updatePointBalance(user, usedPoints.negate());
 
         log.info("포인트 사용 완료: userId={}, orderId={}, 사용 포인트={}", user.getUserId(), order.getId(), usedPoints);
     }
 
-    // TODO point 타입 int로 할지 decimal로 할지 의논 필요
     // 포인트 복구
     @Transactional
     public void refundPoints(User user, Order order) {
@@ -120,11 +118,11 @@ public class PointService {
 
         // 환불 포인트 내역 PointTransaction에 저장
         PointTransaction refundedTransaction = new PointTransaction(
-                user, order, order.getUsedPoints().intValue(), PointType.REFUNDED);
+                user, order, order.getUsedPoints(), PointType.REFUNDED);
         pointRepository.save(refundedTransaction);
 
         // 스냅샷 업데이트
-        updatePointBalance(user, order.getUsedPoints().intValue());
+        updatePointBalance(user, order.getUsedPoints());
 
         log.info("포인트 환불 완료: userId={}, orderId={}, 환불 포인트={}", user.getUserId(), order.getId(), order.getUsedPoints());
     }
@@ -133,8 +131,8 @@ public class PointService {
     @Transactional
     public void earnPoints(User user, Order order) {
         // 사용자의 멤버십 등급에 따라 적립할 포인트 계산
-        int pointsToEarn = order.getFinalAmount().multiply(user.getCurrentGrade().getAccRate())
-                .divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP).intValue();
+        BigDecimal pointsToEarn = order.getFinalAmount().multiply(user.getCurrentGrade().getAccRate())
+                .divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
 
         // 적립 포인트 내역 PointTransaction에 저장
         PointTransaction earnedTransaction = new PointTransaction(
@@ -154,18 +152,18 @@ public class PointService {
         PointTransaction earnedTransaction = pointRepository.findByOrderIdAndType(order.getId(), PointType.EARNED).orElseThrow(
                 () -> new IllegalArgumentException("적립금이 존재하지 않습니다.")
         );
-        int earnedPoints = earnedTransaction.getAmount();
+        BigDecimal earnedPoints = earnedTransaction.getAmount();
 
         // remainingAmount 0으로 변경
         earnedTransaction.deduct(earnedTransaction.getRemainingAmount());
 
         // 적립 취소 내역 PointTransaction에 저장
         PointTransaction canceledTransaction = new PointTransaction(
-                user, order, -earnedPoints, PointType.CANCELED);
+                user, order, earnedPoints.negate(), PointType.CANCELED);
         pointRepository.save(canceledTransaction);
 
         // 스냅샷 업데이트
-        updatePointBalance(user, -earnedPoints);
+        updatePointBalance(user, earnedPoints.negate());
 
         log.info("포인트 적립 취소 완료: userId={}, orderId={}, 취소 포인트={}", user.getUserId(), order.getId(), earnedPoints);
     }
@@ -176,25 +174,24 @@ public class PointService {
     public void expirePoints() {
         // remainingAmount가 0보다 크고, 만료일이 지난 포인트 조회
         List<PointTransaction> earnedTransactionList = pointRepository
-                .findByTypeAndRemainingAmountGreaterThanAndExpiresAtBefore(PointType.EARNED, 0, LocalDate.now());
+                .findByTypeAndRemainingAmountGreaterThanAndExpiresAtBefore(PointType.EARNED, BigDecimal.ZERO, LocalDate.now());
 
         // PointTransaction에 저장, remainingAmount 0으로 변경
         for (PointTransaction earnedTransaction : earnedTransactionList) {
-            int remaining = earnedTransaction.getRemainingAmount();
+            BigDecimal remaining = earnedTransaction.getRemainingAmount();
             PointTransaction expiredTransaction = new PointTransaction(
-                    earnedTransaction.getUser(), null, -remaining, PointType.EXPIRED);
+                    earnedTransaction.getUser(), null, remaining.negate(), PointType.EXPIRED);
             pointRepository.save(expiredTransaction);
 
             earnedTransaction.deduct(remaining);
 
             // 스냅샷 업데이트
-            updatePointBalance(earnedTransaction.getUser(), -remaining);
+            updatePointBalance(earnedTransaction.getUser(), remaining.negate());
 
             log.info("포인트 소멸 완료: userId={}, 소멸 포인트={}", expiredTransaction.getUser().getUserId(), remaining);
         }
     }
 
-    // TODO point 타입 int로 할지 decimal로 할지 의논 필요
     // 스냅샷 정합성 보정 (매일 00시 30분 실행 - 소멸 후)
     @Transactional
     @Scheduled(cron = "0 30 0 * * *")
@@ -204,9 +201,9 @@ public class PointService {
 
         // UserPointBalance의 currentPoints와 실제 포인트가 다르면 보정
         for (UserPointBalance userPointBalance : userPointBalanceList) {
-            Long balance = pointRepository.calculatePointBalance(userPointBalance.getUserId());
-            int actualPointBalance = balance != null ? balance.intValue() : 0;
-            if (actualPointBalance != userPointBalance.getCurrentPoints().intValue()) {
+            BigDecimal balance = pointRepository.calculatePointBalance(userPointBalance.getUserId());
+            BigDecimal actualPointBalance = balance != null ? balance : BigDecimal.ZERO;
+            if (actualPointBalance.compareTo(userPointBalance.getCurrentPoints()) != 0) {
                 userPointBalance.syncPointBalance(actualPointBalance);
 
                 log.info("포인트 정합성 보정: userId={}, 실제 포인트 잔액={}", userPointBalance.getUserId(), actualPointBalance);
@@ -215,7 +212,7 @@ public class PointService {
     }
 
     // 스냅샷 업데이트
-    private void updatePointBalance(User user, int amount) {
+    private void updatePointBalance(User user, BigDecimal amount) {
         UserPointBalance userPointBalance = userPointBalanceRepository.findByUserId(user.getUserId()).get();
         userPointBalance.updatePointBalance(amount);
     }
