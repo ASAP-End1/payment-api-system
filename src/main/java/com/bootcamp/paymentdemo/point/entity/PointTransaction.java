@@ -10,6 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -49,12 +50,12 @@ public class PointTransaction {
     public PointTransaction(User user, Order order, BigDecimal amount, PointType type) {
         this.user = user;
         this.order = order;
-        this.amount = amount;
+        this.amount = amount.setScale(0, RoundingMode.HALF_UP);
         this.type = type;
 
         // 적립일 때 남은 금액, 만료일 자동 설정
         if (type == PointType.EARNED) {
-            this.remainingAmount = amount;
+            this.remainingAmount = amount.setScale(0, RoundingMode.HALF_UP);
             this.expiresAt = LocalDate.now().plusYears(1);
         }
     }

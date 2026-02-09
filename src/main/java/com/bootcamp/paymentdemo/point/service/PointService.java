@@ -132,7 +132,7 @@ public class PointService {
     public void earnPoints(User user, Order order) {
         // 사용자의 멤버십 등급에 따라 적립할 포인트 계산
         BigDecimal pointsToEarn = order.getFinalAmount().multiply(user.getCurrentGrade().getAccRate())
-                .divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
 
         // 적립 포인트 내역 PointTransaction에 저장
         PointTransaction earnedTransaction = new PointTransaction(
