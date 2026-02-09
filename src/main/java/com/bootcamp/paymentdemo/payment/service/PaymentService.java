@@ -1,7 +1,7 @@
 package com.bootcamp.paymentdemo.payment.service;
 
 import com.bootcamp.paymentdemo.order.entity.Order;
-import com.bootcamp.paymentdemo.order.repositoryfordelete.OrderRepository;
+import com.bootcamp.paymentdemo.order.repository.OrderRepository;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
 import com.bootcamp.paymentdemo.payment.dto.PaymentConfirmResponse;
 import com.bootcamp.paymentdemo.payment.dto.PaymentCreateRequest;

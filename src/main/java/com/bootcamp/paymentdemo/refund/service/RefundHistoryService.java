@@ -26,9 +26,9 @@ public class RefundHistoryService {
 
     // 환불 실패 이력 저장
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void saveFailHistory(Payment payment, String reason) {
+    public void saveFailHistory(Payment payment, String reason, String portOneRefundId) {
         Refund failedRefund = Refund.createFailed(
-                payment, payment.getTotalAmount(), reason
+                payment, payment.getTotalAmount(), reason,  portOneRefundId
         );
 
         refundRepository.save(failedRefund);

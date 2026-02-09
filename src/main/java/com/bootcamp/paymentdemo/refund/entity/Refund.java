@@ -33,15 +33,21 @@ public class Refund {
     @Column(name = "status", nullable = false, length = 20)
     private RefundStatus status;
 
+    // PortOne에서 반환하는 환불 ID
+    @Column(name = "portone_refund_id")
+    private String portOneRefundId;
+
     @Column(name = "refunded_at")
     private LocalDateTime refundedAt;
 
+
     @Builder(access = AccessLevel.PRIVATE)
-    private Refund(Payment payment, BigDecimal refundAmount, String reason, RefundStatus status) {
+    private Refund(Payment payment, BigDecimal refundAmount, String reason, RefundStatus status, String portOneRefundId) {
         this.payment = payment;
         this.refundAmount = refundAmount;
         this.reason = reason;
         this.status = status;
+        this.portOneRefundId = portOneRefundId;
         this.refundedAt = LocalDateTime.now();
     }
 
@@ -51,27 +57,30 @@ public class Refund {
                 .payment(payment)
                 .refundAmount(refundAmount)
                 .reason(reason)
+                .portOneRefundId(null)
                 .status(RefundStatus.PENDING)
                 .build();
     }
 
     // 환불 완료 이력 생성
-    public static Refund createCompleted(Payment payment, BigDecimal refundAmount, String reason) {
+    public static Refund createCompleted(Payment payment, BigDecimal refundAmount, String reason, String portOneRefundId) {
         return Refund.builder()
                 .payment(payment)
                 .refundAmount(refundAmount)
                 .reason(reason)
+                .portOneRefundId(portOneRefundId)
                 .status(RefundStatus.COMPLETED)
                 .build();
     }
 
 
     // 환불 실패 이력 생성
-    public static Refund createFailed(Payment payment, BigDecimal refundAmount, String reason) {
+    public static Refund createFailed(Payment payment, BigDecimal refundAmount, String reason, String portOneRefundId) {
         return Refund.builder()
                 .payment(payment)
                 .refundAmount(refundAmount)
                 .reason(reason)
+                .portOneRefundId(portOneRefundId)
                 .status(RefundStatus.FAILED)
                 .build();
     }

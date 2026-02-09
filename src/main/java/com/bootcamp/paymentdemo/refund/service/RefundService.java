@@ -9,6 +9,7 @@ import com.bootcamp.paymentdemo.refund.repository.RefundRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,9 +19,10 @@ public class RefundService {
     private final RefundHistoryService refundHistoryService;
     private final PaymentRepository paymentRepository;
 
+    @Transactional
     public RefundResponse refundAll(Long paymentId, @Valid RefundRequest refundRequest) {
 
-        Payment payment = paymentRepository.findById(paymentId).orElseThrow(
+        Payment payment = paymentRepository.findByIdWithLock(paymentId).orElseThrow(
                 () -> new IllegalArgumentException("에러코드: 설명")
         );
 
@@ -36,12 +38,16 @@ public class RefundService {
                 PortOne API 호출 로직 작성
              */
 
-            completeRefund(payment, refundRequest.getReason());
+            String mockPortOneRefundId = "test-refund-" + System.currentTimeMillis();
+
+            completeRefund(payment, refundRequest.getReason(), mockPortOneRefundId);
 
             return RefundResponse.success(orderId);
+
         } catch (Exception e) {
 
-            refundHistoryService.saveFailHistory(payment, refundRequest.getReason());
+            String mockPortOneRefundId = "test-refund-" + System.currentTimeMillis();
+            refundHistoryService.saveFailHistory(payment, refundRequest.getReason(), mockPortOneRefundId);
 
             return RefundResponse.fail(orderId);
         }
@@ -60,17 +66,18 @@ public class RefundService {
     }
 
     // 환불 완료 이력 저장
-    public void completeRefund(Payment payment, String reason) {
+    public void completeRefund(Payment payment, String reason, String portOneRefundId) {
         Refund completedRefund = Refund.createCompleted(
-                payment, payment.getTotalAmount(), reason
+                payment, payment.getTotalAmount(), reason,  portOneRefundId
         );
 
         refundRepository.save(completedRefund);
 
+        payment.refund();
+        payment.getOrder().cancel();
+
         /*
-            결제 상태 변경 (PAID -> REFUND)
-            주문 상태 변경 (PENDING_CONFIRMATION -> CANCELLED)
-            재고 복구(Order Entity에 재고 증가, 감소 메소드 필요할 듯)
+            재고 복구(Order -> OrderProduct -> Product를 거치는 메서드 필요)
          */
 
     }

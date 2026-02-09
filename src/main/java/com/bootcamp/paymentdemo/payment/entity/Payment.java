@@ -1,6 +1,7 @@
 package com.bootcamp.paymentdemo.payment.entity;
 
 import com.bootcamp.paymentdemo.common.BaseEntity;
+import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
 import jakarta.persistence.*;
@@ -57,4 +58,15 @@ public class Payment extends BaseEntity {
         this.paymentId = paymentId;
         this.status = PaymentStatus.PAID;
     }
+
+    // 환불 시 결제 상태 검증
+    public boolean isCompleted() {
+        return this.status == PaymentStatus.PAID;
+    }
+
+    // 환불 후 상태 변경
+    public void refund() {
+        this.status = PaymentStatus.REFUND;
+    }
 }
+
