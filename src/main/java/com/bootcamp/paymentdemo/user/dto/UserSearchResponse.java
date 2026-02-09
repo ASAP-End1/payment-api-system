@@ -19,7 +19,7 @@ public class UserSearchResponse {
     private String name;
     private String phone;
 
-    private BigDecimal currentPoints;     // 포인트 정보
+    private BigDecimal pointBalance;     // 포인트 정보
     private BigDecimal totalPaidAmount;   // 총 결제 금액
     private String currentGrade;          // 현재 멤버십 등급 정보
 
