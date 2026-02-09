@@ -9,14 +9,13 @@ public class SignupResponse {
 
     private Boolean success;
     private String message;
+    private Long userId;
+    private String email;
 
     // 정적 팩토리 메서드 - 성공 응답
-    public static SignupResponse success() {
-        return new SignupResponse(true, null);
+    public static SignupResponse success(Long userId, String email) {
+        return new SignupResponse(true, "회원가입 성공", userId, email);
     }
 
-    // 정적 팩토리 메서드 - 실패 응답
-    public static SignupResponse failure(String message) {
-        return new SignupResponse(false, message);
-    }
+
 }

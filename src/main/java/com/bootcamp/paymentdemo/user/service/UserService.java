@@ -65,7 +65,7 @@ public class UserService {
 
         log.info("회원가입 완료: email={}, userId={}", saveUser.getEmail(), saveUser.getUserId());
 
-        return SignupResponse.success();
+        return SignupResponse.success(saveUser.getUserId(), saveUser.getEmail());
     }
 
 
