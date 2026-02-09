@@ -9,8 +9,6 @@ import java.math.BigDecimal;
 @Table(name = "membership_grades")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class Membership {
 
     @Id
