@@ -43,7 +43,7 @@ public class PointService {
         User user = userRepository.findByEmail(email).orElseThrow(
                 () ->new UserNotFoundException("사용자가 존재하지 않습니다")
         );
-        Page<PointTransaction> pointTransactionList = pointRepository.findByUser_UserIdOrderByCreatedAtDesc(user.getUserId(), pageable);
+        Page<PointTransaction> pointTransactionList = pointRepository.findPointTransactions(user.getUserId(), pageable);
         Page<PointGetResponse> page = pointTransactionList.map(pointTransaction -> new PointGetResponse(
                 pointTransaction.getId(),
                 // EXPIRED 타입은 Order가 null
@@ -74,9 +74,7 @@ public class PointService {
 
         // 사용 가능한 적립 포인트 조회
         // 만료일 임박한 포인트부터 사용
-        List<PointTransaction> earnedTransactionList = pointRepository
-                .findByUser_UserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAsc(
-                        user.getUserId(), PointType.EARNED, BigDecimal.ZERO, LocalDate.now());
+        List<PointTransaction> earnedTransactionList = pointRepository.findAvailablePoints(user.getUserId());
 
         // 차감하고 남은 포인트
         BigDecimal remaining = usedPoints;
@@ -177,8 +175,7 @@ public class PointService {
     @Scheduled(cron = "0 0 0 * * *")
     public void expirePoints() {
         // remainingAmount가 0보다 크고, 만료일이 지난 포인트 조회
-        List<PointTransaction> earnedTransactionList = pointRepository
-                .findByTypeAndRemainingAmountGreaterThanAndExpiresAtBefore(PointType.EARNED, BigDecimal.ZERO, LocalDate.now());
+        List<PointTransaction> earnedTransactionList = pointRepository.findExpiredPoints();
 
         // PointTransaction에 저장, remainingAmount 0으로 변경
         for (PointTransaction earnedTransaction : earnedTransactionList) {
