@@ -18,11 +18,20 @@ public class Product extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, length = 200)
     private String name;
+
+    @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal price;
+
+    @Column(nullable = false)
     private int stock;
+
+    @Column(nullable = false, length = 100)
     private String category;
 
+    @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private ProductStatus status;
 
