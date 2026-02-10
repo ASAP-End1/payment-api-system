@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.payment.service;
 
+import com.bootcamp.paymentdemo.external.portone.PortOneCancelRequest;
 import com.bootcamp.paymentdemo.external.portone.PortOneClient;
 import com.bootcamp.paymentdemo.external.portone.PortOnePaymentResponse;
 import com.bootcamp.paymentdemo.order.entity.Order;
@@ -78,8 +79,15 @@ public class PaymentService {
             }
 
             // 5. 상태 업데이트 (PAID)
-            payment.completePayment(impUid);
-            log.info("결제 최종 확정: {}", dbPaymentId);
+            try {
+                payment.completePayment(impUid);
+                log.info("결제 최종 확정: {}", dbPaymentId);
+            } catch (Exception e) {
+                // 6. 보상 트랜잭션: 내부 DB 반영 실패 시 포트원 결제 강제 취소  *** 중요한 로직
+                log.error("내부 처리 실패로 인한 결제 보상 취소 진행: {}", e.getMessage());
+                portOneClient.cancelPayment(impUid, PortOneCancelRequest.fullCancel("서버 내부 오류로 인한 자동 취소"));
+                throw e; //
+            }
 
             return new PaymentConfirmResponse(true, payment.getOrder().getId().toString(), "PAID");
 
