@@ -2,11 +2,15 @@ package com.bootcamp.paymentdemo.refund.portOne.client;
 
 import com.bootcamp.paymentdemo.config.PortOneProperties;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
+import com.bootcamp.paymentdemo.refund.exception.PortOneException;
 import com.bootcamp.paymentdemo.refund.portOne.dto.PortOneCancelRequest;
 import com.bootcamp.paymentdemo.refund.portOne.dto.PortOneCancelResponse;
+import com.bootcamp.paymentdemo.refund.portOne.util.PortOneErrorCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Component
@@ -22,7 +26,7 @@ public class PortOneRefundClient {
         String portOnePaymentId = payment.getPaymentId();
 
         if (portOnePaymentId == null || portOnePaymentId.isEmpty()) {
-            throw new IllegalArgumentException("에러코드: 해당 PortOne Payment ID가 존재하지 않습니다.");
+            throw new PortOneException(HttpStatus.BAD_REQUEST, "PortOne Payment ID가 존재하지 않습니다");
         }
 
         String url = portOneProperties.getApi().getBaseUrl() + "/payments/" +  portOnePaymentId +  "/cancel";
@@ -44,19 +48,23 @@ public class PortOneRefundClient {
             PortOneCancelResponse portOneCancelResponse = response.getBody();
 
             if (portOneCancelResponse == null || portOneCancelResponse.getCancellation() == null) {
-                throw new IllegalArgumentException("에러코드: PortOne API 응답이 없습니다");
+                throw new PortOneException(HttpStatus.INTERNAL_SERVER_ERROR, "PortOne API 응답이 올바르지 않습니다");
             }
 
             PortOneCancelResponse.PaymentCancellation paymentCancellation = portOneCancelResponse.getCancellation();
 
             if (!"SUCCEEDED".equals(paymentCancellation.getStatus())) {
-                throw new RuntimeException("에러코드: " + paymentCancellation.getReason());
+                HttpStatus httpStatus = PortOneErrorCase.caseToHttpStatus(paymentCancellation.getType());
+                throw new PortOneException(httpStatus, paymentCancellation.getMessage());
             }
 
             return paymentCancellation.getId();
 
+        } catch (HttpStatusCodeException e) {
+            HttpStatus httpStatus = HttpStatus.valueOf(e.getStatusCode().value());
+            throw new PortOneException(httpStatus, e.getResponseBodyAsString());
         } catch (Exception e) {
-            throw new IllegalArgumentException("에러코드: PortOne 환불 처리 중 오류가 발생했습니다");
+            throw new PortOneException(HttpStatus.INTERNAL_SERVER_ERROR, "PortOne 호출 중 알 수 없는 오류");
         }
     }
 

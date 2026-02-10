@@ -1,6 +1,8 @@
 package com.bootcamp.paymentdemo.common.exception;
 
 import com.bootcamp.paymentdemo.common.dto.ErrorResponse;
+import com.bootcamp.paymentdemo.refund.exception.PortOneException;
+import com.bootcamp.paymentdemo.refund.exception.RefundException;
 import com.bootcamp.paymentdemo.user.exception.DuplicateEmailException;
 import com.bootcamp.paymentdemo.user.exception.GradeNotFoundException;
 import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
@@ -70,6 +72,20 @@ public class GlobalExceptionHandler {
         response.put("errors", errors);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(RefundException.class)
+    public ResponseEntity<ErrorResponse> handleRefundException(RefundException e) {
+        log.warn("RefundException: {}", e.getMessage());
+        ErrorResponse error = new ErrorResponse(e.getHttpStatus().name(), e.getMessage());
+        return ResponseEntity.status(e.getHttpStatus()).body(error);
+    }
+
+    @ExceptionHandler(PortOneException.class)
+    public  ResponseEntity<ErrorResponse> handlePortOneException(PortOneException e) {
+        log.warn("PortOneException: {}", e.getMessage());
+        ErrorResponse error = new ErrorResponse(e.getHttpStatus().name(), e.getMessage());
+        return ResponseEntity.status(e.getHttpStatus()).body(error);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
