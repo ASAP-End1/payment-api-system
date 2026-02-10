@@ -6,7 +6,7 @@ import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
-import com.bootcamp.paymentdemo.point.entity.PointType;
+import com.bootcamp.paymentdemo.point.consts.PointType;
 import com.bootcamp.paymentdemo.point.entity.PointUsage;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;

@@ -1,7 +1,7 @@
 package com.bootcamp.paymentdemo.point.repository;
 
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
-import com.bootcamp.paymentdemo.point.entity.PointType;
+import com.bootcamp.paymentdemo.point.consts.PointType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
