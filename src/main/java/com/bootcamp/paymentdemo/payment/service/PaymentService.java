@@ -1,19 +1,20 @@
 package com.bootcamp.paymentdemo.payment.service;
 
-import com.bootcamp.paymentdemo.external.portone.PortOneCancelRequest;
-import com.bootcamp.paymentdemo.external.portone.PortOneClient;
-import com.bootcamp.paymentdemo.external.portone.PortOnePaymentResponse;
+import com.bootcamp.paymentdemo.external.portone.*;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.order.repository.OrderRepository;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
-import com.bootcamp.paymentdemo.payment.dto.PaymentConfirmResponse;
-import com.bootcamp.paymentdemo.payment.dto.PaymentCreateRequest;
-import com.bootcamp.paymentdemo.payment.dto.PaymentCreateResponse;
+import com.bootcamp.paymentdemo.payment.dto.*;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
 import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
+import com.bootcamp.paymentdemo.webhook.dto.PortoneWebhookPayload;
+import com.bootcamp.paymentdemo.webhook.entity.WebhookEvent;
+import com.bootcamp.paymentdemo.webhook.repository.WebhookRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -24,6 +25,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final PortOneClient portOneClient;
+    private final WebhookRepository webhookRepository;
 
     @Transactional
     public PaymentCreateResponse createPayment(PaymentCreateRequest request) {
@@ -50,7 +52,6 @@ public class PaymentService {
         // 4. 응답 DTO의 paymentId 칸에 우리가 만든 dbPaymentId를 담아서 보냄 (PortOne SDK용)
         return new PaymentCreateResponse(true, dbPaymentId, "PENDING");
     }
-
 
     @Transactional
     public PaymentConfirmResponse confirmPayment(String dbPaymentId, String impUid) {
@@ -95,5 +96,38 @@ public class PaymentService {
             log.error("결제 확정 중 오류 발생: {}", e.getMessage());
             return new PaymentConfirmResponse(false, null, "FAILED");
         }
+    }
+
+    public void processWebhook(PortoneWebhookPayload payload, String webhookId) {
+        try {
+            // 1. 웹훅 이벤트 기록
+            saveWebhookEvent(payload, webhookId);
+
+            log.info("[WEBHOOK] 이벤트 기록 성공: {}", webhookId);
+
+            // 2. 비즈니스 로직 실행
+            confirmPayment(payload.getData().getPaymentId(), payload.getData().getPaymentId());
+
+            log.info("[WEBHOOK] 모든 로직 처리 완료: {}", webhookId);
+
+        } catch (DataIntegrityViolationException e) {
+            // 3. 중복 호출 방어 (PortOne에서 자꾸 호출을 2번해서 Duplicate오류 발생했었음 / 트러블슈터 활용
+            log.warn("[WEBHOOK] 2중 호출 웹훅 무시 : {}", webhookId);
+
+        } catch (Exception e) {
+            // 4. 예외 발생 시 로그 띄우기
+            log.error("[WEBHOOK] 기타 비즈니스 로직 처리 중 오류: {}", e.getMessage());
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void saveWebhookEvent(PortoneWebhookPayload payload, String webhookId) {
+        WebhookEvent event = WebhookEvent.builder()
+                .webhookId(webhookId)
+                .paymentId(payload.getData().getPaymentId())
+                .eventStatus(payload.getType())
+                .build();
+
+        webhookRepository.saveAndFlush(event);
     }
 }

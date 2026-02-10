@@ -98,6 +98,9 @@ public class SecurityConfig {
                     // 3) 공개 API
                     .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
 
+                    // 웹훅 테스트를 위해서 추가한 것 (삭제 예정)
+                    .requestMatchers(HttpMethod.POST, "/portone-webhook").permitAll()
+
                     // 4) 인증 API (회원가입, 로그인)
                     .requestMatchers(HttpMethod.POST, "/api/login", "/api/signup").permitAll()
 

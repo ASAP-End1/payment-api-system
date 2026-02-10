@@ -52,11 +52,12 @@ portone:
   channel:
     kg-inicis: ${PORTONE_CHANNEL_KG:channel-key-3d7869fd-306a-4597-8f7f-d1c72cc2608c}
     toss: ${PORTONE_CHANNEL_TOSS:your-toss-channel-key}
+  webhook:
+    secret: ${PORTPNE_WEBHOOK_SECRET:whsec_IEyjsd++0+1b/+QrYeDaa+gAfU3htpucGJAqa4hHoT0=}
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET:UjGDxgrzCb9XBOmnXPF6eruETQamJKYSacLEXUz7VV8=}
   token-validity-in-seconds: ${JWT_VALIDITY:86400}  # 24 hours
-
 
 # UI Branding Configuration
 app:
