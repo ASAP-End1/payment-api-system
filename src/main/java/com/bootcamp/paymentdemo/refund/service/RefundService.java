@@ -5,6 +5,7 @@ import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
 import com.bootcamp.paymentdemo.refund.dto.RefundRequest;
 import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
 import com.bootcamp.paymentdemo.refund.entity.Refund;
+import com.bootcamp.paymentdemo.refund.portOne.client.PortOneRefundClient;
 import com.bootcamp.paymentdemo.refund.repository.RefundRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class RefundService {
     private final RefundRepository refundRepository;
     private final RefundHistoryService refundHistoryService;
     private final PaymentRepository paymentRepository;
+    private final PortOneRefundClient portOneRefundClient;
 
     @Transactional
     public RefundResponse refundAll(Long id, @Valid RefundRequest refundRequest) {
@@ -32,37 +34,32 @@ public class RefundService {
 
         validateRefundable(payment);
 
-        String refundGroupId = "rfnd-grp-" + UUID.randomUUID().toString();
+        String refundGroupId = "rfnd-grp-" + UUID.randomUUID();
         Long orderId = payment.getOrder().getId();
 
         refundHistoryService.saveRequestHistory(payment, refundRequest.getReason(), refundGroupId);
 
-        String mockPortOneRefundId = null;
+        String portOneRefundId = null;
 
         try {
 
-            /*
-                PortOne API 호출 로직 작성
-             */
+           portOneRefundId = portOneRefundClient.cancelPayment(payment, refundRequest.getReason());
 
-            // 임의 ID 값
-            mockPortOneRefundId = "test-refund-" + System.currentTimeMillis();
-
-            completeRefund(payment, refundRequest.getReason(), mockPortOneRefundId, refundGroupId);
+            completeRefund(payment, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             return RefundResponse.success(orderId);
 
         } catch (Exception e) {
-            if (mockPortOneRefundId == null) {
+            if (portOneRefundId == null) {
                 // PortOne API 호출 실패
                 log.error("PortOne API 호출 실패 - Payment ID: {}, Refund Group ID: {}, Error: {}",
                         id, refundGroupId, e.getMessage(), e);
             } else {
                 // 서버 처리 실패
                 log.error("서버 처리 실패 - Payment ID: {}, PortOne Refund ID: {}, Error: {}",
-                        id, mockPortOneRefundId, e.getMessage(), e);
+                        id, portOneRefundId, e.getMessage(), e);
             }
-            refundHistoryService.saveFailHistory(payment, refundRequest.getReason(), mockPortOneRefundId, refundGroupId);
+            refundHistoryService.saveFailHistory(payment, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             return RefundResponse.fail(orderId);
         }
