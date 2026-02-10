@@ -100,8 +100,16 @@ api:
               description: 회원가입 성공 여부
             - name: message
               type: string
-              required: false
-              description: 에러 메시지 (실패 시)
+              required: true
+              description: 회원가입 성공 메세지
+            - name: userId
+              type: number
+              required: true
+              description: 사용자 userId
+            - name: email
+              type: string
+              required: true
+              description: 사용자 email
 
     get-current-user:
       url: /api/me
@@ -110,10 +118,10 @@ api:
       response:
         body:
           fields:
-            - name: customerUid
-              type: string
+            - name: userId
+              type: number
               required: true
-              description: PortOne 고객 고유 식별자 (서버에서 customerUid로 관리)
+              description: 사용자 userId
               usage: PortOne payment window customer.customerId
             - name: email
               type: string

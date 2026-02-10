@@ -5,6 +5,10 @@ spring:
   profiles:
     active: local    # application-local.yml 파일 생성해 local에서 DB연결
 
+  sql:
+    init:
+      mode: never
+
   jpa:
     hibernate:
       ddl-auto: update

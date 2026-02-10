@@ -51,12 +51,7 @@ public class User extends Base {
         return user;
     }
 
-    // PortOne customerUid 생성
-    public String generateCustomerUid() {
-        // CUST_{userId}_{random6}
-        int random6 = (int) (Math.random() * 900000) + 100000;
-        return String.format("CUST_%d_%d", this.userId, random6);
-    }
+
 
     // 사용자 멤버십 등급 업데이트
     public void updateGrade(Membership grade) {
