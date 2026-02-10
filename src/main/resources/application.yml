@@ -49,11 +49,11 @@ server:
 portone:
   api:
     base-url: https://api.portone.io
-    secret: ${PORTONE_API_SECRET:your-api-secret}
+    secret: ${PORTONE_API_SECRET:83zJhqvP6vUebfsozbuBTUeMpgepZfhPR5IssODyNwYI0pqofdIDpt2GwgNNLAobP56Wf1YeOW6xiQSY}
   store:
-    id: ${PORTONE_STORE_ID:your-store-id}
+    id: ${PORTONE_STORE_ID:INIpayTest}
   channel:
-    kg-inicis: ${PORTONE_CHANNEL_KG:your-kg-inicis-channel-key}
+    kg-inicis: ${PORTONE_CHANNEL_KG:channel-key-3d7869fd-306a-4597-8f7f-d1c72cc2608c}
     toss: ${PORTONE_CHANNEL_TOSS:your-toss-channel-key}
 # JWT Configuration
 jwt:
