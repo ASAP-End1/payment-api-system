@@ -5,6 +5,7 @@ import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
 import com.bootcamp.paymentdemo.point.entity.PointType;
 import com.bootcamp.paymentdemo.point.entity.PointUsage;
+import com.bootcamp.paymentdemo.point.exception.EarnedPointNotFoundException;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;
 import com.bootcamp.paymentdemo.user.entity.User;
@@ -150,7 +151,7 @@ public class PointService {
     public void cancelEarnedPoints(User user, Order order) {
         // 해당 주문에서 적립된 포인트 조회
         PointTransaction earnedTransaction = pointRepository.findByOrderIdAndType(order.getId(), PointType.EARNED).orElseThrow(
-                () -> new IllegalArgumentException("적립금이 존재하지 않습니다.")
+                () -> new EarnedPointNotFoundException("적립금이 존재하지 않습니다.")
         );
         BigDecimal earnedPoints = earnedTransaction.getAmount();
 
