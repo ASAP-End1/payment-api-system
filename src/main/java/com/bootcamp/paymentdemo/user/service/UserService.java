@@ -1,16 +1,13 @@
 package com.bootcamp.paymentdemo.user.service;
 
 import com.bootcamp.paymentdemo.membership.entity.Membership;
+import com.bootcamp.paymentdemo.membership.entity.MembershipGrade;
 import com.bootcamp.paymentdemo.membership.repository.MembershipRepository;
 import com.bootcamp.paymentdemo.security.JwtTokenProvider;
 import com.bootcamp.paymentdemo.user.dto.*;
-import com.bootcamp.paymentdemo.user.entity.RefreshToken;
-import com.bootcamp.paymentdemo.user.entity.User;
-import com.bootcamp.paymentdemo.user.entity.UserPointBalance;
+import com.bootcamp.paymentdemo.user.entity.*;
 import com.bootcamp.paymentdemo.user.exception.*;
-import com.bootcamp.paymentdemo.user.repository.RefreshTokenRepository;
-import com.bootcamp.paymentdemo.user.repository.UserPointBalanceRepository;
-import com.bootcamp.paymentdemo.user.repository.UserRepository;
+import com.bootcamp.paymentdemo.user.repository.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,11 +23,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserPointBalanceRepository pointBalanceRepository;
     private final MembershipRepository gradeRepository;
+    private final UserPaidAmountRepository userPaidAmountRepository;
+    private final UserGradeHistoryRepository userGradeHistoryRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
-    private static final String DEFAULT_GRADE = "NORMAL";
+    private static final MembershipGrade DEFAULT_GRADE = MembershipGrade.NORMAL;
 
     // 회원가입
     @Transactional
@@ -51,6 +50,14 @@ public class UserService {
         // 포인트 잔액 초기화
         UserPointBalance pointBalance = UserPointBalance.createDefault(saveUser);
         pointBalanceRepository.save(pointBalance);
+
+        // 총 결제 금액 초기화
+        UserPaidAmount paidAmount = UserPaidAmount.createDefault(saveUser);
+        userPaidAmountRepository.save(paidAmount);
+
+        // 등급 변경 이력 초기 생성
+        UserGradeHistory history = UserGradeHistory.createInitial(saveUser, defaultGrade);
+        userGradeHistoryRepository.save(history);
 
         log.info("회원가입 완료: email={}, userId={}", saveUser.getEmail(), saveUser.getUserId());
 
@@ -120,7 +127,13 @@ public class UserService {
                     return pointBalanceRepository.save(newBalance);
                 });
 
-        return UserSearchResponse.from(user, pointBalance);
+        UserPaidAmount paidAmount = userPaidAmountRepository.findByUserId(user.getUserId())
+                .orElseGet(() -> {
+                    UserPaidAmount newPaidAmount = UserPaidAmount.createDefault(user);
+                    return userPaidAmountRepository.save(newPaidAmount);
+                });
+
+        return UserSearchResponse.from(user, pointBalance, paidAmount);
     }
 
 
