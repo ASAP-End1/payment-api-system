@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.point.service;
 
+import com.bootcamp.paymentdemo.common.dto.PageResponse;
 import com.bootcamp.paymentdemo.membership.entity.Membership;
 import com.bootcamp.paymentdemo.membership.entity.MembershipGrade;
 import com.bootcamp.paymentdemo.order.consts.OrderStatus;
@@ -8,6 +9,7 @@ import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
 import com.bootcamp.paymentdemo.point.consts.PointType;
 import com.bootcamp.paymentdemo.point.entity.PointUsage;
+import com.bootcamp.paymentdemo.point.exception.EarnedPointNotFoundException;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;
 import com.bootcamp.paymentdemo.user.entity.User;
@@ -22,6 +24,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -52,12 +57,13 @@ class PointServiceTest {
     private UserPointBalance testUserPointBalance;
 
     @BeforeEach
-    void setUp() {
-        Membership membership = Membership.builder()
-                .gradeName(MembershipGrade.NORMAL)
-                .accRate(BigDecimal.valueOf(1))
-                .minAmount(BigDecimal.ZERO)
-                .build();
+    void setUp() throws Exception {
+        var constructor = Membership.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        Membership membership = constructor.newInstance();
+        ReflectionTestUtils.setField(membership, "gradeName", MembershipGrade.NORMAL);
+        ReflectionTestUtils.setField(membership, "accRate", BigDecimal.valueOf(1));
+        ReflectionTestUtils.setField(membership, "minAmount", BigDecimal.ZERO);
 
         testUser = User.register("test@test.com", "1234", "test", "010-1234-5678", membership);
         ReflectionTestUtils.setField(testUser, "userId", 1L);
@@ -94,18 +100,18 @@ class PointServiceTest {
         PointTransaction expired = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(100).negate(), PointType.EXPIRED);
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
-        when(pointRepository.findByUser_UserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(spent, refunded, earned, canceled, expired));
+        when(pointRepository.findPointTransactions(eq(1L), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(spent, refunded, earned, canceled, expired)));
 
         // When
-        List<PointGetResponse> result = pointService.getPointHistory("test@test.com");
+        PageResponse<PointGetResponse> result = pointService.getPointHistory("test@test.com", PageRequest.of(0, 10));
 
         // Then
-        assertThat(result).hasSize(5);
-        assertThat(result.get(0).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(400).negate());
-        assertThat(result.get(1).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(400));
-        assertThat(result.get(2).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
-        assertThat(result.get(3).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(200).negate());
-        assertThat(result.get(4).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(100).negate());
+        assertThat(result.getContent()).hasSize(5);
+        assertThat(result.getContent().get(0).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(400).negate());
+        assertThat(result.getContent().get(1).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(400));
+        assertThat(result.getContent().get(2).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
+        assertThat(result.getContent().get(3).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(200).negate());
+        assertThat(result.getContent().get(4).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(100).negate());
     }
 
     @Test
@@ -116,7 +122,7 @@ class PointServiceTest {
 
         // When & Then
         assertThrows(UserNotFoundException.class,
-                () -> pointService.getPointHistory("fail@test.com"));
+                () -> pointService.getPointHistory("fail@test.com", PageRequest.of(0, 10)));
     }
 
 
@@ -158,8 +164,7 @@ class PointServiceTest {
         PointTransaction earned1 = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(200), PointType.EARNED);
         PointTransaction earned2 = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(300), PointType.EARNED);
 
-        when(pointRepository.findByUser_UserIdAndTypeAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAsc(
-                1L, PointType.EARNED, BigDecimal.ZERO, LocalDate.now())).thenReturn(List.of(earned1, earned2));
+        when(pointRepository.findAvailablePoints(1L)).thenReturn(List.of(earned1, earned2));
         when(userPointBalanceRepository.findByUserId(1L)).thenReturn(Optional.of(testUserPointBalance));
 
         // When
@@ -252,7 +257,7 @@ class PointServiceTest {
         when(pointRepository.findByOrderIdAndType(1L, PointType.EARNED)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(EarnedPointNotFoundException.class,
                 () -> pointService.cancelEarnedPoints(testUser, testOrder));
     }
 
@@ -265,8 +270,7 @@ class PointServiceTest {
         PointTransaction earned = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(200), PointType.EARNED);
         ReflectionTestUtils.setField(earned, "expiresAt", LocalDate.now().minusDays(1));
 
-        when(pointRepository.findByTypeAndRemainingAmountGreaterThanAndExpiresAtBefore(
-                PointType.EARNED, BigDecimal.ZERO, LocalDate.now())).thenReturn(List.of(earned));
+        when(pointRepository.findExpiredPoints()).thenReturn(List.of(earned));
         when(userPointBalanceRepository.findByUserId(1L)).thenReturn(Optional.of(testUserPointBalance));
 
         // When
