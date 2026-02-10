@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.point.service;
 
+import com.bootcamp.paymentdemo.common.dto.PageResponse;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
@@ -15,6 +16,8 @@ import com.bootcamp.paymentdemo.user.repository.UserPointBalanceRepository;
 import com.bootcamp.paymentdemo.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,24 +37,24 @@ public class PointService {
     private final UserRepository userRepository;
     private final UserPointBalanceRepository userPointBalanceRepository;
 
-    // TODO 페이징 적용
     // 포인트 내역 조회
     @Transactional(readOnly = true)
-    public List<PointGetResponse> getPointHistory(String email) {
+    public PageResponse<PointGetResponse> getPointHistory(String email, Pageable pageable) {
         User user = userRepository.findByEmail(email).orElseThrow(
                 () ->new UserNotFoundException("사용자가 존재하지 않습니다")
         );
-        List<PointTransaction> pointTransactionList = pointRepository.findByUser_UserIdOrderByCreatedAtDesc(user.getUserId());
-        return pointTransactionList.stream()
-                .map(pointTransaction -> new PointGetResponse(
-                        pointTransaction.getId(),
-                        // EXPIRED 타입은 Order가 null
-                        pointTransaction.getOrder() != null ? pointTransaction.getOrder().getId() : null,
-                        pointTransaction.getAmount(),
-                        pointTransaction.getType(),
-                        pointTransaction.getCreatedAt(),
-                        pointTransaction.getExpiresAt()
-                )).toList();
+        Page<PointTransaction> pointTransactionList = pointRepository.findByUser_UserIdOrderByCreatedAtDesc(user.getUserId(), pageable);
+        Page<PointGetResponse> page = pointTransactionList.map(pointTransaction -> new PointGetResponse(
+                pointTransaction.getId(),
+                // EXPIRED 타입은 Order가 null
+                pointTransaction.getOrder() != null ? pointTransaction.getOrder().getId() : null,
+                pointTransaction.getAmount(),
+                pointTransaction.getType(),
+                pointTransaction.getCreatedAt(),
+                pointTransaction.getExpiresAt()
+        ));
+
+        return new PageResponse<>(page);
     }
 
     // 포인트 잔액 조회

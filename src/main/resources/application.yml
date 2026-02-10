@@ -5,6 +5,12 @@ spring:
   profiles:
     active: local    # application-local.yml 파일 생성해 local에서 DB연결
 
+  # 페이징 1-based로 보정
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
+
   jpa:
     hibernate:
       ddl-auto: update
