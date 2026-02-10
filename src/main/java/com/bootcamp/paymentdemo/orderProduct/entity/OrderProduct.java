@@ -1,6 +1,7 @@
 package com.bootcamp.paymentdemo.orderProduct.entity;
 
 import com.bootcamp.paymentdemo.common.BaseEntity;
+import com.bootcamp.paymentdemo.order.entity.Order;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -18,15 +19,26 @@ public class OrderProduct extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long orderId;
-    private Long productId;   // 원본 상품 참조 ID
-    private String productName; // 주문 당시 상품명 (기록용)
-    private BigDecimal orderPrice; // 주문 당시 가격 (기록용)
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
+
+    @Column(name = "product_id", nullable = false)
+    private Long productId;   // 원본 상품 참조 ID (스냅샷)
+
+    @Column(name = "product_name", nullable = false, length = 200)
+    private String productName; // 주문 당시 상품명 (스냅샷)
+
+    @Column(name = "order_price", nullable = false, precision = 18, scale = 2)
+    private BigDecimal orderPrice; // 주문 당시 가격 (스냅샷)
+
+    @Column(nullable = false)
     private int count;        // 수량
 
     @Builder
-    public OrderProduct(Long orderId, Long productId, String productName, BigDecimal orderPrice, int count) {
-        this.orderId = orderId;
+    public OrderProduct(Order order, Long productId, String productName, BigDecimal orderPrice, int count) {
+        this.order = order;
         this.productId = productId;
         this.productName = productName;
         this.orderPrice = orderPrice;

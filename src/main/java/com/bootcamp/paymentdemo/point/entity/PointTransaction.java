@@ -1,6 +1,7 @@
 package com.bootcamp.paymentdemo.point.entity;
 
 import com.bootcamp.paymentdemo.order.entity.Order;
+import com.bootcamp.paymentdemo.point.consts.PointType;
 import com.bootcamp.paymentdemo.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
