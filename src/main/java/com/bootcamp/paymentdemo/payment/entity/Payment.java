@@ -57,4 +57,11 @@ public class Payment extends BaseEntity {
         this.paymentId = paymentId;
         this.status = PaymentStatus.PAID;
     }
+
+    public boolean isAlreadyProcessed() {
+
+        return this.status == PaymentStatus.PAID ||
+                this.status == PaymentStatus.REFUND ||
+                this.status == PaymentStatus.FAIL;
+    }
 }

@@ -54,20 +54,30 @@ public class PaymentService {
     @Transactional
     public PaymentConfirmResponse confirmPayment(String dbPaymentId, String impUid) {
         try {
-            // 1. 포트원 서버에서 실제 결제 내역 조회 (검증 시작)
-            PortOnePaymentResponse portOneResponse = portOneClient.getPayment(impUid);
-
-            // 2. DB에서 결제 대기 중인 장부 조회
+            // 1. DB에서 결제 대기 중인 DB 먼저 조회
             Payment payment = paymentRepository.findByDbPaymentId(dbPaymentId)
                     .orElseThrow(() -> new IllegalArgumentException("결제 건이 존재하지 않습니다."));
 
-            // 3. 금액 검증: DB 금액과 포트원 실제 결제 금액 비교 (위변조 방지)
+            // 2. 멱등성 체크: 저거 뭐지? 상태가 대기중이 아니면 2중으로 시도한거기때문에 멱등성 체크로 확인
+            if (payment.getStatus() != PaymentStatus.PENDING) {
+                log.info("이미 처리된 결제 건입니다. 상태: {}, DB_ID={}", payment.getStatus(), dbPaymentId);
+                return new PaymentConfirmResponse(
+                        true,
+                        payment.getOrder().getId().toString(),
+                        payment.getStatus().name()
+                );
+            }
+
+            // 3. 검증 시작
+            PortOnePaymentResponse portOneResponse = portOneClient.getPayment(impUid);
+
+            // 4. 금액 검증: DB 금액과 포트원 실제 결제 금액 비교
             if (payment.getTotalAmount().compareTo(portOneResponse.amount().total()) != 0) {
                 log.error("금액 불일치! DB: {}, PortOne: {}", payment.getTotalAmount(), portOneResponse.amount().total());
                 return new PaymentConfirmResponse(false, null, "AMOUNT_MISMATCH");
             }
 
-            // 4. 상태 업데이트 (PAID)
+            // 5. 상태 업데이트 (PAID)
             payment.completePayment(impUid);
             log.info("결제 최종 확정: {}", dbPaymentId);
 
