@@ -62,4 +62,9 @@ public class Order extends BaseEntity {
         }
         this.orderStatus = OrderStatus.CONFIRMED;
     }
+
+    // 환불 시 주문 상태 검증
+    public boolean isAwaitingConfirmation() {
+        return this.orderStatus == OrderStatus.PENDING_CONFIRMATION;
+    }
 }

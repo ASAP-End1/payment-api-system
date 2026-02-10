@@ -8,16 +8,12 @@ import com.bootcamp.paymentdemo.user.dto.*;
 import com.bootcamp.paymentdemo.user.entity.*;
 import com.bootcamp.paymentdemo.user.exception.*;
 import com.bootcamp.paymentdemo.user.repository.*;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.security.Principal;
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -65,7 +61,7 @@ public class UserService {
 
         log.info("회원가입 완료: email={}, userId={}", saveUser.getEmail(), saveUser.getUserId());
 
-        return SignupResponse.success();
+        return SignupResponse.success(saveUser.getUserId(), saveUser.getEmail());
     }
 
 
