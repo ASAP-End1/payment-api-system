@@ -1,7 +1,9 @@
 package com.bootcamp.paymentdemo.payment.service;
 
+import com.bootcamp.paymentdemo.external.portone.PortOneClient;
+import com.bootcamp.paymentdemo.external.portone.PortOnePaymentResponse;
 import com.bootcamp.paymentdemo.order.entity.Order;
-import com.bootcamp.paymentdemo.order.repositoryfordelete.OrderRepository;
+import com.bootcamp.paymentdemo.order.repository.OrderRepository;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
 import com.bootcamp.paymentdemo.payment.dto.PaymentConfirmResponse;
 import com.bootcamp.paymentdemo.payment.dto.PaymentCreateRequest;
@@ -20,15 +22,15 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final PortOneClient portOneClient;
 
-    // 결제 준비 Order랑 다른 부분들 개발 되면 이후 추가하겠음
     @Transactional
     public PaymentCreateResponse createPayment(PaymentCreateRequest request) {
         // 1. 주문 정보 조회 (결제와 연결하기 위함)
-        Order order = orderRepository.findByOrderId(request.getOrderId())
+        Order order = orderRepository.findByOrderNumber(request.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
 
-        // 2. [우리 서버 ID 생성] merchant_uid 역할
+        // 2. merchant_uid 역할
         String dbPaymentId = "order_mid_" + System.currentTimeMillis();
 
         // 3. 결제 장부 생성 (PENDING 상태)
@@ -50,27 +52,29 @@ public class PaymentService {
 
 
     @Transactional
-    public PaymentConfirmResponse confirmPayment(String dbPaymentId, String impUid) { // 인자명도 dbPaymentId로 통일
+    public PaymentConfirmResponse confirmPayment(String dbPaymentId, String impUid) {
         try {
-            // [1] DB 조회: 우리가 발행한 번호(dbPaymentId)로 결제 건을 찾습니다.
+            // 1. 포트원 서버에서 실제 결제 내역 조회 (검증 시작)
+            PortOnePaymentResponse portOneResponse = portOneClient.getPayment(impUid);
+
+            // 2. DB에서 결제 대기 중인 장부 조회
             Payment payment = paymentRepository.findByDbPaymentId(dbPaymentId)
-                    .orElseThrow(() -> new IllegalArgumentException("해당 결제 준비 건이 존재하지 않습니다: " + dbPaymentId));
+                    .orElseThrow(() -> new IllegalArgumentException("결제 건이 존재하지 않습니다."));
 
-            // [2] 상태 업데이트: 엔티티에 정의한 completePayment 사용
-            // 이 메서드 내부에서 status = PAID와 paymentId = impUid가 동시에 처리됩니다.
+            // 3. 금액 검증: DB 금액과 포트원 실제 결제 금액 비교 (위변조 방지)
+            if (payment.getTotalAmount().compareTo(portOneResponse.amount().total()) != 0) {
+                log.error("금액 불일치! DB: {}, PortOne: {}", payment.getTotalAmount(), portOneResponse.amount().total());
+                return new PaymentConfirmResponse(false, null, "AMOUNT_MISMATCH");
+            }
+
+            // 4. 상태 업데이트 (PAID)
             payment.completePayment(impUid);
+            log.info("결제 최종 확정: {}", dbPaymentId);
 
-            log.info("결제 확정 완료: DB_ID={}, PortOne_ID={}", dbPaymentId, impUid);
-
-            // [3] 응답 반환: Long 타입 ID를 String으로 변환하여 DTO 생성
-            return new PaymentConfirmResponse(
-                    true,
-                    payment.getOrder().getId().toString(),
-                    "PAID"
-            );
+            return new PaymentConfirmResponse(true, payment.getOrder().getId().toString(), "PAID");
 
         } catch (Exception e) {
-            log.error("결제 확정 처리 중 오류: {}", e.getMessage());
+            log.error("결제 확정 중 오류 발생: {}", e.getMessage());
             return new PaymentConfirmResponse(false, null, "FAILED");
         }
     }
