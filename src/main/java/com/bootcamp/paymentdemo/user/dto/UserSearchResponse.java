@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class UserSearchResponse {
-    private String customerUid;  // PortOne 고객 고유 식별자
+    private Long userId;
     private String email;
     private String name;
     private String phone;
@@ -26,7 +26,7 @@ public class UserSearchResponse {
     // 정적 팩토리 메서드
     public static UserSearchResponse from(User user, UserPointBalance userPointBalance, UserPaidAmount userpaidAmount) {
         return new UserSearchResponse(
-                user.generateCustomerUid(),
+                user.getUserId(),
                 user.getEmail(),
                 user.getUsername(),
                 user.getPhoneNumber(),
