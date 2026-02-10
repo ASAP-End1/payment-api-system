@@ -74,7 +74,7 @@ public class OrderService {
 
         // 6. 주문 엔티티 저장
         Order order = orderRepository.save(Order.builder()
-                .userId(String.valueOf(request.getUserId()))
+                .user(user)
                 .orderNumber(generateOrderNumber())
                 .totalAmount(totalAmount)
                 .usedPoints(usedPoints)
@@ -90,7 +90,7 @@ public class OrderService {
         // 7. OrderProduct 저장
         List<OrderProduct> orderProducts = tempItems.stream()
                 .map(item -> OrderProduct.builder()
-                        .orderId(order.getId())
+                        .order(order)
                         .productId(item.product.getId())
                         .productName(item.product.getName())
                         .orderPrice(item.product.getPrice())
@@ -135,7 +135,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
 
-        List<OrderProduct> orderProducts = orderProductRepository.findByOrderId(orderId);
+        List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(orderId);
 
         // OrderProduct 변환
         List<OrderProductGetResponse> orderProductGetResponses = orderProducts.stream()
@@ -160,6 +160,48 @@ public class OrderService {
                 order.getEarnedPoints(),
                 orderProductGetResponses
         );
+    }
+
+    // 결제 완료 처리 Payment 서비스에서만 호출
+    @Transactional
+    public void completePayment(Long orderId) {
+        // 1. 주문 조회
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+
+        // 2. 결제 완료 처리 (상태 검증은 엔티티 내부에서 처리)
+        order.completePayment();
+
+        log.info("결제 완료 처리: orderId={}, orderNumber={}, 현재 상태={}",
+            orderId, order.getOrderNumber(), order.getOrderStatus());
+    }
+
+    // 주문 수동 확정
+    @Transactional
+    public void confirmOrder(Long orderId) {
+        // 1. 주문 조회
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+
+        // 2. 주문 확정 (상태 검증은 엔티티 내부에서 처리)
+        order.confirm();
+
+        log.info("주문 수동 확정 완료: orderId={}, orderNumber={}, 현재 상태={}",
+            orderId, order.getOrderNumber(), order.getOrderStatus());
+    }
+
+    // 주문 취소 (환불 시 사용)
+    @Transactional
+    public void cancelOrder(Long orderId, String cancelReason) {
+        // 1. 주문 조회
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+
+        // 2. 주문 취소 (상태 검증은 엔티티 내부에서 처리)
+        order.cancel();
+
+        log.info("주문 취소 완료: orderId={}, orderNumber={}, 현재 상태={}, 취소 사유={}",
+            orderId, order.getOrderNumber(), order.getOrderStatus(), cancelReason);
     }
 
     // ----------
