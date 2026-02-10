@@ -9,6 +9,12 @@ spring:
     init:
       mode: never
 
+  # 페이징 1-based로 보정
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
+
   jpa:
     hibernate:
       ddl-auto: update

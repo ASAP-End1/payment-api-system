@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.point.entity;
+package com.bootcamp.paymentdemo.point.consts;
 
 public enum PointType {
     SPENT,      // 사용
