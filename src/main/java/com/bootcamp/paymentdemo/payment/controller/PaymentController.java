@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/api/payments")
+@RequestMapping("/api/payment")
 public class PaymentController {
 
     private final PaymentService paymentService;
 
     // 1. 결제 준비 (장부 생성)
-    @PostMapping
+    @PostMapping("/create")
     public PaymentCreateResponse createPayment(@RequestBody PaymentCreateRequest request) {
         log.info("결제 생성 요청: OrderID={}", request.getOrderId());
         return paymentService.createPayment(request);
