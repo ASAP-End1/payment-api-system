@@ -42,4 +42,26 @@ public class Product extends BaseEntity {
         this.category = category;
         this.status = status;
     }
+
+    // 재고 차감 (주문 생성 시)
+    public void decreaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("차감할 수량은 0보다 커야 합니다.");
+        }
+        if (this.stock < quantity) {
+            throw new IllegalStateException(
+                String.format("재고가 부족합니다. 상품: %s (현재 재고: %d, 요청 수량: %d)",
+                    this.name, this.stock, quantity)
+            );
+        }
+        this.stock -= quantity;
+    }
+
+    // 재고 복구 (주문 취소/환불 시)
+    public void increaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("복구할 수량은 0보다 커야 합니다.");
+        }
+        this.stock += quantity;
+    }
 }
