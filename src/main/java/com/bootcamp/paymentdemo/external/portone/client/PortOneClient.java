@@ -1,25 +1,22 @@
 package com.bootcamp.paymentdemo.external.portone.client;
 
-import com.bootcamp.paymentdemo.external.portone.dto.PortOneCancelRequest;
-import com.bootcamp.paymentdemo.external.portone.dto.PortOnePaymentRequest;
-import com.bootcamp.paymentdemo.external.portone.dto.PortOnePaymentResponse;
+import com.bootcamp.paymentdemo.external.portone.dto.*;
 import com.bootcamp.paymentdemo.external.portone.error.PortOneError;
+import com.bootcamp.paymentdemo.external.portone.error.PortOneErrorCase;
 import com.bootcamp.paymentdemo.external.portone.exception.PortOneApiException;
-import org.springframework.http.HttpStatusCode;
+import com.bootcamp.paymentdemo.external.portone.exception.PortOneException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
+@RequiredArgsConstructor
 public class PortOneClient {
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
-
-    public PortOneClient(RestClient portOneRestClient, ObjectMapper objectMapper) {
-        this.restClient = portOneRestClient;
-        this.objectMapper = objectMapper;
-    }
 
     public PortOnePaymentResponse createInstantPayment(String paymentId, PortOnePaymentRequest request) {
         return restClient.post()
@@ -74,6 +71,28 @@ public class PortOneClient {
             return objectMapper.readValue(response.getBody(), PortOneError.class);
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    // PortOne 환불 API 요청
+    public PortOneRefundResponse refundPayment(String paymentId, PortOneRefundRequest request) {
+        try {
+            return restClient.post()
+                    .uri("/payments/{paymentId}/cancel", paymentId)
+                    .body(request)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                       PortOneError error = parseErrorResponse(res);
+                       throw new PortOneException(
+                               PortOneErrorCase.caseToHttpStatus(error.type()), error.message()
+                       );
+                    }).body(PortOneRefundResponse.class);
+        } catch (PortOneException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortOneException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "PortOne 호출 중 알 수 없는 오류"
+            );
         }
     }
 }
