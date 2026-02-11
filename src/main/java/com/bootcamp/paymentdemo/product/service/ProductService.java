@@ -45,4 +45,28 @@ public class ProductService {
                 product.getStatus().getStatusName()
         );
     }
+
+    // 재고 차감 (주문 생성 시 호출)
+    @Transactional
+    public void decreaseStock(Long productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+
+        product.decreaseStock(quantity);
+
+        log.info("재고 차감 완료: productId={}, productName={}, 차감수량={}, 남은재고={}",
+                productId, product.getName(), quantity, product.getStock());
+    }
+
+    // 재고 복구 (주문 취소/환불 시 호출)
+    @Transactional
+    public void increaseStock(Long productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+
+        product.increaseStock(quantity);
+
+        log.info("재고 복구 완료: productId={}, productName={}, 복구수량={}, 현재재고={}",
+                productId, product.getName(), quantity, product.getStock());
+    }
 }
