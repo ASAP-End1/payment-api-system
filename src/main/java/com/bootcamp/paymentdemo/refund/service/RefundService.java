@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.refund.service;
 
+import com.bootcamp.paymentdemo.order.service.OrderService;
 import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
 import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
@@ -34,6 +35,7 @@ public class RefundService {
     private final PortOneRefundClient portOneRefundClient;
     private final OrderProductRepository orderProductRepository;
     private final ProductService productService;
+    private final OrderService orderService;
 
     @Transactional
     public RefundResponse refundAll(Long id, @Valid RefundRequest refundRequest) {
@@ -106,17 +108,18 @@ public class RefundService {
         refundRepository.save(completedRefund);
 
         payment.refund();
-        payment.getOrder().cancel();
 
-        // 재고 복구
+        // 주문 취소 및 재고 복구
         Long orderId = payment.getOrder().getId();
+        orderService.cancelOrder(orderId, reason);
+
         List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(orderId);
 
         for (OrderProduct orderProduct : orderProducts) {
             productService.increaseStock(orderProduct.getProductId(), orderProduct.getCount());
         }
 
-        log.info("재고 복구 완료: orderId={}, 상품 수={}", orderId, orderProducts.size());
+        log.info("환불 완료: 주문 취소 및 재고 복구 완료 - orderId={}, 상품 수={}", orderId, orderProducts.size());
 
     }
 }
