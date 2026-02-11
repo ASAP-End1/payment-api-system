@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.refund.service;
 
+import com.bootcamp.paymentdemo.membership.service.MembershipService;
 import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
 import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
@@ -36,6 +37,7 @@ public class RefundService {
     private final ProductService  productService;
     private final PointService  pointService;
     private final OrderProductRepository  orderProductRepository;
+    private final MembershipService membershipService;
 
     @Transactional
     public RefundResponse refundAll(Long id, @Valid RefundRequest refundRequest) {
@@ -120,6 +122,13 @@ public class RefundService {
 
         orderProducts.forEach(orderProduct ->
                 productService.increaseStock(orderProduct.getProductId(), orderProduct.getCount())
+        );
+
+        // 멤버십 갱신
+        membershipService.handleRefund(
+                payment.getOrder().getUser().getUserId(),
+                payment.getOrder().getFinalAmount(),
+                payment.getOrder().getId()
         );
     }
 }
