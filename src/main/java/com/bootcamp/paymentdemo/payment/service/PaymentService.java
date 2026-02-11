@@ -1,12 +1,14 @@
 package com.bootcamp.paymentdemo.payment.service;
 
 import com.bootcamp.paymentdemo.external.portone.*;
+import com.bootcamp.paymentdemo.membership.service.MembershipService;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.order.repository.OrderRepository;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
 import com.bootcamp.paymentdemo.payment.dto.*;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
 import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
+import com.bootcamp.paymentdemo.point.service.PointService;
 import com.bootcamp.paymentdemo.webhook.dto.PortoneWebhookPayload;
 import com.bootcamp.paymentdemo.webhook.entity.WebhookEvent;
 import com.bootcamp.paymentdemo.webhook.repository.WebhookRepository;
@@ -16,6 +18,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +31,25 @@ public class PaymentService {
     private final PortOneClient portOneClient;
     private final WebhookRepository webhookRepository;
 
+    private final PointService pointService;
+    private final MembershipService membershipService;
+
     @Transactional
     public PaymentCreateResponse createPayment(PaymentCreateRequest request) {
+
         // 1. 주문 정보 조회 (결제와 연결하기 위함)
         Order order = orderRepository.findByOrderNumber(request.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
+
+        // 포인트 사용 부분 구현
+        BigDecimal pointsToUse = request.getPointsToUse() != null ? request.getPointsToUse() : BigDecimal.ZERO;
+
+        if (pointsToUse.compareTo(BigDecimal.ZERO) > 0) {
+            // Order 엔티티에 할인 적용 (finalAmount 갱신)
+            order.applyPointDiscount(pointsToUse);
+            // 실제 포인트 차감 (수민님 코드 사용)
+            pointService.usePoints(order.getUser(), order);
+        }
 
         // 2. merchant_uid 역할
         String dbPaymentId = "order_mid_" + System.currentTimeMillis();
@@ -40,14 +58,15 @@ public class PaymentService {
         Payment payment = Payment.builder()
                 .dbPaymentId(dbPaymentId)
                 .order(order)
-                .totalAmount(request.getTotalAmount())
-                .pointsToUse(request.getPointsToUse())
+                .totalAmount(order.getTotalAmount()) // 원래 주문 총액
+                .pointsToUse(pointsToUse)            // 사용 포인트 기록
                 .status(PaymentStatus.PENDING)
                 .build();
 
         paymentRepository.save(payment);
 
-        log.info("결제 대기 장부 생성 완료: DB_ID={}, OrderID={}", dbPaymentId, order.getId());
+        log.info("결제 대기 장부 생성 완료: DB_ID={}, OrderID={}, 실결제액={}",
+                dbPaymentId, order.getId(), order.getFinalAmount());
 
         // 4. 응답 DTO의 paymentId 칸에 우리가 만든 dbPaymentId를 담아서 보냄 (PortOne SDK용)
         return new PaymentCreateResponse(true, dbPaymentId, "PENDING");
@@ -55,9 +74,12 @@ public class PaymentService {
 
     @Transactional
     public PaymentConfirmResponse confirmPayment(String dbPaymentId, String impUid) {
+        // 예외 발생 시 보상 트랜잭션에서 쓰기 위해 변수 선언을 밖으로 뺌
+        Payment payment = null;
+
         try {
             // 1. DB에서 결제 대기 중인 DB 먼저 조회
-            Payment payment = paymentRepository.findByDbPaymentId(dbPaymentId)
+            payment = paymentRepository.findByDbPaymentId(dbPaymentId)
                     .orElseThrow(() -> new IllegalArgumentException("결제 건이 존재하지 않습니다."));
 
             // 2. 멱등성 체크: 저거 뭐지? 상태가 대기중이 아니면 2중으로 시도한거기때문에 멱등성 체크로 확인
@@ -73,21 +95,60 @@ public class PaymentService {
             // 3. 검증 시작
             PortOnePaymentResponse portOneResponse = portOneClient.getPayment(impUid);
 
-            // 4. 금액 검증: DB 금액과 포트원 실제 결제 금액 비교
-            if (payment.getTotalAmount().compareTo(portOneResponse.amount().total()) != 0) {
-                log.error("금액 불일치! DB: {}, PortOne: {}", payment.getTotalAmount(), portOneResponse.amount().total());
+            // 4. 금액 검증: DB 금액(포인트 차감 후 최종금액)과 포트원 실제 결제 금액 비교
+            BigDecimal expectedPayAmount = payment.getOrder().getFinalAmount();
+            BigDecimal actualPayAmount = portOneResponse.amount().total();
+
+            if (expectedPayAmount.compareTo(actualPayAmount) != 0) {
+                log.error("금액 불일치! DB(예상): {}, PortOne(실제): {}", expectedPayAmount, actualPayAmount);
+
+                if (payment.getPointsToUse().compareTo(BigDecimal.ZERO) > 0) {
+                    try {
+                        pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());
+                    } catch (Exception px) {
+                        log.error("금액 불일치로 인한 포인트 롤백 실패: {}", px.getMessage());
+                    }
+                }
+
+                // 금액 위변조 시 즉시 취소
+                portOneClient.cancelPayment(impUid, PortOneCancelRequest.fullCancel("금액 위변조 감지"));
                 return new PaymentConfirmResponse(false, null, "AMOUNT_MISMATCH");
             }
 
             // 5. 상태 업데이트 (PAID)
             try {
                 payment.completePayment(impUid);
+                payment.getOrder().completePayment();
+                payment.getOrder().confirm();
+
+                // 포인트 적립! 까먹을뻔 했네
+                pointService.earnPoints(payment.getOrder().getUser(), payment.getOrder());
+
+                // 포인트 적립 이후에 자동으로 멤버십에 반영 아마도 등급 업그레이드 까지도 자동으로 구현되어있다면 업그레이드 될듯?
+                membershipService.handlePaymentCompleted(
+                        payment.getOrder().getUser().getUserId(),
+                        actualPayAmount,
+                        payment.getId()
+                );
+
                 log.info("결제 최종 확정: {}", dbPaymentId);
+
             } catch (Exception e) {
-                // 6. 보상 트랜잭션: 내부 DB 반영 실패 시 포트원 결제 강제 취소  *** 중요한 로직
+                // 6. 보상 트랜잭션: 내부 DB 반영 실패 시 포트원 결제 강제 취소 *** 중요한 로직
                 log.error("내부 처리 실패로 인한 결제 보상 취소 진행: {}", e.getMessage());
+
+                //  결제 취소시 당연히 포인트도 돌려주어야하기에 포인트 돌려주기 부분 구현 // 수민님 코드 사용
+                if (payment.getPointsToUse().compareTo(BigDecimal.ZERO) > 0) {
+                    try {
+                        pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());
+                    } catch (Exception px) {
+                        log.error("포인트 롤백 실패: {}", px.getMessage());
+                    }
+                }
+
+                // PG사 결제 취소
                 portOneClient.cancelPayment(impUid, PortOneCancelRequest.fullCancel("서버 내부 오류로 인한 자동 취소"));
-                throw e; //
+                throw e;
             }
 
             return new PaymentConfirmResponse(true, payment.getOrder().getId().toString(), "PAID");
@@ -105,8 +166,15 @@ public class PaymentService {
 
             log.info("[WEBHOOK] 이벤트 기록 성공: {}", webhookId);
 
-            // 2. 비즈니스 로직 실행
-            confirmPayment(payload.getData().getPaymentId(), payload.getData().getPaymentId());
+            //  2. 비즈니스 로직 실행 전 ID 매핑
+            String portOnePaymentId = payload.getData().getPaymentId();
+            PortOnePaymentResponse details = portOneClient.getPayment(portOnePaymentId);
+
+            // PortOne V2 응답의 id 필드가 우리가 보낸 dbPaymentId(merchant_uid)
+            String dbPaymentId = details.id();
+
+            // 매핑된 ID로 확정 로직 수행
+            confirmPayment(dbPaymentId, portOnePaymentId);
 
             log.info("[WEBHOOK] 모든 로직 처리 완료: {}", webhookId);
 
