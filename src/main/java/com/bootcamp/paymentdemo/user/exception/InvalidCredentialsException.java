@@ -1,7 +1,10 @@
 package com.bootcamp.paymentdemo.user.exception;
 
-public class InvalidCredentialsException extends RuntimeException {
+import com.bootcamp.paymentdemo.common.exception.ServiceException;
+import org.springframework.http.HttpStatus;
+
+public class InvalidCredentialsException extends ServiceException {
     public InvalidCredentialsException(String message) {
-        super(message);
+        super("INVALID_CREDENTIALS", message, HttpStatus.UNAUTHORIZED);
     }
 }

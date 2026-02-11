@@ -1,7 +1,10 @@
 package com.bootcamp.paymentdemo.user.exception;
 
-public class UserNotFoundException extends RuntimeException {
+import com.bootcamp.paymentdemo.common.exception.ServiceException;
+import org.springframework.http.HttpStatus;
+
+public class UserNotFoundException extends ServiceException {
     public UserNotFoundException(String message) {
-        super(message);
+        super("USER_NOT_FOUND", message, HttpStatus.NOT_FOUND);
     }
 }
