@@ -59,6 +59,13 @@ public class Payment extends BaseEntity {
         this.status = PaymentStatus.PAID;
     }
 
+    public boolean isAlreadyProcessed() {
+
+        return this.status == PaymentStatus.PAID ||
+                this.status == PaymentStatus.REFUND ||
+                this.status == PaymentStatus.FAIL;
+    }
+
     // 환불 시 결제 상태 검증
     public boolean isCompleted() {
         return this.status == PaymentStatus.PAID;

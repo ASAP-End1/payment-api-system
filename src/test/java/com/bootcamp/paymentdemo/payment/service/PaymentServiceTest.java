@@ -2,7 +2,7 @@ package com.bootcamp.paymentdemo.payment.service;
 
 import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.order.entity.Order;
-import com.bootcamp.paymentdemo.order.repositoryfordelete.OrderRepository;
+import com.bootcamp.paymentdemo.order.repository.OrderRepository;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
 import com.bootcamp.paymentdemo.payment.dto.PaymentConfirmResponse;
 import com.bootcamp.paymentdemo.payment.dto.PaymentCreateRequest;
@@ -60,7 +60,7 @@ class PaymentServiceTest {
 
         // 1. 요청 객체 생성 (orderId는 "1"로 설정)
         PaymentCreateRequest request = new PaymentCreateRequest("1", new BigDecimal("10000"), BigDecimal.ZERO);
-        given(orderRepository.findByOrderId(anyString()))
+        given(orderRepository.findByOrderNumber(anyString()))
                 .willReturn(Optional.of(testOrder));
 
         // [When] 실제 결제 생성 로직 실행
