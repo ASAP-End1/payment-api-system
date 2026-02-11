@@ -1,7 +1,10 @@
 package com.bootcamp.paymentdemo.refund.service;
 
+import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
+import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
 import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
+import com.bootcamp.paymentdemo.product.service.ProductService;
 import com.bootcamp.paymentdemo.refund.dto.RefundRequest;
 import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
 import com.bootcamp.paymentdemo.refund.entity.Refund;
@@ -15,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 import static com.bootcamp.paymentdemo.refund.consts.ErrorEnum.*;
@@ -28,6 +32,8 @@ public class RefundService {
     private final RefundHistoryService refundHistoryService;
     private final PaymentRepository paymentRepository;
     private final PortOneRefundClient portOneRefundClient;
+    private final OrderProductRepository orderProductRepository;
+    private final ProductService productService;
 
     @Transactional
     public RefundResponse refundAll(Long id, @Valid RefundRequest refundRequest) {
@@ -102,9 +108,15 @@ public class RefundService {
         payment.refund();
         payment.getOrder().cancel();
 
-        /*
-            재고 복구(Order -> OrderProduct -> Product를 거치는 메서드 필요)
-         */
+        // 재고 복구
+        Long orderId = payment.getOrder().getId();
+        List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(orderId);
+
+        for (OrderProduct orderProduct : orderProducts) {
+            productService.increaseStock(orderProduct.getProductId(), orderProduct.getCount());
+        }
+
+        log.info("재고 복구 완료: orderId={}, 상품 수={}", orderId, orderProducts.size());
 
     }
 }

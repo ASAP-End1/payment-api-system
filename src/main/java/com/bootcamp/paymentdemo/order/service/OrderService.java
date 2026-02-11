@@ -9,6 +9,7 @@ import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.point.service.PointService;
 import com.bootcamp.paymentdemo.product.entity.Product;
 import com.bootcamp.paymentdemo.product.repository.ProductRepository;
+import com.bootcamp.paymentdemo.product.service.ProductService;
 import com.bootcamp.paymentdemo.user.entity.User;
 import com.bootcamp.paymentdemo.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -36,6 +37,7 @@ public class OrderService {
     private final OrderProductRepository orderProductRepository;
     private final UserRepository userRepository;
     private final PointService pointService;
+    private final ProductService productService;
 
     @Transactional
     public OrderCreateResponse createOrder(OrderCreateRequest request) {
@@ -100,7 +102,14 @@ public class OrderService {
 
         orderProductRepository.saveAll(orderProducts);
 
-        // 8. 응답 반환 (모든 포인트 정보 포함)
+        // 8. 재고 차감
+        for (OrderProduct orderProduct : orderProducts) {
+            productService.decreaseStock(orderProduct.getProductId(), orderProduct.getCount());
+        }
+
+        log.info("재고 차감 완료: orderId={}, 상품 수={}", order.getId(), orderProducts.size());
+
+        // 9. 응답 반환 (모든 포인트 정보 포함)
         return new OrderCreateResponse(
                 order.getId(),
                 order.getOrderNumber(),
