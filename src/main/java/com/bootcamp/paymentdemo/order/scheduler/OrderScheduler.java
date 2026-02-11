@@ -3,6 +3,7 @@ package com.bootcamp.paymentdemo.order.scheduler;
 import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.order.repository.OrderRepository;
+import com.bootcamp.paymentdemo.point.service.PointService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,6 +19,7 @@ import java.util.List;
 public class OrderScheduler {
 
     private final OrderRepository orderRepository;
+    private final PointService pointService;
 
     // 시간이 지나면 자동 확정
     @Scheduled(cron = "0 * * * * *") // 매 분 0초 마다 실행
@@ -36,6 +38,7 @@ public class OrderScheduler {
         for (Order order : ordersToConfirm) {
             try {
                 order.confirm();
+                pointService.earnPoints(order.getUser(), order);
             } catch (Exception e) {
                 log.error("주문 ID {} 자동 확정 실패: {}", order.getId(), e.getMessage());
             }

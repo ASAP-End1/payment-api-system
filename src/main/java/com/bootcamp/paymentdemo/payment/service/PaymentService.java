@@ -4,6 +4,7 @@ import com.bootcamp.paymentdemo.external.portone.*;
 import com.bootcamp.paymentdemo.membership.service.MembershipService;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.order.repository.OrderRepository;
+import com.bootcamp.paymentdemo.order.service.OrderService;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
 import com.bootcamp.paymentdemo.payment.dto.*;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
@@ -30,6 +31,7 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final PortOneClient portOneClient;
     private final WebhookRepository webhookRepository;
+    private final OrderService orderService;
 
     private final PointService pointService;
     private final MembershipService membershipService;
@@ -133,8 +135,11 @@ public class PaymentService {
 
                 log.info("결제 최종 확정: {}", dbPaymentId);
 
+                // 6. 주문 상태 업데이트 (PENDING_PAYMENT -> PENDING_CONFIRMATION)
+                orderService.completePayment(payment.getOrder().getId());
+                log.info("주문 상태 업데이트 완료: orderId={}", payment.getOrder().getId());
             } catch (Exception e) {
-                // 6. 보상 트랜잭션: 내부 DB 반영 실패 시 포트원 결제 강제 취소 *** 중요한 로직
+                // 7. 보상 트랜잭션: 내부 DB 반영 실패 시 포트원 결제 강제 취소  *** 중요한 로직
                 log.error("내부 처리 실패로 인한 결제 보상 취소 진행: {}", e.getMessage());
 
                 //  결제 취소시 당연히 포인트도 돌려주어야하기에 포인트 돌려주기 부분 구현 // 수민님 코드 사용
