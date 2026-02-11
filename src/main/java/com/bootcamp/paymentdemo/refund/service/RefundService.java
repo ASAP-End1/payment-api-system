@@ -1,7 +1,11 @@
 package com.bootcamp.paymentdemo.refund.service;
 
+import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
+import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
 import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
+import com.bootcamp.paymentdemo.point.service.PointService;
+import com.bootcamp.paymentdemo.product.service.ProductService;
 import com.bootcamp.paymentdemo.refund.dto.RefundRequest;
 import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
 import com.bootcamp.paymentdemo.refund.entity.Refund;
@@ -15,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 import static com.bootcamp.paymentdemo.refund.consts.ErrorEnum.*;
@@ -28,6 +33,9 @@ public class RefundService {
     private final RefundHistoryService refundHistoryService;
     private final PaymentRepository paymentRepository;
     private final PortOneRefundClient portOneRefundClient;
+    private final ProductService  productService;
+    private final PointService  pointService;
+    private final OrderProductRepository  orderProductRepository;
 
     @Transactional
     public RefundResponse refundAll(Long id, @Valid RefundRequest refundRequest) {
@@ -91,20 +99,28 @@ public class RefundService {
 
     }
 
-    // 환불 완료 이력 저장
+    // 환불 완료 로직
     private void completeRefund(Payment payment, String reason, String portOneRefundId, String refundGroupId) {
         Refund completedRefund = Refund.createCompleted(
                 payment, payment.getTotalAmount(), reason,  portOneRefundId,  refundGroupId
         );
 
+        // 환불 완료 이력 저장
         refundRepository.save(completedRefund);
 
+        // 결제 및 주문 상태 변경
         payment.refund();
         payment.getOrder().cancel();
 
-        /*
-            재고 복구(Order -> OrderProduct -> Product를 거치는 메서드 필요)
-         */
+        // 포인트 복구 및 적립 취소
+        pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());
+        pointService.cancelEarnedPoints(payment.getOrder().getUser(), payment.getOrder());
 
+        // 상품 재고 복구
+        List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(payment.getOrder().getId());
+
+        orderProducts.forEach(orderProduct ->
+                productService.increaseStock(orderProduct.getProductId(), orderProduct.getCount())
+        );
     }
 }
