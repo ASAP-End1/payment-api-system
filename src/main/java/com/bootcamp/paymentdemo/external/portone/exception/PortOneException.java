@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.refund.exception;
+package com.bootcamp.paymentdemo.external.portone.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

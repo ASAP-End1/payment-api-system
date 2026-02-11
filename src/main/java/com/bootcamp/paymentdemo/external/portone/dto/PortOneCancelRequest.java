@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.external.portone;
+package com.bootcamp.paymentdemo.external.portone.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

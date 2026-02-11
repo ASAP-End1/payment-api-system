@@ -3,7 +3,7 @@ package com.bootcamp.paymentdemo.common.exception;
 import com.bootcamp.paymentdemo.common.dto.ErrorResponse;
 import com.bootcamp.paymentdemo.membership.exception.MembershipNotFoundException;
 import com.bootcamp.paymentdemo.membership.exception.UserPaidAmountNotFoundException;
-import com.bootcamp.paymentdemo.refund.exception.PortOneException;
+import com.bootcamp.paymentdemo.external.portone.exception.PortOneException;
 import com.bootcamp.paymentdemo.refund.exception.RefundException;
 import com.bootcamp.paymentdemo.user.exception.DuplicateEmailException;
 import com.bootcamp.paymentdemo.user.exception.GradeNotFoundException;
