@@ -68,7 +68,7 @@ class PointServiceTest {
         ReflectionTestUtils.setField(testUser, "userId", 1L);
 
         testOrder = Order.builder()
-                .userId("1")
+                .user(testUser)
                 .orderNumber("ORD-20260209-0001")
                 .totalAmount(BigDecimal.valueOf(10000))
                 .usedPoints(BigDecimal.valueOf(400))
@@ -95,23 +95,21 @@ class PointServiceTest {
         PointTransaction spent = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(400).negate(), PointType.SPENT);
         PointTransaction refunded = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(400), PointType.REFUNDED);
         PointTransaction earned = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(200), PointType.EARNED);
-        PointTransaction canceled = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(200).negate(), PointType.CANCELED);
         PointTransaction expired = new PointTransaction(testUser, null, BigDecimal.valueOf(100).negate(), PointType.EXPIRED);
 
         given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(testUser));
-        given(pointRepository.findPointTransactions(eq(1L), any(Pageable.class))).willReturn(new PageImpl<>(List.of(spent, refunded, earned, canceled, expired)));
+        given(pointRepository.findPointTransactions(eq(1L), any(Pageable.class))).willReturn(new PageImpl<>(List.of(spent, refunded, earned, expired)));
 
         // When
         PageResponse<PointGetResponse> result = pointService.getPointHistory("test@test.com", PageRequest.of(0, 10));
 
         // Then
-        assertThat(result.getContent()).hasSize(5);
+        assertThat(result.getContent()).hasSize(4);
         assertThat(result.getContent().get(0).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(400).negate());
         assertThat(result.getContent().get(1).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(400));
         assertThat(result.getContent().get(2).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
-        assertThat(result.getContent().get(3).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(200).negate());
-        assertThat(result.getContent().get(4).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(100).negate());
-        assertThat(result.getContent().get(4).getOrderId()).isNull();
+        assertThat(result.getContent().get(3).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(100).negate());
+        assertThat(result.getContent().get(3).getOrderId()).isNull();
     }
 
     @Test
@@ -226,39 +224,6 @@ class PointServiceTest {
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.EARNED && transaction.getAmount().compareTo(BigDecimal.valueOf(96)) == 0));
-    }
-
-
-    // 포인트 적립 취소 테스트
-    @Test
-    @DisplayName("포인트 적립 취소 - 성공")
-    void cancelEarnedPoints_성공() {
-        // Given
-        PointTransaction earned = new PointTransaction(testUser, testOrder, BigDecimal.valueOf(96), PointType.EARNED);
-
-        given(pointRepository.findByOrderIdAndType(1L, PointType.EARNED)).willReturn(Optional.of(earned));
-        given(userPointBalanceRepository.findByUserId(1L)).willReturn(Optional.of(testUserPointBalance));
-
-        // When
-        pointService.cancelEarnedPoints(testUser, testOrder);
-
-        // Then
-        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(904));
-        assertThat(earned.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
-
-        verify(pointRepository, times(1)).save(argThat(transaction ->
-                transaction.getType() == PointType.CANCELED && transaction.getAmount().compareTo(BigDecimal.valueOf(96).negate()) == 0));
-    }
-
-    @Test
-    @DisplayName("포인트 적립 취소 - 실패")
-    void cancelEarnedPoints_실패() {
-        // Given
-        given(pointRepository.findByOrderIdAndType(1L, PointType.EARNED)).willReturn(Optional.empty());
-
-        // When & Then
-        assertThrows(EarnedPointNotFoundException.class,
-                () -> pointService.cancelEarnedPoints(testUser, testOrder));
     }
 
 
