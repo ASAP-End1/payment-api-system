@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.refund.service;
 
+import com.bootcamp.paymentdemo.external.portone.client.PortOneClient;
 import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
 import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
@@ -11,7 +12,6 @@ import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
 import com.bootcamp.paymentdemo.refund.entity.Refund;
 import com.bootcamp.paymentdemo.external.portone.exception.PortOneException;
 import com.bootcamp.paymentdemo.refund.exception.RefundException;
-import com.bootcamp.paymentdemo.external.portone.client.PortOneRefundClient;
 import com.bootcamp.paymentdemo.refund.repository.RefundRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class RefundService {
     private final RefundRepository refundRepository;
     private final RefundHistoryService refundHistoryService;
     private final PaymentRepository paymentRepository;
-    private final PortOneRefundClient portOneRefundClient;
+    private final PortOneClient portOneClient;
     private final ProductService  productService;
     private final PointService  pointService;
     private final OrderProductRepository  orderProductRepository;
@@ -55,7 +55,7 @@ public class RefundService {
 
         try {
 
-           portOneRefundId = portOneRefundClient.cancelPayment(lockedPayment, refundRequest.getReason());
+           portOneRefundId = portOneClient.cancelPayment(lockedPayment, refundRequest.getReason());
 
             completeRefund(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
