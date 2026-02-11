@@ -59,9 +59,9 @@ public class MembershipService {
     }
 
     // 사용자 등급 업데이트
-    // userId, paymentId(등급 변경을 발생시킨 결제 id), reason(등급 변경 사유)
+    // userId, orderId(등급 변경을 발생시킨 주문 id), reason(등급 변경 사유)
     @Transactional
-    public boolean updateUserGrade(Long userId, Long paymentId, String reason) {
+    public boolean updateUserGrade(Long userId, Long orderId, String reason) {
 
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new UserNotFoundException("사용자를 찾을 수 없습니다: " + userId)
@@ -104,7 +104,7 @@ public class MembershipService {
                 user,
                 currentGrade,
                 newGrade,
-                paymentId,
+                orderId,
                 reason
         );
         userGradeHistoryRepository.save(history);
@@ -112,36 +112,36 @@ public class MembershipService {
         return true; // 등급 변경됨
     }
 
-    // 결제 완료 시 총 결제 금액 증가 & 등급 업데이트
-    // userId, totalAmount(실제 결제 요청 금액), paymentId(등급 변경을 발생시킨 결제 id)
+    // 주문 확정 시 총 결제 금액 증가 & 등급 업데이트
+    // userId, orderAmount(포인트 차감 후 금액-finalAmount), orderId(등급 변경을 발생시킨 주문 id)
     @Transactional
-    public void handlePaymentCompleted(Long userId, BigDecimal totalAmount, Long paymentId) {
+    public void handleOrderCompleted(Long userId, BigDecimal orderAmount, Long orderId) {
 
         UserPaidAmount userPaidAmount = userPaidAmountRepository.findByUserId(userId).orElseThrow(
                 () -> new UserPaidAmountNotFoundException("총 결제 금액 정보를 찾을 수 없습니다")
         );
 
-        userPaidAmount.addPaidAmount(totalAmount);
+        userPaidAmount.addPaidAmount(orderAmount);
         userPaidAmountRepository.save(userPaidAmount);
 
         log.info("총 결제 금액 증가: userId={}, 이전={}, 결제={}, 합계={}",
                 userId,
-                userPaidAmount.getTotalPaidAmount().subtract(totalAmount),
-                totalAmount,
+                userPaidAmount.getTotalPaidAmount().subtract(orderAmount),
+                orderAmount,
                 userPaidAmount.getTotalPaidAmount());
 
         // 등급 업데이트
-        boolean gradeChanged = updateUserGrade(userId, paymentId, "결제 완료");
+        boolean gradeChanged = updateUserGrade(userId, orderId, "주문 확정");
 
         if (gradeChanged) {
-            log.info("결제 완료 후 등급 상승: userId={}, paymentId={}", userId, paymentId);
+            log.info("결제 완료 후 등급 상승: userId={}, paymentId={}", userId, orderId);
         }
     }
 
     // 환불 완료 시 총 결제 금액 차감 & 등급 업데이트
-    // userId, refundAmount(환불 금액), paymentId(등급 변경을 발생시킨 결제 id)
+    // userId, refundAmount(환불 금액), orderId(등급 변경을 발생시킨 주문 id)
     @Transactional
-    public void handleRefund(Long userId, BigDecimal refundAmount, Long paymentId) {
+    public void handleRefund(Long userId, BigDecimal refundAmount, Long orderId) {
 
         UserPaidAmount userPaidAmount = userPaidAmountRepository.findByUserId(userId).orElseThrow(
                 () -> new UserPaidAmountNotFoundException("총 결제 금액 정보를 찾을 수 없습니다")
@@ -157,10 +157,10 @@ public class MembershipService {
                 userPaidAmount.getTotalPaidAmount());
 
         // 등급 업데이트
-        boolean gradeChanged = updateUserGrade(userId, paymentId, "환불");
+        boolean gradeChanged = updateUserGrade(userId, orderId, "환불");
 
         if (gradeChanged) {
-            log.warn("환불 후 등급 하락: userId={}, paymentId={}", userId, paymentId);
+            log.warn("환불 후 등급 하락: userId={}, paymentId={}", userId, orderId);
         }
     }
 

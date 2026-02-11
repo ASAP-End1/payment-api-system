@@ -74,7 +74,7 @@ class MembershipServiceTest {
         // given
 
         // when [50,000원 결제]
-        membershipService.handlePaymentCompleted(testUser.getUserId(), new BigDecimal("50000"), 1L);
+        membershipService.handleOrderCompleted(testUser.getUserId(), new BigDecimal("50000"), 1L);
 
         // then
         User updatedUser = userRepository.findById(testUser.getUserId()).orElseThrow();
@@ -87,7 +87,7 @@ class MembershipServiceTest {
         // given
 
         // when [50,001원 결제]
-        membershipService.handlePaymentCompleted(testUser.getUserId(), new BigDecimal("50001"), 1L);
+        membershipService.handleOrderCompleted(testUser.getUserId(), new BigDecimal("50001"), 1L);
 
         // then
         User updatedUser = userRepository.findById(testUser.getUserId()).orElseThrow();
@@ -100,7 +100,7 @@ class MembershipServiceTest {
         // given
 
         // when [149,999원 결제]
-        membershipService.handlePaymentCompleted(testUser.getUserId(), new BigDecimal("149999"), 1L);
+        membershipService.handleOrderCompleted(testUser.getUserId(), new BigDecimal("149999"), 1L);
 
         // then
         User updatedUser = userRepository.findById(testUser.getUserId()).orElseThrow();
@@ -113,7 +113,7 @@ class MembershipServiceTest {
         // given
 
         // when [150,000원 결제]
-        membershipService.handlePaymentCompleted(testUser.getUserId(), new BigDecimal("150000"), 1L);
+        membershipService.handleOrderCompleted(testUser.getUserId(), new BigDecimal("150000"), 1L);
 
         // then
         User updatedUser = userRepository.findById(testUser.getUserId()).orElseThrow();
@@ -134,7 +134,7 @@ class MembershipServiceTest {
         BigDecimal paymentAmount = new BigDecimal("60000");
         Long paymentId = 1L;
 
-        membershipService.handlePaymentCompleted(testUser.getUserId(), paymentAmount, paymentId);
+        membershipService.handleOrderCompleted(testUser.getUserId(), paymentAmount, paymentId);
 
         // then [총 결제 금액 증가 확인]
         UserPaidAmount updatedPaidAmount = userPaidAmountRepository.findByUserId(testUser.getUserId())
@@ -155,8 +155,8 @@ class MembershipServiceTest {
         UserGradeHistory upgradeHistory = histories.get(1);
         assertThat(upgradeHistory.getFromGrade().getGradeName()).isEqualTo(MembershipGrade.NORMAL);
         assertThat(upgradeHistory.getToGrade().getGradeName()).isEqualTo(MembershipGrade.VIP);
-        assertThat(upgradeHistory.getTriggerPaymentId()).isEqualTo(paymentId);
-        assertThat(upgradeHistory.getReason()).isEqualTo("결제 완료");
+        assertThat(upgradeHistory.getTriggerOrderId()).isEqualTo(paymentId);
+        assertThat(upgradeHistory.getReason()).isEqualTo("주문 확정");
     }
 
     @Test
@@ -168,7 +168,7 @@ class MembershipServiceTest {
         BigDecimal paymentAmount = new BigDecimal("160000");
         Long paymentId = 2L;
 
-        membershipService.handlePaymentCompleted(testUser.getUserId(), paymentAmount, paymentId);
+        membershipService.handleOrderCompleted(testUser.getUserId(), paymentAmount, paymentId);
 
         // then [총 결제 금액 확인]
         UserPaidAmount updatedPaidAmount = userPaidAmountRepository.findByUserId(testUser.getUserId())
@@ -191,7 +191,7 @@ class MembershipServiceTest {
         BigDecimal paymentAmount = new BigDecimal("30000");
         Long paymentId = 3L;
 
-        membershipService.handlePaymentCompleted(testUser.getUserId(), paymentAmount, paymentId);
+        membershipService.handleOrderCompleted(testUser.getUserId(), paymentAmount, paymentId);
 
         // then [총 결제 금액 확인]
         UserPaidAmount updatedPaidAmount = userPaidAmountRepository.findByUserId(testUser.getUserId())
@@ -215,7 +215,7 @@ class MembershipServiceTest {
     void handleRefund_DowngradeFromVVIPToVIP() {
         // given [VVIP 등급으로 설정 (160,000원 결제)]
         BigDecimal initialPayment = new BigDecimal("160000");
-        membershipService.handlePaymentCompleted(testUser.getUserId(), initialPayment, 1L);
+        membershipService.handleOrderCompleted(testUser.getUserId(), initialPayment, 1L);
 
         User userAfterPayment = userRepository.findById(testUser.getUserId()).orElseThrow();
         assertThat(userAfterPayment.getCurrentGrade().getGradeName()).isEqualTo(MembershipGrade.VVIP);
@@ -245,7 +245,7 @@ class MembershipServiceTest {
         UserGradeHistory downgradeHistory = histories.get(2);
         assertThat(downgradeHistory.getFromGrade().getGradeName()).isEqualTo(MembershipGrade.VVIP);
         assertThat(downgradeHistory.getToGrade().getGradeName()).isEqualTo(MembershipGrade.VIP);
-        assertThat(downgradeHistory.getTriggerPaymentId()).isEqualTo(refundPaymentId);
+        assertThat(downgradeHistory.getTriggerOrderId()).isEqualTo(refundPaymentId);
         assertThat(downgradeHistory.getReason()).isEqualTo("환불");
     }
 
@@ -254,7 +254,7 @@ class MembershipServiceTest {
     void handleRefund_DowngradeFromVIPToNormal() {
         // given [VIP 등급으로 설정 (60,000원 결제)]
         BigDecimal initialPayment = new BigDecimal("60000");
-        membershipService.handlePaymentCompleted(testUser.getUserId(), initialPayment, 1L);
+        membershipService.handleOrderCompleted(testUser.getUserId(), initialPayment, 1L);
 
         User userAfterPayment = userRepository.findById(testUser.getUserId()).orElseThrow();
         assertThat(userAfterPayment.getCurrentGrade().getGradeName()).isEqualTo(MembershipGrade.VIP);
@@ -291,7 +291,7 @@ class MembershipServiceTest {
     void handleRefund_ShouldStayVIP() {
         // given [VIP 등급으로 설정 (80,000원 결제)]
         BigDecimal initialPayment = new BigDecimal("80000");
-        membershipService.handlePaymentCompleted(testUser.getUserId(), initialPayment, 1L);
+        membershipService.handleOrderCompleted(testUser.getUserId(), initialPayment, 1L);
 
         User userAfterPayment = userRepository.findById(testUser.getUserId()).orElseThrow();
         assertThat(userAfterPayment.getCurrentGrade().getGradeName()).isEqualTo(MembershipGrade.VIP);
@@ -325,14 +325,14 @@ class MembershipServiceTest {
         // given
 
         // when [1차 결제 60,000원]
-        membershipService.handlePaymentCompleted(testUser.getUserId(), new BigDecimal("60000"), 1L);
+        membershipService.handleOrderCompleted(testUser.getUserId(), new BigDecimal("60000"), 1L);
 
         // then [VIP 등급 확인]
         User user1 = userRepository.findById(testUser.getUserId()).orElseThrow();
         assertThat(user1.getCurrentGrade().getGradeName()).isEqualTo(MembershipGrade.VIP);
 
         // when [2차 결제 100,000원 (총 결제 금액 160,000원)]
-        membershipService.handlePaymentCompleted(testUser.getUserId(), new BigDecimal("100000"), 2L);
+        membershipService.handleOrderCompleted(testUser.getUserId(), new BigDecimal("100000"), 2L);
 
         // then [VVIP 등급 확인]
         User user2 = userRepository.findById(testUser.getUserId()).orElseThrow();
