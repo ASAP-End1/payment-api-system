@@ -5,6 +5,6 @@ import com.bootcamp.paymentdemo.refund.consts.ErrorEnum;
 
 public class RefundException extends ServiceException {
     public RefundException(ErrorEnum errorEnum) {
-        super(errorEnum.getStatus().name(), errorEnum.getMessage(), errorEnum.getStatus());
+        super(errorEnum.getMessage(), errorEnum.getStatus());
     }
 }

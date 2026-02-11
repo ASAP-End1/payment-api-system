@@ -5,6 +5,6 @@ import org.springframework.http.HttpStatus;
 
 public class GradeNotFoundException extends ServiceException {
     public GradeNotFoundException(String message) {
-        super("GRADE_NOT_FOUND", message, HttpStatus.NOT_FOUND);
+        super(message, HttpStatus.NOT_FOUND);
     }
 }
