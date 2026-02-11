@@ -94,7 +94,7 @@ public class AuthController {
             // UserService에 토큰 생성 위임
             UserService.TokenPair tokenPair = userService.login(email);
 
-            LoginResponse response = LoginResponse.success(tokenPair.email);
+            LoginResponse response = LoginResponse.success(tokenPair.email, tokenPair.accessToken);
 
             // Authorization 헤더에 Access Token 포함
             HttpHeaders headers = new HttpHeaders();
