@@ -93,9 +93,9 @@ public class UserService {
     }
 
     // LoginResponse 생성 헬퍼 메서드
-    public LoginResponse createLoginResponse(String email) {
+    public LoginResponse createLoginResponse(String email, String accessToken) {
 
-        return LoginResponse.success(email);
+        return LoginResponse.success(email, accessToken);
     }
 
     // 로그아웃 - Refresh Token 무효화
