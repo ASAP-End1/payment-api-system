@@ -1,6 +1,8 @@
 package com.bootcamp.paymentdemo.payment.service;
 
-import com.bootcamp.paymentdemo.external.portone.*;
+import com.bootcamp.paymentdemo.external.portone.client.PortOneClient;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOneCancelRequest;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOnePaymentResponse;
 import com.bootcamp.paymentdemo.membership.service.MembershipService;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.order.repository.OrderRepository;
@@ -120,18 +122,6 @@ public class PaymentService {
             // 5. 상태 업데이트 (PAID)
             try {
                 payment.completePayment(impUid);
-                payment.getOrder().completePayment();
-                payment.getOrder().confirm();
-
-                // 포인트 적립! 까먹을뻔 했네
-                pointService.earnPoints(payment.getOrder().getUser(), payment.getOrder());
-
-                // 포인트 적립 이후에 자동으로 멤버십에 반영 아마도 등급 업그레이드 까지도 자동으로 구현되어있다면 업그레이드 될듯?
-                membershipService.handlePaymentCompleted(
-                        payment.getOrder().getUser().getUserId(),
-                        actualPayAmount,
-                        payment.getId()
-                );
 
                 log.info("결제 최종 확정: {}", dbPaymentId);
 
@@ -142,14 +132,7 @@ public class PaymentService {
                 // 7. 보상 트랜잭션: 내부 DB 반영 실패 시 포트원 결제 강제 취소  *** 중요한 로직
                 log.error("내부 처리 실패로 인한 결제 보상 취소 진행: {}", e.getMessage());
 
-                //  결제 취소시 당연히 포인트도 돌려주어야하기에 포인트 돌려주기 부분 구현 // 수민님 코드 사용
-                if (payment.getPointsToUse().compareTo(BigDecimal.ZERO) > 0) {
-                    try {
-                        pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());
-                    } catch (Exception px) {
-                        log.error("포인트 롤백 실패: {}", px.getMessage());
-                    }
-                }
+                // 구현 예정
 
                 // PG사 결제 취소
                 portOneClient.cancelPayment(impUid, PortOneCancelRequest.fullCancel("서버 내부 오류로 인한 자동 취소"));

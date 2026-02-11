@@ -1,5 +1,10 @@
-package com.bootcamp.paymentdemo.external.portone;
+package com.bootcamp.paymentdemo.external.portone.client;
 
+import com.bootcamp.paymentdemo.external.portone.dto.PortOneCancelRequest;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOnePaymentRequest;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOnePaymentResponse;
+import com.bootcamp.paymentdemo.external.portone.error.PortOneError;
+import com.bootcamp.paymentdemo.external.portone.exception.PortOneApiException;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -16,7 +21,7 @@ public class PortOneClient {
         this.objectMapper = objectMapper;
     }
 
-    public com.bootcamp.paymentdemo.external.portone.PortOnePaymentResponse createInstantPayment(String paymentId, PortOnePaymentRequest request) {
+    public PortOnePaymentResponse createInstantPayment(String paymentId, PortOnePaymentRequest request) {
         return restClient.post()
                 .uri("/payments/{paymentId}/instant", paymentId)
                 .header("Idempotency-Key", paymentId)

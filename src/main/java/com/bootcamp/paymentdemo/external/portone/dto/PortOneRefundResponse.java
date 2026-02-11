@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.refund.portOne.dto;
+package com.bootcamp.paymentdemo.external.portone.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class PortOneCancelResponse {
+public class PortOneRefundResponse {
 
     @JsonProperty("cancellation")
     private PaymentCancellation cancellation;
