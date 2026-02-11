@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.order.service;
 
+import com.bootcamp.paymentdemo.membership.service.MembershipService;
 import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.order.dto.*;
 import com.bootcamp.paymentdemo.order.entity.Order;
@@ -38,6 +39,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final PointService pointService;
     private final ProductService productService;
+    private final MembershipService membershipService;
 
     @Transactional
     public OrderCreateResponse createOrder(OrderCreateRequest request) {
@@ -211,6 +213,13 @@ public class OrderService {
         pointService.earnPoints(user, order);
         log.info("포인트 적립 완료: userId={}, orderId={}, 적립 포인트={}",
             user.getUserId(), orderId, order.getEarnedPoints());
+
+        // 4. 멤버십 갱신
+        membershipService.handleOrderCompleted(
+                order.getUser().getUserId(),
+                order.getFinalAmount(),
+                order.getId()
+        );
     }
 
     // 주문 취소 (환불 시 사용)
