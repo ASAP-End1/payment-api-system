@@ -1,6 +1,6 @@
 package com.bootcamp.paymentdemo.point.dto;
 
-import com.bootcamp.paymentdemo.point.entity.PointType;
+import com.bootcamp.paymentdemo.point.consts.PointType;
 import lombok.Getter;
 
 import java.math.BigDecimal;

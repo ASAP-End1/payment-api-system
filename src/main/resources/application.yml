@@ -5,9 +5,12 @@ spring:
   profiles:
     active: local    # application-local.yml 파일 생성해 local에서 DB연결
 
-  sql:
-    init:
-      mode: never
+  datasource:
+  # localhost:3306 뒤의 'payment_db'는 실제 생성하신 스키마(데이터베이스) 이름으로 바꿔주세요.
+   url: jdbc:mysql://localhost:3306/test
+   driver-class-name: com.mysql.cj.jdbc.Driver
+   username: root        # MySQL 아이디 (보통 root)
+   password: 1234 # MySQL 설치 시 설정한 비밀번호로 변경하세요!
 
   jpa:
     hibernate:
@@ -45,15 +48,16 @@ portone:
     base-url: https://api.portone.io
     secret: ${PORTONE_API_SECRET:83zJhqvP6vUebfsozbuBTUeMpgepZfhPR5IssODyNwYI0pqofdIDpt2GwgNNLAobP56Wf1YeOW6xiQSY}
   store:
-    id: ${PORTONE_STORE_ID:INIpayTest}
+    id: ${PORTONE_STORE_ID:store-f6bd9fab-9ae2-4dfd-a7e5-5d7b5b800298}
   channel:
     kg-inicis: ${PORTONE_CHANNEL_KG:channel-key-3d7869fd-306a-4597-8f7f-d1c72cc2608c}
     toss: ${PORTONE_CHANNEL_TOSS:your-toss-channel-key}
+  webhook:
+    secret: ${PORTPNE_WEBHOOK_SECRET:whsec_IEyjsd++0+1b/+QrYeDaa+gAfU3htpucGJAqa4hHoT0=}
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET:UjGDxgrzCb9XBOmnXPF6eruETQamJKYSacLEXUz7VV8=}
   token-validity-in-seconds: ${JWT_VALIDITY:86400}  # 24 hours
-
 
 # UI Branding Configuration
 app:

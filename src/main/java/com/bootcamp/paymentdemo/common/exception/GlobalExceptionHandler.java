@@ -1,6 +1,9 @@
 package com.bootcamp.paymentdemo.common.exception;
 
 import com.bootcamp.paymentdemo.common.dto.ErrorResponse;
+import com.bootcamp.paymentdemo.refund.exception.PortOneException;
+import com.bootcamp.paymentdemo.refund.exception.RefundException;
+import com.bootcamp.paymentdemo.point.exception.EarnedPointNotFoundException;
 import com.bootcamp.paymentdemo.user.exception.DuplicateEmailException;
 import com.bootcamp.paymentdemo.user.exception.GradeNotFoundException;
 import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
@@ -72,6 +75,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(RefundException.class)
+    public ResponseEntity<ErrorResponse> handleRefundException(RefundException e) {
+        log.warn("RefundException: {}", e.getMessage());
+        ErrorResponse error = new ErrorResponse(e.getHttpStatus().name(), e.getMessage());
+        return ResponseEntity.status(e.getHttpStatus()).body(error);
+    }
+
+    @ExceptionHandler(PortOneException.class)
+    public  ResponseEntity<ErrorResponse> handlePortOneException(PortOneException e) {
+        log.warn("PortOneException: {}", e.getMessage());
+        ErrorResponse error = new ErrorResponse(e.getHttpStatus().name(), e.getMessage());
+        return ResponseEntity.status(e.getHttpStatus()).body(error);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
         log.warn("IllegalArgumentException: {}", e.getMessage());
@@ -89,4 +106,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
+    // 존재하지 않는 적립금
+    @ExceptionHandler(EarnedPointNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEarnedPointNotFoundException(EarnedPointNotFoundException e) {
+        log.warn("EarnedPointNotFoundException: {}", e.getMessage());
+        ErrorResponse error = new ErrorResponse("EARNED_POINT_NOT_FOUND", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
 }

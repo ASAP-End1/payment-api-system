@@ -5,6 +5,8 @@ import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
 import com.bootcamp.paymentdemo.refund.dto.RefundRequest;
 import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
 import com.bootcamp.paymentdemo.refund.entity.Refund;
+import com.bootcamp.paymentdemo.refund.exception.PortOneException;
+import com.bootcamp.paymentdemo.refund.exception.RefundException;
 import com.bootcamp.paymentdemo.refund.portOne.client.PortOneRefundClient;
 import com.bootcamp.paymentdemo.refund.repository.RefundRepository;
 import jakarta.validation.Valid;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+
+import static com.bootcamp.paymentdemo.refund.consts.ErrorEnum.*;
 
 @Service
 @Slf4j
@@ -28,53 +32,63 @@ public class RefundService {
     @Transactional
     public RefundResponse refundAll(Long id, @Valid RefundRequest refundRequest) {
 
-        Payment payment = paymentRepository.findByIdWithLock(id).orElseThrow(
-                () -> new IllegalArgumentException("에러코드: 설명")
+        Payment lockedPayment = paymentRepository.findByIdWithLock(id).orElseThrow(
+                () -> new RefundException(ERR_PAYMENT_NOT_FOUND)
         );
 
-        validateRefundable(payment);
+        validateRefundable(lockedPayment);
 
         String refundGroupId = "rfnd-grp-" + UUID.randomUUID();
-        Long orderId = payment.getOrder().getId();
+        Long orderId = lockedPayment.getOrder().getId();
 
-        refundHistoryService.saveRequestHistory(payment, refundRequest.getReason(), refundGroupId);
+        refundHistoryService.saveRequestHistory(lockedPayment, refundRequest.getReason(), refundGroupId);
 
         String portOneRefundId = null;
 
         try {
 
-           portOneRefundId = portOneRefundClient.cancelPayment(payment, refundRequest.getReason());
+           portOneRefundId = portOneRefundClient.cancelPayment(lockedPayment, refundRequest.getReason());
 
-            completeRefund(payment, refundRequest.getReason(), portOneRefundId, refundGroupId);
+            completeRefund(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             return RefundResponse.success(orderId);
 
-        } catch (Exception e) {
-            if (portOneRefundId == null) {
-                // PortOne API 호출 실패
-                log.error("PortOne API 호출 실패 - Payment ID: {}, Refund Group ID: {}, Error: {}",
-                        id, refundGroupId, e.getMessage(), e);
-            } else {
-                // 서버 처리 실패
-                log.error("서버 처리 실패 - Payment ID: {}, PortOne Refund ID: {}, Error: {}",
-                        id, portOneRefundId, e.getMessage(), e);
-            }
-            refundHistoryService.saveFailHistory(payment, refundRequest.getReason(), portOneRefundId, refundGroupId);
+        } catch (PortOneException e) {
+            log.error("PortOne API 호출 실패 - Payment ID: {}, Refund Group ID: {}", id, refundGroupId, e);
+
+            refundHistoryService.saveFailHistory(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             return RefundResponse.fail(orderId);
+
+        } catch (Exception e) {
+            log.error("서버 내부 오류 발생 - Payment ID: {}, Refund Group ID: {}",  id, refundGroupId, e);
+
+            refundHistoryService.saveFailHistory(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
+
+            throw e;
         }
 
     }
 
     // 환불 가능 상태 검증
     private void validateRefundable(Payment payment) {
+
+        if(payment.getOrder().isCanceled()) {
+            throw new RefundException(ERR_REFUND_ALREADY_PROCESSED);
+        }
+
+        if(payment.isRefund()) {
+            throw new RefundException(ERR_REFUND_ALREADY_PROCESSED);
+        }
+
         if(!payment.getOrder().isAwaitingConfirmation()) {
-            throw new IllegalArgumentException("에러코드: 설명");
+            throw new RefundException(ERR_REFUND_INVALID_STATUS);
         }
 
         if(!payment.isCompleted()) {
-            throw new IllegalArgumentException(("에러코드: 설명"));
+            throw new RefundException(ERR_REFUND_INVALID_STATUS);
         }
+
     }
 
     // 환불 완료 이력 저장

@@ -39,4 +39,11 @@ public class OrderController {
         log.info("주문 상세 조회 요청 - 주문번호: {}", orderId);
         return ResponseEntity.status(HttpStatus.OK).body(orderService.findOrderDetail(orderId));
     }
+
+    @PatchMapping("/{orderId}/confirm")
+    public ResponseEntity<Void> confirmOrder(@PathVariable("orderId") Long orderId){
+        log.info("주문 수동 확정 요청 - 주문번호: {}", orderId);
+        orderService.confirmOrder(orderId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }
