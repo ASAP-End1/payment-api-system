@@ -114,7 +114,6 @@ public class RefundService {
 
         // 포인트 복구 및 적립 취소
         pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());
-        pointService.cancelEarnedPoints(payment.getOrder().getUser(), payment.getOrder());
 
         // 상품 재고 복구
         List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(payment.getOrder().getId());
