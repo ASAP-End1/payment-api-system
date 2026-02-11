@@ -2,6 +2,8 @@ package com.bootcamp.paymentdemo.membership.service;
 
 import com.bootcamp.paymentdemo.membership.entity.Membership;
 import com.bootcamp.paymentdemo.membership.entity.MembershipGrade;
+import com.bootcamp.paymentdemo.membership.exception.MembershipNotFoundException;
+import com.bootcamp.paymentdemo.membership.exception.UserPaidAmountNotFoundException;
 import com.bootcamp.paymentdemo.membership.repository.MembershipRepository;
 import com.bootcamp.paymentdemo.user.entity.User;
 import com.bootcamp.paymentdemo.user.entity.UserGradeHistory;
@@ -44,15 +46,15 @@ public class MembershipService {
         if (totalPaidAmount.compareTo(VVIP_MIN) >= 0) {
             // 15만원 이상 - VVIP
             return membershipRepository.findByGradeName(MembershipGrade.VVIP).orElseThrow(
-                    () -> new IllegalArgumentException("VVIP 등급을 찾을 수 없습니다"));
+                    () -> new MembershipNotFoundException("VVIP 등급을 찾을 수 없습니다"));
         } else if (totalPaidAmount.compareTo(NORMAL_MAX) > 0 && totalPaidAmount.compareTo(VIP_MAX) <= 0) {
             // 5만원 초과 ~ 149999원 이하 - VIP
             return membershipRepository.findByGradeName(MembershipGrade.VIP).orElseThrow(
-                    () -> new IllegalArgumentException("VIP 등급을 찾을 수 없습니다"));
+                    () -> new MembershipNotFoundException("VIP 등급을 찾을 수 없습니다"));
         } else {
             // 5만원 이하 - NORMAL
             return membershipRepository.findByGradeName(MembershipGrade.NORMAL).orElseThrow(
-                    () -> new IllegalArgumentException("NORMAL 등급을 찾을 수 없습니다"));
+                    () -> new MembershipNotFoundException("NORMAL 등급을 찾을 수 없습니다"));
         }
     }
 
@@ -66,7 +68,7 @@ public class MembershipService {
         );
 
         UserPaidAmount userPaidAmount = userPaidAmountRepository.findByUserId(userId).orElseThrow(
-                () -> new IllegalStateException("총 결제 금액 정보를 찾을 수 없습니다")
+                () -> new UserPaidAmountNotFoundException("총 결제 금액 정보를 찾을 수 없습니다")
         );
 
         BigDecimal totalPaidAmount = userPaidAmount.getTotalPaidAmount();
@@ -116,7 +118,7 @@ public class MembershipService {
     public void handlePaymentCompleted(Long userId, BigDecimal totalAmount, Long paymentId) {
 
         UserPaidAmount userPaidAmount = userPaidAmountRepository.findByUserId(userId).orElseThrow(
-                () -> new IllegalStateException("총 결제 금액 정보를 찾을 수 없습니다")
+                () -> new UserPaidAmountNotFoundException("총 결제 금액 정보를 찾을 수 없습니다")
         );
 
         userPaidAmount.addPaidAmount(totalAmount);
@@ -142,7 +144,7 @@ public class MembershipService {
     public void handleRefund(Long userId, BigDecimal refundAmount, Long paymentId) {
 
         UserPaidAmount userPaidAmount = userPaidAmountRepository.findByUserId(userId).orElseThrow(
-                () -> new IllegalStateException("총 결제 금액 정보를 찾을 수 없습니다")
+                () -> new UserPaidAmountNotFoundException("총 결제 금액 정보를 찾을 수 없습니다")
         );
 
         userPaidAmount.subtractPaidAmount(refundAmount);
