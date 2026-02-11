@@ -110,7 +110,6 @@ public class RefundService {
 
         // 결제 및 주문 상태 변경
         payment.refund();
-        payment.getOrder().cancel();
 
         // 포인트 복구 및 적립 취소
         pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());

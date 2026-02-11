@@ -9,6 +9,7 @@ import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.point.service.PointService;
 import com.bootcamp.paymentdemo.product.entity.Product;
 import com.bootcamp.paymentdemo.product.repository.ProductRepository;
+import com.bootcamp.paymentdemo.product.service.ProductService;
 import com.bootcamp.paymentdemo.user.entity.User;
 import com.bootcamp.paymentdemo.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -36,6 +37,7 @@ public class OrderService {
     private final OrderProductRepository orderProductRepository;
     private final UserRepository userRepository;
     private final PointService pointService;
+    private final ProductService productService;
 
     @Transactional
     public OrderCreateResponse createOrder(OrderCreateRequest request) {
@@ -100,7 +102,15 @@ public class OrderService {
 
         orderProductRepository.saveAll(orderProducts);
 
-        // 8. 응답 반환 (모든 포인트 정보 포함)
+        // 8. 재고 차감
+        for (OrderProduct orderProduct : orderProducts) {
+            productService.decreaseStock(orderProduct.getProductId(), orderProduct.getCount());
+        }
+
+        log.info("재고 차감 완료: orderId={}, 상품 수={}", order.getId(), orderProducts.size());
+
+        // 9. 응답 반환 (모든 포인트 정보 포함)
+        // 포인트는 결제 완료 시점에 차감됨
         return new OrderCreateResponse(
                 order.getId(),
                 order.getOrderNumber(),
@@ -174,6 +184,19 @@ public class OrderService {
 
         log.info("결제 완료 처리: orderId={}, orderNumber={}, 현재 상태={}",
             orderId, order.getOrderNumber(), order.getOrderStatus());
+
+        // 3. 포인트 처리
+        User user = order.getUser();
+
+        // 3-1. 포인트 사용 (차감) - PointService에서 사용 가능한 포인트만큼만 차감
+        if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
+            pointService.usePoints(user, order);
+        }
+
+        // 3-2. 포인트 적립
+        pointService.earnPoints(user, order);
+        log.info("포인트 적립 완료: userId={}, orderId={}, 적립 포인트={}",
+            user.getUserId(), orderId, order.getEarnedPoints());
     }
 
     // 주문 수동 확정
@@ -202,6 +225,23 @@ public class OrderService {
 
         log.info("주문 취소 완료: orderId={}, orderNumber={}, 현재 상태={}, 취소 사유={}",
             orderId, order.getOrderNumber(), order.getOrderStatus(), cancelReason);
+
+        // 3. 포인트 처리
+        User user = order.getUser();
+
+        // 3-1. 사용한 포인트 복구
+        if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
+            pointService.refundPoints(user, order);
+            log.info("사용 포인트 복구 완료: userId={}, orderId={}, 복구 포인트={}",
+                user.getUserId(), orderId, order.getUsedPoints());
+        }
+
+        // 3-2. 적립된 포인트 취소 (결제 완료된 주문만)
+        if (order.getOrderStatus() == OrderStatus.CANCELLED && order.getEarnedPoints().compareTo(BigDecimal.ZERO) > 0) {
+            pointService.cancelEarnedPoints(user, order);
+            log.info("적립 포인트 취소 완료: userId={}, orderId={}, 취소 포인트={}",
+                user.getUserId(), orderId, order.getEarnedPoints());
+        }
     }
 
     // ----------
