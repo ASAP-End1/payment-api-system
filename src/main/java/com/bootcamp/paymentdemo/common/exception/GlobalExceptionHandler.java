@@ -5,7 +5,6 @@ import com.bootcamp.paymentdemo.membership.exception.MembershipNotFoundException
 import com.bootcamp.paymentdemo.membership.exception.UserPaidAmountNotFoundException;
 import com.bootcamp.paymentdemo.refund.exception.PortOneException;
 import com.bootcamp.paymentdemo.refund.exception.RefundException;
-import com.bootcamp.paymentdemo.point.exception.EarnedPointNotFoundException;
 import com.bootcamp.paymentdemo.user.exception.DuplicateEmailException;
 import com.bootcamp.paymentdemo.user.exception.GradeNotFoundException;
 import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
@@ -106,14 +105,6 @@ public class GlobalExceptionHandler {
                 "서버 내부 오류가 발생했습니다."
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
-
-    // 존재하지 않는 적립금
-    @ExceptionHandler(EarnedPointNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleEarnedPointNotFoundException(EarnedPointNotFoundException e) {
-        log.warn("EarnedPointNotFoundException: {}", e.getMessage());
-        ErrorResponse error = new ErrorResponse("EARNED_POINT_NOT_FOUND", e.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     // 특정 멤버십 등급이 존재하지 않는 경우

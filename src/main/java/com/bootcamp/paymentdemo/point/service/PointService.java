@@ -6,7 +6,6 @@ import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.entity.PointTransaction;
 import com.bootcamp.paymentdemo.point.consts.PointType;
 import com.bootcamp.paymentdemo.point.entity.PointUsage;
-import com.bootcamp.paymentdemo.point.exception.EarnedPointNotFoundException;
 import com.bootcamp.paymentdemo.point.repository.PointRepository;
 import com.bootcamp.paymentdemo.point.repository.PointUsageRepository;
 import com.bootcamp.paymentdemo.user.entity.User;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 
 @Slf4j
@@ -130,9 +128,8 @@ public class PointService {
     // 포인트 적립
     @Transactional
     public void earnPoints(User user, Order order) {
-        // 사용자의 멤버십 등급에 따라 적립할 포인트 계산
-        BigDecimal pointsToEarn = order.getFinalAmount().multiply(user.getCurrentGrade().getAccRate())
-                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+        // 주문의 적립 포인트
+        BigDecimal pointsToEarn = order.getEarnedPoints();
 
         // 적립 포인트 내역 PointTransaction에 저장
         PointTransaction earnedTransaction = new PointTransaction(
