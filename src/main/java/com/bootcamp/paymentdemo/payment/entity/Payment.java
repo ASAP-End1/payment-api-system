@@ -57,6 +57,7 @@ public class Payment extends BaseEntity {
     public void completePayment(String paymentId) {
         this.paymentId = paymentId;
         this.status = PaymentStatus.PAID;
+        order.completePayment();
     }
 
     public boolean isAlreadyProcessed() {
