@@ -24,36 +24,12 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 이메일 중복
-    @ExceptionHandler(DuplicateEmailException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateEmailException(DuplicateEmailException e) {
-        log.warn("DuplicateEmailException: {}", e.getMessage());
-        ErrorResponse error = new ErrorResponse("DUPLICATE_EMAIL", e.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-    // 이메일 or 비밀번호 불일치
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException e) {
-        log.warn("InvalidCredentialsException: {}", e.getMessage());
-        ErrorResponse error = new ErrorResponse("INVALID_CREDENTIALS", e.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-    }
-
-    // 존재하지 않는 사용자
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException e) {
-        log.warn("UserNotFoundException: {}", e.getMessage());
-        ErrorResponse error = new ErrorResponse("USER_NOT_FOUND", e.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    // 사용자의 멤버십 등급 찾지 못하는 경우
-    @ExceptionHandler(GradeNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleGradeNotFoundException(GradeNotFoundException e) {
-        log.error("GradeNotFoundException: {}", e.getMessage());
-        ErrorResponse error = new ErrorResponse("GRADE_NOT_FOUND", e.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    // 모든 예외 ServiceException 하나로 처리
+    @ExceptionHandler(ServiceException.class)
+    public ResponseEntity<ErrorResponse> handleServiceException(ServiceException e) {
+        log.warn("{}: {}", e.getClass().getSimpleName(), e.getMessage());
+        ErrorResponse error = new ErrorResponse(e.getCode(), e.getMessage());
+        return ResponseEntity.status(e.getStatus()).body(error);
     }
 
     // 입력값 검증 실패

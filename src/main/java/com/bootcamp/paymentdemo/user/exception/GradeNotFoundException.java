@@ -1,7 +1,10 @@
 package com.bootcamp.paymentdemo.user.exception;
 
-public class GradeNotFoundException extends RuntimeException {
+import com.bootcamp.paymentdemo.common.exception.ServiceException;
+import org.springframework.http.HttpStatus;
+
+public class GradeNotFoundException extends ServiceException {
     public GradeNotFoundException(String message) {
-        super(message);
+        super("GRADE_NOT_FOUND", message, HttpStatus.NOT_FOUND);
     }
 }
