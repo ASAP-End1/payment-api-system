@@ -1,10 +1,10 @@
 package com.bootcamp.paymentdemo.refund.service;
 
-import com.bootcamp.paymentdemo.order.service.OrderService;
 import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
 import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
 import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
+import com.bootcamp.paymentdemo.point.service.PointService;
 import com.bootcamp.paymentdemo.product.service.ProductService;
 import com.bootcamp.paymentdemo.refund.dto.RefundRequest;
 import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
@@ -33,9 +33,9 @@ public class RefundService {
     private final RefundHistoryService refundHistoryService;
     private final PaymentRepository paymentRepository;
     private final PortOneRefundClient portOneRefundClient;
-    private final OrderProductRepository orderProductRepository;
-    private final ProductService productService;
-    private final OrderService orderService;
+    private final ProductService  productService;
+    private final PointService  pointService;
+    private final OrderProductRepository  orderProductRepository;
 
     @Transactional
     public RefundResponse refundAll(Long id, @Valid RefundRequest refundRequest) {
@@ -99,27 +99,26 @@ public class RefundService {
 
     }
 
-    // 환불 완료 이력 저장
+    // 환불 완료 로직
     private void completeRefund(Payment payment, String reason, String portOneRefundId, String refundGroupId) {
         Refund completedRefund = Refund.createCompleted(
                 payment, payment.getTotalAmount(), reason,  portOneRefundId,  refundGroupId
         );
 
+        // 환불 완료 이력 저장
         refundRepository.save(completedRefund);
 
+        // 결제 및 주문 상태 변경
         payment.refund();
 
-        // 주문 취소 및 재고 복구
-        Long orderId = payment.getOrder().getId();
-        orderService.cancelOrder(orderId, reason);
+        // 포인트 복구 및 적립 취소
+        pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());
 
-        List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(orderId);
+        // 상품 재고 복구
+        List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(payment.getOrder().getId());
 
-        for (OrderProduct orderProduct : orderProducts) {
-            productService.increaseStock(orderProduct.getProductId(), orderProduct.getCount());
-        }
-
-        log.info("환불 완료: 주문 취소 및 재고 복구 완료 - orderId={}, 상품 수={}", orderId, orderProducts.size());
-
+        orderProducts.forEach(orderProduct ->
+                productService.increaseStock(orderProduct.getProductId(), orderProduct.getCount())
+        );
     }
 }
