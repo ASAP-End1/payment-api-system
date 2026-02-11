@@ -1,6 +1,7 @@
 package com.bootcamp.paymentdemo.payment.entity;
 
 import com.bootcamp.paymentdemo.common.BaseEntity;
+import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
 import jakarta.persistence.*;
