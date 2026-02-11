@@ -115,7 +115,7 @@ public class MembershipService {
     // 주문 확정 시 총 결제 금액 증가 & 등급 업데이트
     // userId, orderAmount(포인트 차감 후 금액-finalAmount), orderId(등급 변경을 발생시킨 주문 id)
     @Transactional
-    public void handlePaymentCompleted(Long userId, BigDecimal orderAmount, Long orderId) {
+    public void handleOrderCompleted(Long userId, BigDecimal orderAmount, Long orderId) {
 
         UserPaidAmount userPaidAmount = userPaidAmountRepository.findByUserId(userId).orElseThrow(
                 () -> new UserPaidAmountNotFoundException("총 결제 금액 정보를 찾을 수 없습니다")
