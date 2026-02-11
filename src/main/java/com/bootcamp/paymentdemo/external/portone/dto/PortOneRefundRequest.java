@@ -6,7 +6,5 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class PortOneRefundRequest {
-
-    private String storeId;
     private String reason;
 }

@@ -1,5 +1,9 @@
 package com.bootcamp.paymentdemo.refund.service;
 
+import com.bootcamp.paymentdemo.external.portone.client.PortOneClient;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOneRefundRequest;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOneRefundResponse;
+import com.bootcamp.paymentdemo.external.portone.error.PortOneErrorCase;
 import com.bootcamp.paymentdemo.membership.service.MembershipService;
 import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
 import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
@@ -12,11 +16,11 @@ import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
 import com.bootcamp.paymentdemo.refund.entity.Refund;
 import com.bootcamp.paymentdemo.external.portone.exception.PortOneException;
 import com.bootcamp.paymentdemo.refund.exception.RefundException;
-import com.bootcamp.paymentdemo.external.portone.client.PortOneRefundClient;
 import com.bootcamp.paymentdemo.refund.repository.RefundRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +37,7 @@ public class RefundService {
     private final RefundRepository refundRepository;
     private final RefundHistoryService refundHistoryService;
     private final PaymentRepository paymentRepository;
-    private final PortOneRefundClient portOneRefundClient;
+    private final PortOneClient portOneClient;
     private final ProductService  productService;
     private final PointService  pointService;
     private final OrderProductRepository  orderProductRepository;
@@ -57,7 +61,13 @@ public class RefundService {
 
         try {
 
-           portOneRefundId = portOneRefundClient.cancelPayment(lockedPayment, refundRequest.getReason());
+            PortOneRefundRequest portOneRefundRequest = new PortOneRefundRequest(refundRequest.getReason());
+
+            PortOneRefundResponse portOnePaymentResponse = portOneClient.refundPayment(lockedPayment.getPaymentId(), portOneRefundRequest);
+
+            validatePortOneResponse(portOnePaymentResponse);
+
+            portOneRefundId = portOnePaymentResponse.getCancellation().getId();
 
             completeRefund(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
@@ -113,7 +123,7 @@ public class RefundService {
         // 결제 및 주문 상태 변경
         payment.refund();
 
-        // 포인트 복구 및 적립 취소
+        // 포인트 복구
         pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());
 
         // 상품 재고 복구
@@ -129,5 +139,26 @@ public class RefundService {
                 payment.getOrder().getFinalAmount(),
                 payment.getOrder().getId()
         );
+    }
+
+    private void validatePortOneResponse(PortOneRefundResponse response) {
+        if (response == null || response.getCancellation() == null) {
+            throw new PortOneException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "PortOne 응답이 비어있습니다"
+            );
+        }
+        if (!"SUCCEEDED".equals(response.getCancellation().getStatus())) {
+
+            HttpStatus status =
+                    PortOneErrorCase.caseToHttpStatus(
+                            response.getCancellation().getType()
+                    );
+
+            throw new PortOneException(
+                    status,
+                    response.getCancellation().getMessage()
+            );
+        }
     }
 }
