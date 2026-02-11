@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.controller;
 
+import com.bootcamp.paymentdemo.common.dto.ApiResponse;
 import com.bootcamp.paymentdemo.user.dto.*;
 import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
 import com.bootcamp.paymentdemo.user.service.UserService;
@@ -46,14 +47,20 @@ public class AuthController {
      * Response Body:
      * {
      *   "success": true,
-     *   "message": null
+     *   "code": "CREATED",
+     *   "message": "회원가입 성공",
+     *   "data": {
+     *       "userId": 1,
+     *       "email": "user@example.com"
+     *   }
      * }
      */
     @PostMapping("/signup")
-    public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
         log.info("회원가입 요청: email={}", request.getEmail());
         SignupResponse response = userService.signup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(HttpStatus.CREATED, "회원가입 성공", response));
     }
 
 
@@ -73,12 +80,16 @@ public class AuthController {
      * 응답 본문:
      * {
      *   "success": true,
-     *   "email": "user@example.com"
+     *   "code": "OK",
+     *   "message": "로그인 성공",
+     *   "data": {
+     *       "email": "user@example.com"
+     *   }
      * }
      */
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         log.info("로그인 요청: email={}", request.getEmail());
 
         try {
@@ -94,7 +105,7 @@ public class AuthController {
             // UserService에 토큰 생성 위임
             UserService.TokenPair tokenPair = userService.login(email);
 
-            LoginResponse response = LoginResponse.success(tokenPair.email, tokenPair.accessToken);
+            LoginResponse response = new LoginResponse(tokenPair.email, tokenPair.accessToken);
 
             // Authorization 헤더에 Access Token 포함
             HttpHeaders headers = new HttpHeaders();
@@ -113,7 +124,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.OK)
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .headers(headers)
-                    .body(response);
+                    .body(ApiResponse.success(HttpStatus.OK, "로그인 성공", response));
 
         } catch (AuthenticationException e) {
             // 인증 실패
@@ -134,15 +145,16 @@ public class AuthController {
      * Response Body:
      * {
      *   "success": true,
+     *   "code": "OK",
      *   "message": "로그아웃되었습니다."
+     *   "data": null
      * }
      */
     @PostMapping("/logout")
-    public ResponseEntity<LogoutResponse> logout(Principal principal) {
+    public ResponseEntity<ApiResponse<Void>> logout(Principal principal) {
         log.info("로그아웃 요청: email={}", principal.getName());
 
-        // LogoutResponse 반환
-        LogoutResponse response = userService.logout(principal.getName());
+        userService.logout(principal.getName());
 
         // Refresh Token 쿠키 삭제
         ResponseCookie deleteCookie = ResponseCookie
@@ -153,7 +165,9 @@ public class AuthController {
                 .maxAge(0)  // 즉시 삭제
                 .build();
 
-        return ResponseEntity.status(HttpStatus.OK).header(HttpHeaders.SET_COOKIE, deleteCookie.toString()).body(response);
+        return ResponseEntity.status(HttpStatus.OK)
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body(ApiResponse.success(HttpStatus.OK, "로그아웃되었습니다.", null));
     }
 
 
@@ -164,20 +178,24 @@ public class AuthController {
      * 응답:
      * {
      *   "success": true,
-     *   "email": "user@example.com",
-     *   "customerUid": "CUST_xxxxx",
-     *   "name": "홍길동"
+     *   "code": "OK",
+     *   "message": "사용자 조회 성공",
+     *   "data": {
+     *       "email": "user@example.com",
+     *       "customerUid": "CUST_xxxxx",
+     *       "name": "홍길동"
+     *   }
      * }
      *
      * 중요: customerUid는 PortOne 빌링키 발급 시 활용!
      */
     @GetMapping("/me")
-    public ResponseEntity<UserSearchResponse> getCurrentUser(Principal principal) {
+    public ResponseEntity<ApiResponse<UserSearchResponse>> getCurrentUser(Principal principal) {
         log.info("현재 사용자 조회: email={}", principal.getName());
 
         UserSearchResponse response = userService.getCurrentUser(principal.getName());
 
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, "사용자 조회 성공", response));
     }
-
 }
