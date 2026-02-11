@@ -1,16 +1,10 @@
 package com.bootcamp.paymentdemo.refund.exception;
 
-import lombok.Getter;
+import com.bootcamp.paymentdemo.common.exception.ServiceException;
 import org.springframework.http.HttpStatus;
 
-@Getter
-public class PortOneException  extends RuntimeException {
-
-    private final HttpStatus httpStatus;
-
-    public PortOneException (HttpStatus type, String message) {
-
-        super(message);
-        this.httpStatus = type;
+public class PortOneException  extends ServiceException {
+    public PortOneException (HttpStatus status, String message) {
+        super(status.name(), message, status);
     }
 }
