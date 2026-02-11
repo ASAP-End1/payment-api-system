@@ -1,11 +1,11 @@
-package com.bootcamp.paymentdemo.refund.portOne.client;
+package com.bootcamp.paymentdemo.external.portone.client;
 
 import com.bootcamp.paymentdemo.config.PortOneProperties;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
-import com.bootcamp.paymentdemo.refund.exception.PortOneException;
-import com.bootcamp.paymentdemo.refund.portOne.dto.PortOneCancelRequest;
-import com.bootcamp.paymentdemo.refund.portOne.dto.PortOneCancelResponse;
-import com.bootcamp.paymentdemo.refund.portOne.util.PortOneErrorCase;
+import com.bootcamp.paymentdemo.external.portone.exception.PortOneException;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOneRefundRequest;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOneRefundResponse;
+import com.bootcamp.paymentdemo.external.portone.error.PortOneErrorCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -34,23 +34,23 @@ public class PortOneRefundClient {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "PortOne " + portOneProperties.getApi().getSecret());
 
-        PortOneCancelRequest portOneCancelRequest = new PortOneCancelRequest(
+        PortOneRefundRequest portOneCancelRequest = new PortOneRefundRequest(
                 portOneProperties.getStore().getId(),
                 reason
         );
 
-        HttpEntity<PortOneCancelRequest> request = new HttpEntity<>(portOneCancelRequest, headers);
+        HttpEntity<PortOneRefundRequest> request = new HttpEntity<>(portOneCancelRequest, headers);
 
         try {
-            ResponseEntity<PortOneCancelResponse> response = restTemplate.exchange(url, HttpMethod.POST, request, PortOneCancelResponse.class);
+            ResponseEntity<PortOneRefundResponse> response = restTemplate.exchange(url, HttpMethod.POST, request, PortOneRefundResponse.class);
 
-            PortOneCancelResponse portOneCancelResponse = response.getBody();
+            PortOneRefundResponse portOneCancelResponse = response.getBody();
 
             if (portOneCancelResponse == null || portOneCancelResponse.getCancellation() == null) {
                 throw new PortOneException(HttpStatus.INTERNAL_SERVER_ERROR, "PortOne API 응답이 올바르지 않습니다");
             }
 
-            PortOneCancelResponse.PaymentCancellation paymentCancellation = portOneCancelResponse.getCancellation();
+            PortOneRefundResponse.PaymentCancellation paymentCancellation = portOneCancelResponse.getCancellation();
 
             if (!"SUCCEEDED".equals(paymentCancellation.getStatus())) {
                 HttpStatus httpStatus = PortOneErrorCase.caseToHttpStatus(paymentCancellation.getType());

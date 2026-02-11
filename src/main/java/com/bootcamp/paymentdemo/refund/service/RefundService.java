@@ -9,9 +9,9 @@ import com.bootcamp.paymentdemo.product.service.ProductService;
 import com.bootcamp.paymentdemo.refund.dto.RefundRequest;
 import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
 import com.bootcamp.paymentdemo.refund.entity.Refund;
-import com.bootcamp.paymentdemo.refund.exception.PortOneException;
+import com.bootcamp.paymentdemo.external.portone.exception.PortOneException;
 import com.bootcamp.paymentdemo.refund.exception.RefundException;
-import com.bootcamp.paymentdemo.refund.portOne.client.PortOneRefundClient;
+import com.bootcamp.paymentdemo.external.portone.client.PortOneRefundClient;
 import com.bootcamp.paymentdemo.refund.repository.RefundRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -110,7 +110,6 @@ public class RefundService {
 
         // 결제 및 주문 상태 변경
         payment.refund();
-        payment.getOrder().cancel();
 
         // 포인트 복구
         pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());

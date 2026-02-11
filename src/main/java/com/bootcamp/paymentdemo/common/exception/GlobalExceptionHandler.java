@@ -1,9 +1,10 @@
 package com.bootcamp.paymentdemo.common.exception;
 
 import com.bootcamp.paymentdemo.common.dto.ErrorResponse;
-import com.bootcamp.paymentdemo.refund.exception.PortOneException;
+import com.bootcamp.paymentdemo.membership.exception.MembershipNotFoundException;
+import com.bootcamp.paymentdemo.membership.exception.UserPaidAmountNotFoundException;
+import com.bootcamp.paymentdemo.external.portone.exception.PortOneException;
 import com.bootcamp.paymentdemo.refund.exception.RefundException;
-import com.bootcamp.paymentdemo.point.exception.EarnedPointNotFoundException;
 import com.bootcamp.paymentdemo.user.exception.DuplicateEmailException;
 import com.bootcamp.paymentdemo.user.exception.GradeNotFoundException;
 import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
@@ -106,11 +107,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
-    // 존재하지 않는 적립금
-    @ExceptionHandler(EarnedPointNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleEarnedPointNotFoundException(EarnedPointNotFoundException e) {
-        log.warn("EarnedPointNotFoundException: {}", e.getMessage());
-        ErrorResponse error = new ErrorResponse("EARNED_POINT_NOT_FOUND", e.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    // 특정 멤버십 등급이 존재하지 않는 경우
+    @ExceptionHandler(MembershipNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleMembershipNotFoundException(MembershipNotFoundException e) {
+        log.error("MembershipNotFoundException: {}", e.getMessage());
+        ErrorResponse error = new ErrorResponse("MEMBERSHIP_NOT_FOUND", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    // 사용자의 총 결제 금액 정보가 존재하지 않는 경우
+    @ExceptionHandler(UserPaidAmountNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserPaidAmountNotFoundException(UserPaidAmountNotFoundException e) {
+        log.error("UserPaidAmountNotFoundException: {}", e.getMessage());
+        ErrorResponse error = new ErrorResponse("USER_PAID_AMOUNT_NOT_FOUND", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 }
