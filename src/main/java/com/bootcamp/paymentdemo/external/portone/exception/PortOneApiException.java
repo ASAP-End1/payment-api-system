@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.external.portone;
+package com.bootcamp.paymentdemo.external.portone.exception;
 
 public class PortOneApiException extends RuntimeException {
     public PortOneApiException(String type, String message, int status) {

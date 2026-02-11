@@ -4,10 +4,7 @@ import com.bootcamp.paymentdemo.common.BaseEntity;
 import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -37,6 +34,8 @@ public class Order extends BaseEntity {
     @Column(name = "final_amount", nullable = false, precision = 18, scale = 2)
     private BigDecimal finalAmount; // 포인트 차감 후
 
+    // [추가 요청] 적립 예정 포인트 기록 (선택 사항이지만 데이터 정합성을 위해 권장)
+    @Setter
     @Column(name = "earned_points", nullable = false, precision = 18, scale = 2)
     private BigDecimal earnedPoints;
 
@@ -97,4 +96,19 @@ public class Order extends BaseEntity {
     public boolean isCanceled() {
         return this.orderStatus == OrderStatus.CANCELLED;
     }
+
+    // 포인트를 사용하기 위해서 구현한 로직 <- 윤민기
+    public void applyPointDiscount(BigDecimal usagePoints) {
+        if (usagePoints == null) {
+            usagePoints = BigDecimal.ZERO;
+        }
+
+        if (usagePoints.compareTo(this.totalAmount) > 0) {
+            throw new IllegalArgumentException("포인트 사용액은 결제 총액을 초과할 수 없습니다.");
+        }
+
+        this.usedPoints = usagePoints;
+        this.finalAmount = this.totalAmount.subtract(usagePoints);
+    }
+
 }

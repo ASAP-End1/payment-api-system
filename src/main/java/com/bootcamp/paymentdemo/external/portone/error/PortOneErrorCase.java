@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.refund.portOne.util;
+package com.bootcamp.paymentdemo.external.portone.error;
 
 import org.springframework.http.HttpStatus;
 
