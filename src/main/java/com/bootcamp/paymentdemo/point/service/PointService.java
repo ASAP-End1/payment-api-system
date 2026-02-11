@@ -145,29 +145,6 @@ public class PointService {
         log.info("포인트 적립 완료: userId={}, orderId={}, 적립 포인트={}", user.getUserId(), order.getId(), pointsToEarn);
     }
 
-    // 포인트 적립 취소
-    @Transactional
-    public void cancelEarnedPoints(User user, Order order) {
-        // 해당 주문에서 적립된 포인트 조회
-        PointTransaction earnedTransaction = pointRepository.findByOrderIdAndType(order.getId(), PointType.EARNED).orElseThrow(
-                () -> new EarnedPointNotFoundException("적립금이 존재하지 않습니다.")
-        );
-        BigDecimal earnedPoints = earnedTransaction.getAmount();
-
-        // remainingAmount 0으로 변경
-        earnedTransaction.deduct(earnedTransaction.getRemainingAmount());
-
-        // 적립 취소 내역 PointTransaction에 저장
-        PointTransaction canceledTransaction = new PointTransaction(
-                user, order, earnedPoints.negate(), PointType.CANCELED);
-        pointRepository.save(canceledTransaction);
-
-        // 스냅샷 업데이트
-        updatePointBalance(user, earnedPoints.negate());
-
-        log.info("포인트 적립 취소 완료: userId={}, orderId={}, 취소 포인트={}", user.getUserId(), order.getId(), earnedPoints);
-    }
-
     // 포인트 소멸
     @Transactional
     public void expirePoints() {
