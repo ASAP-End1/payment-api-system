@@ -94,15 +94,25 @@ public class PointService {
             if (remaining.compareTo(BigDecimal.ZERO) == 0) break;
         }
 
-        // 사용 포인트 내역 PointTransaction에 저장
-        PointTransaction spentTransaction = new PointTransaction(
-                user, order, usedPoints.negate(), PointType.SPENT);
-        pointRepository.save(spentTransaction);
+        // 실제 사용된 포인트 계산
+        BigDecimal actualUsedPoints = usedPoints.subtract(remaining);
 
-        // 스냅샷 업데이트
-        updatePointBalance(user, usedPoints.negate());
+        // 실제 사용된 포인트만큼만 기록
+        if (actualUsedPoints.compareTo(BigDecimal.ZERO) > 0) {
+            // 사용 포인트 내역 PointTransaction에 저장
+            PointTransaction spentTransaction = new PointTransaction(
+                    user, order, actualUsedPoints.negate(), PointType.SPENT);
+            pointRepository.save(spentTransaction);
 
-        log.info("포인트 사용 완료: userId={}, orderId={}, 사용 포인트={}", user.getUserId(), order.getId(), usedPoints);
+            // 스냅샷 업데이트
+            updatePointBalance(user, actualUsedPoints.negate());
+
+            log.info("포인트 사용 완료: userId={}, orderId={}, 요청 포인트={}, 실제 사용={}",
+                user.getUserId(), order.getId(), usedPoints, actualUsedPoints);
+        } else {
+            log.warn("사용 가능한 포인트 없음: userId={}, orderId={}, 요청 포인트={}",
+                user.getUserId(), order.getId(), usedPoints);
+        }
     }
 
     // 포인트 복구
