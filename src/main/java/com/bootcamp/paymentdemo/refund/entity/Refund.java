@@ -1,6 +1,7 @@
 package com.bootcamp.paymentdemo.refund.entity;
 
 import com.bootcamp.paymentdemo.payment.entity.Payment;
+import com.bootcamp.paymentdemo.refund.consts.RefundStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

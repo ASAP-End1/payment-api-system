@@ -1,6 +1,6 @@
 package com.bootcamp.paymentdemo.refund.dto;
 
-import com.bootcamp.paymentdemo.refund.entity.RefundStatus;
+import com.bootcamp.paymentdemo.refund.consts.RefundStatus;
 import lombok.Builder;
 import lombok.Getter;
 
