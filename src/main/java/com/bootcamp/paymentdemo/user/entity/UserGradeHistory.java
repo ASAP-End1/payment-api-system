@@ -35,8 +35,8 @@ public class UserGradeHistory {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "trigger_payment_id")
-    private Long triggerPaymentId;   // 등급 변경을 발생시킨 결제 id
+    @Column(name = "trigger_order_id")
+    private Long triggerOrderId;   // 등급 변경을 발생시킨 주문 id
 
     @Column(name = "reason", length = 100)
     private String reason;
@@ -57,7 +57,7 @@ public class UserGradeHistory {
             User user,
             Membership fromGrade,
             Membership toGrade,
-            Long triggerPaymentId,
+            Long triggerOrderId,
             String reason
     ) {
         UserGradeHistory history = new UserGradeHistory();
@@ -65,7 +65,7 @@ public class UserGradeHistory {
         history.fromGrade = fromGrade;
         history.toGrade = toGrade;
         history.updatedAt = LocalDateTime.now();
-        history.triggerPaymentId = triggerPaymentId;
+        history.triggerOrderId = triggerOrderId;
         history.reason = reason;
         return history;
     }

@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.order.scheduler;
 
+import com.bootcamp.paymentdemo.membership.service.MembershipService;
 import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.order.repository.OrderRepository;
@@ -20,6 +21,7 @@ public class OrderScheduler {
 
     private final OrderRepository orderRepository;
     private final PointService pointService;
+    private final MembershipService membershipService;
 
     // 시간이 지나면 자동 확정
     @Scheduled(cron = "0 * * * * *") // 매 분 0초 마다 실행
@@ -39,6 +41,11 @@ public class OrderScheduler {
             try {
                 order.confirm();
                 pointService.earnPoints(order.getUser(), order);
+                membershipService.handleOrderCompleted(
+                        order.getUser().getUserId(),
+                        order.getFinalAmount(),
+                        order.getId()
+                );
             } catch (Exception e) {
                 log.error("주문 ID {} 자동 확정 실패: {}", order.getId(), e.getMessage());
             }
