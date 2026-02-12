@@ -91,7 +91,7 @@ public class OrderService {
                 .build());
 
         log.info("주문 생성 완료: orderId={}, orderNumber={}, totalAmount={}, usedPoints={}, finalAmount={}, earnedPoints={}",
-            order.getId(), order.getOrderNumber(), totalAmount, usedPoints, finalAmount, earnedPoints);
+                order.getId(), order.getOrderNumber(), totalAmount, usedPoints, finalAmount, earnedPoints);
 
         // 7. OrderProduct 저장
         List<OrderProduct> orderProducts = tempItems.stream()
@@ -197,7 +197,7 @@ public class OrderService {
         order.completePayment();
 
         log.info("결제 완료 처리: orderId={}, orderNumber={}, 현재 상태={}",
-            orderId, order.getOrderNumber(), order.getOrderStatus());
+                orderId, order.getOrderNumber(), order.getOrderStatus());
 
         // 3. 포인트 사용 (차감)
         User user = order.getUser();
@@ -218,13 +218,13 @@ public class OrderService {
         order.confirm();
 
         log.info("주문 수동 확정 완료: orderId={}, orderNumber={}, 현재 상태={}",
-            orderId, order.getOrderNumber(), order.getOrderStatus());
+                orderId, order.getOrderNumber(), order.getOrderStatus());
 
         // 3. 포인트 적립
         User user = order.getUser();
         pointService.earnPoints(user, order);
         log.info("포인트 적립 완료: userId={}, orderId={}, 적립 포인트={}",
-            user.getUserId(), orderId, order.getEarnedPoints());
+                user.getUserId(), orderId, order.getEarnedPoints());
 
         // 4. 멤버십 갱신
         membershipService.handleOrderCompleted(
@@ -245,7 +245,7 @@ public class OrderService {
         order.cancel();
 
         log.info("주문 취소 완료: orderId={}, orderNumber={}, 현재 상태={}, 취소 사유={}",
-            orderId, order.getOrderNumber(), order.getOrderStatus(), cancelReason);
+                orderId, order.getOrderNumber(), order.getOrderStatus(), cancelReason);
 
         // 3. 사용한 포인트 복구
         User user = order.getUser();
@@ -253,7 +253,7 @@ public class OrderService {
         if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
             pointService.refundPoints(user, order);
             log.info("사용 포인트 복구 완료: userId={}, orderId={}, 복구 포인트={}",
-                user.getUserId(), orderId, order.getUsedPoints());
+                    user.getUserId(), orderId, order.getUsedPoints());
         }
     }
 
@@ -293,13 +293,13 @@ public class OrderService {
         // compareTo 반환값: 0 (같음), 1 (pointsToUse가 더 큼), -1 (pointsToUse가 더 작음)
         if (pointsToUse.compareTo(currentBalance) > 0) {
             throw new IllegalArgumentException(
-                String.format("포인트 잔액이 부족합니다. (보유: %s, 사용 요청: %s)",
-                    currentBalance, pointsToUse)
+                    String.format("포인트 잔액이 부족합니다. (보유: %s, 사용 요청: %s)",
+                            currentBalance, pointsToUse)
             );
         }
 
         log.info("포인트 잔액 검증 완료: userId={}, 보유={}, 사용={}",
-            user.getUserId(), currentBalance, pointsToUse);
+                user.getUserId(), currentBalance, pointsToUse);
     }
 
 
@@ -311,12 +311,24 @@ public class OrderService {
                 .divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
 
         log.info("적립 예정 포인트 계산: userId={}, finalAmount={}, accRate={}%, earnedPoints={}",
-            user.getUserId(), finalAmount, user.getCurrentGrade().getAccRate(), earnedPoints);
+                user.getUserId(), finalAmount, user.getCurrentGrade().getAccRate(), earnedPoints);
 
         return earnedPoints;
     }
 
 
     // 임시 저장
-    private record TempProductInfo(Product product, int count) {}
+    private record TempProductInfo(Product product, int count) {
+    }
+
+    @Transactional
+    public void rollbackUsedPoint(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+
+        if (order.getUsedPoints().compareTo(BigDecimal.ZERO) == 0) {
+            return;
+        }
+        order.cancelPointUsage();
+    }
 }

@@ -111,4 +111,9 @@ public class Order extends BaseEntity {
         this.finalAmount = this.totalAmount.subtract(usagePoints);
     }
 
+    public void cancelPointUsage() {
+        this.usedPoints = BigDecimal.ZERO;
+        this.finalAmount = this.totalAmount;
+    }
+
 }
