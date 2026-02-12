@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.order.controller;
 
+import com.bootcamp.paymentdemo.common.dto.ApiResponse;
 import com.bootcamp.paymentdemo.order.dto.OrderCreateRequest;
 import com.bootcamp.paymentdemo.order.dto.OrderCreateResponse;
 import com.bootcamp.paymentdemo.order.dto.OrderGetDetailResponse;
@@ -22,28 +23,35 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<OrderCreateResponse> createOrder(@RequestBody OrderCreateRequest request)
+    public ResponseEntity<ApiResponse<OrderCreateResponse>> createOrder(@RequestBody OrderCreateRequest request)
     {
         log.info("주문 생성 요청 - 사용자: {}", request.getUserId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(request));
+        OrderCreateResponse response = orderService.createOrder(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(HttpStatus.CREATED, "주문 생성 성공", response));
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderGetResponse>> getAllOrders(){
+    public ResponseEntity<ApiResponse<List<OrderGetResponse>>> getAllOrders(){
         log.info("주문 목록 조회 요청");
-        return ResponseEntity.status(HttpStatus.OK).body(orderService.findAllOrders());
+        List<OrderGetResponse> response = orderService.findAllOrders();
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, "주문 목록 조회 성공", response));
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderGetDetailResponse> getOntOrder(@PathVariable("orderId") Long orderId){
+    public ResponseEntity<ApiResponse<OrderGetDetailResponse>> getOntOrder(@PathVariable("orderId") Long orderId){
         log.info("주문 상세 조회 요청 - 주문번호: {}", orderId);
-        return ResponseEntity.status(HttpStatus.OK).body(orderService.findOrderDetail(orderId));
+        OrderGetDetailResponse response = orderService.findOrderDetail(orderId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, "주문 상세 조회 성공", response));
     }
 
     @PatchMapping("/{orderId}/confirm")
-    public ResponseEntity<Void> confirmOrder(@PathVariable("orderId") Long orderId){
+    public ResponseEntity<ApiResponse<Void>> confirmOrder(@PathVariable("orderId") Long orderId){
         log.info("주문 수동 확정 요청 - 주문번호: {}", orderId);
         orderService.confirmOrder(orderId);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, "주문 확정 성공", null));
     }
 }

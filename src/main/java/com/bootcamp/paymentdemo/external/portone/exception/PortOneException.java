@@ -5,6 +5,6 @@ import org.springframework.http.HttpStatus;
 
 public class PortOneException  extends ServiceException {
     public PortOneException (HttpStatus status, String message) {
-        super(status.name(), message, status);
+        super(message, status);
     }
 }

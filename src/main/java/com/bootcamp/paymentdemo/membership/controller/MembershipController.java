@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.membership.controller;
 
+import com.bootcamp.paymentdemo.common.dto.ApiResponse;
 import com.bootcamp.paymentdemo.membership.dto.MembershipSearchResponse;
 import com.bootcamp.paymentdemo.membership.entity.Membership;
 import com.bootcamp.paymentdemo.membership.service.MembershipService;
@@ -23,13 +24,13 @@ public class MembershipController {
 
     // 멤버십 등급 정책 조회
     @GetMapping
-    public ResponseEntity<List<MembershipSearchResponse>> getAllGrades() {
+    public ResponseEntity<ApiResponse<List<MembershipSearchResponse>>> getAllGrades() {
         List<Membership> grades = membershipService.getAllGradePolices();
 
         List<MembershipSearchResponse> response = grades.stream().map(MembershipSearchResponse::from)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, "멤버십 등급 정책 조회 성공", response));
     }
-
 }

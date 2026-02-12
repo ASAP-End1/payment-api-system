@@ -5,6 +5,6 @@ import org.springframework.http.HttpStatus;
 
 public class MembershipNotFoundException extends ServiceException {
     public MembershipNotFoundException(String message) {
-        super("MEMBERSHIP_NOT_FOUND", message, HttpStatus.NOT_FOUND);
+        super(message, HttpStatus.NOT_FOUND);
     }
 }
