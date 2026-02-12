@@ -84,7 +84,7 @@ public class PaymentService {
                     .orElseThrow(() -> new IllegalArgumentException("결제 건이 존재하지 않습니다."));
 
             if (payment.getStatus() != PaymentStatus.PENDING) {
-                return new PaymentConfirmResponse(true, payment.getOrder().getId(),payment.getOrder().getOrderNumber(), payment.getStatus().name());
+                return new PaymentConfirmResponse(payment.getOrder().getId(),payment.getOrder().getOrderNumber());
             }
 
             // 2. PortOne 검증
@@ -106,14 +106,12 @@ public class PaymentService {
                 // PG사 결제 취소
                 portOneClient.cancelPayment(dbPaymentId, PortOneCancelRequest.fullCancel("금액 위변조 감지"));
 
-                return new PaymentConfirmResponse(false, null, payment.getOrder().getOrderNumber(),"AMOUNT_MISMATCH");
+                return new PaymentConfirmResponse(null, payment.getOrder().getOrderNumber());
             }
             // 4. 결제 성공 처리
             try {
                 payment.completePayment(dbPaymentId);
-
                 orderService.completePayment(payment.getOrder().getId());
-
                 log.info("결제 및 주문 최종 확정 완료: {}", dbPaymentId);
 
             } catch (Exception e) {
@@ -133,11 +131,11 @@ public class PaymentService {
                 throw e;
             }
 
-            return new PaymentConfirmResponse(true, payment.getOrder().getId(),payment.getOrder().getOrderNumber(), "PAID");
+            return new PaymentConfirmResponse(payment.getOrder().getId(),payment.getOrder().getOrderNumber());
 
         } catch (Exception e) {
             log.error("결제 확정 실패: {}", e.getMessage());
-            return new PaymentConfirmResponse(false, null, payment.getOrder().getOrderNumber(),"FAILED");
+            return new PaymentConfirmResponse(null, payment.getOrder().getOrderNumber());
         }
     }
 
