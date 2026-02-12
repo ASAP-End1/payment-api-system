@@ -11,6 +11,7 @@ import com.bootcamp.paymentdemo.payment.entity.Payment;
 import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
 import com.bootcamp.paymentdemo.point.service.PointService;
 import com.bootcamp.paymentdemo.product.service.ProductService;
+import com.bootcamp.paymentdemo.refund.consts.RefundStatus;
 import com.bootcamp.paymentdemo.refund.dto.RefundRequest;
 import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
 import com.bootcamp.paymentdemo.refund.entity.Refund;
@@ -71,14 +72,14 @@ public class RefundService {
 
             completeRefund(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
-            return RefundResponse.success(orderId);
+            return new RefundResponse(orderId, RefundStatus.COMPLETED);
 
         } catch (PortOneException e) {
             log.error("PortOne API 호출 실패 - Payment ID: {}, Refund Group ID: {}", id, refundGroupId, e);
 
             refundHistoryService.saveFailHistory(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
-            return RefundResponse.fail(orderId);
+            throw e;
 
         } catch (Exception e) {
             log.error("서버 내부 오류 발생 - Payment ID: {}, Refund Group ID: {}",  id, refundGroupId, e);
