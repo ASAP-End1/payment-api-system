@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.dto;
+package com.bootcamp.paymentdemo.frontend.dto;
 
 import com.bootcamp.paymentdemo.config.ClientApiProperties;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.controller;
+package com.bootcamp.paymentdemo.frontend.controller;
 
 import com.bootcamp.paymentdemo.common.dto.ApiResponse;
 import com.bootcamp.paymentdemo.user.dto.*;
