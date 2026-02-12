@@ -21,6 +21,6 @@ public class RefundController {
     public ResponseEntity<ApiResponse<RefundResponse>> refundAll(@PathVariable Long id, @Valid @RequestBody RefundRequest refundRequest) {
         RefundResponse response = refundService.refundAll(id, refundRequest);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success(HttpStatus.OK, "환불 요청 성공", response));
+                .body(ApiResponse.success(HttpStatus.OK, "환불 완료", response));
     }
 }
