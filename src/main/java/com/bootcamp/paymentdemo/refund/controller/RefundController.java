@@ -17,9 +17,9 @@ public class RefundController {
 
     private final RefundService refundService;
 
-    @PostMapping("/{id}")
-    public ResponseEntity<ApiResponse<RefundResponse>> refundAll(@PathVariable Long id, @Valid @RequestBody RefundRequest refundRequest) {
-        RefundResponse response = refundService.refundAll(id, refundRequest);
+    @PostMapping("/{dbPaymentId}")
+    public ResponseEntity<ApiResponse<RefundResponse>> refundAll(@PathVariable String dbPaymentId, @Valid @RequestBody RefundRequest refundRequest) {
+        RefundResponse response = refundService.refundAll(dbPaymentId, refundRequest);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(HttpStatus.OK, "환불 완료", response));
     }

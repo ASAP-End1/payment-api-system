@@ -38,24 +38,23 @@ public class RefundService {
     private final RefundHistoryService refundHistoryService;
     private final PaymentRepository paymentRepository;
     private final PortOneClient portOneClient;
-    private final ProductService  productService;
-    private final PointService  pointService;
-    private final OrderProductRepository  orderProductRepository;
+    private final ProductService productService;
+    private final PointService pointService;
+    private final OrderProductRepository orderProductRepository;
     private final MembershipService membershipService;
 
     @Transactional
-    public RefundResponse refundAll(Long id, @Valid RefundRequest refundRequest) {
+    public RefundResponse refundAll(String dbPaymentId, @Valid RefundRequest refundRequest) {
 
-        Payment lockedPayment = paymentRepository.findByIdWithLock(id).orElseThrow(
+        Payment lockedPayment = paymentRepository.findByDbPaymentIdWithLock(dbPaymentId).orElseThrow(
                 () -> new RefundException(ERR_PAYMENT_NOT_FOUND)
         );
 
         validateRefundable(lockedPayment);
 
         String refundGroupId = "rfnd-grp-" + UUID.randomUUID();
-        Long orderId = lockedPayment.getOrder().getId();
 
-        refundHistoryService.saveRequestHistory(lockedPayment, refundRequest.getReason(), refundGroupId);
+        refundHistoryService.saveRequestHistory(dbPaymentId, refundRequest.getReason(), refundGroupId);
 
         String portOneRefundId = null;
 
@@ -69,25 +68,31 @@ public class RefundService {
 
             portOneRefundId = portOnePaymentResponse.getCancellation().getId();
 
-            completeRefund(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
+            completeRefund(dbPaymentId, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
-            return new RefundResponse(orderId);
+            return new RefundResponse(lockedPayment.getOrder().getId(), lockedPayment.getOrder().getOrderNumber());
 
         } catch (PortOneException e) {
-            log.error("PortOne API 호출 실패 - Payment ID: {}, Refund Group ID: {}", id, refundGroupId, e);
+            log.error("PortOne API 호출 실패 - Payment ID: {}, Refund Group ID: {}", dbPaymentId, refundGroupId, e);
 
-            refundHistoryService.saveFailHistory(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
+            refundHistoryService.saveFailHistory(dbPaymentId, refundRequest.getReason(), portOneRefundId, refundGroupId);
+
+            throw e;
+
+        } catch (RefundException e) {
+            log.error("서버 내부 오류 발생 - Payment ID: {}, Refund Group ID: {}", dbPaymentId, refundGroupId, e);
+
+            refundHistoryService.saveFailHistory(dbPaymentId, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             throw e;
 
         } catch (Exception e) {
-            log.error("서버 내부 오류 발생 - Payment ID: {}, Refund Group ID: {}",  id, refundGroupId, e);
+            log.error("서버 내부 오류 발생 - Payment ID: {}, Refund Group ID: {}", dbPaymentId, refundGroupId, e);
 
-            refundHistoryService.saveFailHistory(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
+            refundHistoryService.saveFailHistory(dbPaymentId, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             throw e;
         }
-
     }
 
     // 환불 가능 상태 검증
@@ -105,16 +110,19 @@ public class RefundService {
             throw new RefundException(ERR_REFUND_INVALID_STATUS);
         }
 
-        if(!payment.isCompleted()) {
+        if(!payment.isPaid()) {
             throw new RefundException(ERR_REFUND_INVALID_STATUS);
         }
 
     }
 
     // 환불 완료 로직
-    private void completeRefund(Payment payment, String reason, String portOneRefundId, String refundGroupId) {
+    private void completeRefund(String dbPaymentId, String reason, String portOneRefundId, String refundGroupId) {
+        Payment payment = paymentRepository.findByDbPaymentId(dbPaymentId).orElseThrow(
+                () -> new RefundException(ERR_PAYMENT_NOT_FOUND)
+        );
         Refund completedRefund = Refund.createCompleted(
-                payment, payment.getTotalAmount(), reason,  portOneRefundId,  refundGroupId
+                payment.getId(), payment.getTotalAmount(), reason,  portOneRefundId,  refundGroupId
         );
 
         // 환불 완료 이력 저장

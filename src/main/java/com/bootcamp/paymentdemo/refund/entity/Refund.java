@@ -20,9 +20,8 @@ public class Refund {
     @Column(name = "refund_id")
     private Long refundId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", nullable = false)
-    private Payment payment;
+    @Column(name = "payment_id", nullable = false)
+    private Long paymentId;
 
     @Column(name = "refund_amount", nullable = false, precision = 18, scale = 2)
     private BigDecimal refundAmount;
@@ -46,8 +45,8 @@ public class Refund {
 
 
     @Builder(access = AccessLevel.PRIVATE)
-    private Refund(Payment payment, BigDecimal refundAmount, String reason, RefundStatus status, String portOneRefundId,  String refundGroupId) {
-        this.payment = payment;
+    private Refund(Long paymentId, BigDecimal refundAmount, String reason, RefundStatus status, String portOneRefundId,  String refundGroupId) {
+        this.paymentId = paymentId;
         this.refundAmount = refundAmount;
         this.reason = reason;
         this.status = status;
@@ -57,9 +56,9 @@ public class Refund {
     }
 
     // 환불 요청 이력 생성
-    public static Refund createRequest(Payment payment, BigDecimal refundAmount, String reason, String refundGroupId) {
+    public static Refund createRequest(Long paymentId, BigDecimal refundAmount, String reason, String refundGroupId) {
         return Refund.builder()
-                .payment(payment)
+                .paymentId(paymentId)
                 .refundAmount(refundAmount)
                 .reason(reason)
                 .portOneRefundId(null)
@@ -69,9 +68,9 @@ public class Refund {
     }
 
     // 환불 완료 이력 생성
-    public static Refund createCompleted(Payment payment, BigDecimal refundAmount, String reason, String portOneRefundId, String refundGroupId) {
+    public static Refund createCompleted(Long paymentId, BigDecimal refundAmount, String reason, String portOneRefundId, String refundGroupId) {
         return Refund.builder()
-                .payment(payment)
+                .paymentId(paymentId)
                 .refundAmount(refundAmount)
                 .reason(reason)
                 .portOneRefundId(portOneRefundId)
@@ -82,9 +81,9 @@ public class Refund {
 
 
     // 환불 실패 이력 생성
-    public static Refund createFailed(Payment payment, BigDecimal refundAmount, String reason, String portOneRefundId, String refundGroupId) {
+    public static Refund createFailed(Long paymentId, BigDecimal refundAmount, String reason, String portOneRefundId, String refundGroupId) {
         return Refund.builder()
-                .payment(payment)
+                .paymentId(paymentId)
                 .refundAmount(refundAmount)
                 .reason(reason)
                 .portOneRefundId(portOneRefundId)

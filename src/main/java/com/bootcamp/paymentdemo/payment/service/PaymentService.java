@@ -102,7 +102,6 @@ public class PaymentService {
                 payment.completePayment(dbPaymentId);
 
                 orderService.completePayment(payment.getOrder().getId());
-                orderService.confirmOrder(payment.getOrder().getId());
 
                 log.info("결제 및 주문 최종 확정 완료: {}", dbPaymentId);
 
@@ -122,6 +121,7 @@ public class PaymentService {
                 throw e;
             }
 
+            payment.getOrder().pendingConfirmation();
             return new PaymentConfirmResponse(true, payment.getOrder().getId(),payment.getOrder().getOrderNumber(), "PAID");
 
         } catch (Exception e) {
