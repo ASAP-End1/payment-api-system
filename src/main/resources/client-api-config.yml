@@ -104,7 +104,7 @@ api:
               description: 회원가입 성공 여부
             - name: message
               type: string
-              required: true
+              required: false
               description: 회원가입 성공 메세지
             - name: userId
               type: number
