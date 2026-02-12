@@ -249,7 +249,7 @@
             }
 
             // PENDING 상태의 주문만 필터링
-            const pendingOrders = orders.filter(order => order.status === 'PENDING');
+            const pendingOrders = orders.filter(order => order.status === 'PENDING_PAYMENT');
 
             if (pendingOrders.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">결제 대기 중인 주문이 없습니다</p>';
@@ -257,8 +257,8 @@
             }
 
             const ordersHtml = pendingOrders.map(order => {
-                const statusClass = order.status === 'PENDING' ? 'warning' :
-                                  order.status === 'PAID' ? 'success' : 'secondary';
+                const statusClass = order.status === 'PENDING_PAYMENT' ? 'warning' :
+                                  order.status === 'CONFIRMED' ? 'success' : 'secondary';
 
                 return `
                     <div style="padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); margin-bottom: 1rem;">
@@ -282,7 +282,7 @@
                                     ${order.totalAmount.toLocaleString()}원
                                 </div>
                             </div>
-                            <button class="btn btn-primary" onclick='openPointsModal("${order.orderId}")'>
+                            <button class="btn btn-primary" onclick='openPointsModal("${order.id}")'>
                                 💰 포인트로 결제
                             </button>
                         </div>
@@ -296,7 +296,7 @@
         // 포인트 모달 열기
         function openPointsModal(orderId) {
             // orders 배열에서 orderId로 주문 찾기
-            const order = orders.find(o => o.orderId === orderId);
+            const order = orders.find(o => o.id == orderId);
 
             if (!order) {
                 showNotification('주문을 찾을 수 없습니다', 'error');
@@ -435,7 +435,7 @@
 
             try {
                 const orderToProcess = {
-                    orderId: selectedOrder.orderId,
+                    orderId: selectedOrder.id,
                     orderNumber: selectedOrder.orderNumber,
                     totalAmount: selectedOrder.totalAmount,
                     currency: selectedOrder.currency || 'KRW'
