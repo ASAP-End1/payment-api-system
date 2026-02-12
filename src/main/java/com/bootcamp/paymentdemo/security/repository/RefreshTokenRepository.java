@@ -1,6 +1,6 @@
-package com.bootcamp.paymentdemo.user.repository;
+package com.bootcamp.paymentdemo.security.repository;
 
-import com.bootcamp.paymentdemo.user.entity.RefreshToken;
+import com.bootcamp.paymentdemo.security.entity.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

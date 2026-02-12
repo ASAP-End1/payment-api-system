@@ -1,6 +1,7 @@
-package com.bootcamp.paymentdemo.user.entity;
+package com.bootcamp.paymentdemo.security.entity;
 
 import com.bootcamp.paymentdemo.common.entity.Base;
+import com.bootcamp.paymentdemo.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
