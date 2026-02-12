@@ -304,7 +304,7 @@
                     </td>
                     <td style="padding: 0.75rem; text-align: center;">
                         ${order.status === 'PENDING_PAYMENT' ?
-                            `<button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="payOrder(${order.orderId}, ${finalAmount})">
+                            `<button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="payOrder('${order.orderId}', '${order.orderNumber}', ${finalAmount})">
                                 💳 결제하기
                             </button>` :
                             `<span style="color: var(--text-secondary); font-size: 0.875rem;">-</span>`
@@ -317,7 +317,7 @@
         }
 
         // 주문 결제하기
-        async function payOrder(orderId, totalAmount) {
+        async function payOrder(orderId, orderNumber ,totalAmount) {
             if (!currentUser) {
                 showNotification('⚠️ 사용자 정보를 먼저 로드해주세요', 'warning');
                 return;
@@ -333,6 +333,7 @@
             try {
                 const paymentData = {
                     orderId: orderId,
+                    orderNumber: orderNumber,
                     orderName: `주문 ${order.orderNumber}`,  // 주문 번호로 표시
                     totalAmount: totalAmount,
                     currency: 'KRW',
@@ -347,9 +348,9 @@
 
                 const result = await openPortOnePayment(paymentData);
 
-                if (result.paymentId) {
+                if (result.success) {
                     // 결제 완료 후 모드 B에 자동 입력
-                    document.getElementById('manual-payment-id').value = result.paymentId;
+                    document.getElementById('manual-payment-id').value = result.data.paymentId;
 
                     showNotification('💳 결제 완료! 아래에서 결제 확정/취소를 테스트할 수 있습니다.', 'success');
 

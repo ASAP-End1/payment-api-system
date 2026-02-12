@@ -104,7 +104,7 @@ api:
               description: 회원가입 성공 여부
             - name: message
               type: string
-              required: true
+              required: false
               description: 회원가입 성공 메세지
             - name: userId
               type: number
@@ -257,7 +257,7 @@ api:
       request:
         fields:
           - name: orderId
-            type: string
+            type: number
             required: true
             description: 주문 ID (서버에서 주문 정보 조회)
           - name: totalAmount

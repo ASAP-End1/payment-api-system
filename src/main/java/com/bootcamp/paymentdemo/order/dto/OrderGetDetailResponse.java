@@ -10,7 +10,7 @@ import java.util.List;
 public class OrderGetDetailResponse {
 
     // 주문 기본 정보
-    private final Long id;
+    private final Long orderId;
     private final String orderNumber;
     private final String status;
     private final LocalDateTime createdAt;
@@ -27,11 +27,11 @@ public class OrderGetDetailResponse {
     // 포인트 요약 (간단한 요약 정보)
     private final PointSummary pointSummary;
 
-    public OrderGetDetailResponse(Long id, String orderNumber, String status,
+    public OrderGetDetailResponse(Long orderId, String orderNumber, String status,
                                   LocalDateTime createdAt, BigDecimal totalAmount,
                                   BigDecimal usedPoints, BigDecimal finalAmount,
                                   BigDecimal earnedPoints, List<OrderProductGetResponse> orderProducts) {
-        this.id = id;
+        this.orderId = orderId;
         this.orderNumber = orderNumber;
         this.status = status;
         this.createdAt = createdAt;
