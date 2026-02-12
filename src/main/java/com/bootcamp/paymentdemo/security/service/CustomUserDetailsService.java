@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.security;
+package com.bootcamp.paymentdemo.security.service;
 
 import com.bootcamp.paymentdemo.user.entity.User;
 import com.bootcamp.paymentdemo.user.repository.UserRepository;
