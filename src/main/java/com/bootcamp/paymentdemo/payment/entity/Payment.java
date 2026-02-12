@@ -79,5 +79,10 @@ public class Payment extends BaseEntity {
     public void refund() {
         this.status = PaymentStatus.REFUND;
     }
+
+    public void cancelPointUsage() {
+        this.totalAmount = BigDecimal.ZERO;
+        this.pointsToUse = this.totalAmount;
+    }
 }
 
