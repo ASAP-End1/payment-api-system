@@ -177,11 +177,11 @@
                         <div class="price">₩${product.price.toLocaleString()}</div>
                         <div style="margin: 0.5rem 0; font-size: 0.9rem;">${stockStatus}</div>
                         <div class="quantity-control">
-                            <button class="quantity-btn" onclick="updateQuantity('${product.id}', -1)"
+                            <button class="quantity-btn" onclick="updateQuantity(${product.id}, -1)"
                                 ${product.stock === 0 ? 'disabled' : ''}>-</button>
                             <input type="number" class="quantity-input" id="qty-${product.id}"
                                 value="0" min="0" max="${product.stock}" readonly>
-                            <button class="quantity-btn" onclick="updateQuantity('${product.id}', 1)"
+                            <button class="quantity-btn" onclick="updateQuantity(${product.id}, 1)"
                                 ${product.stock === 0 ? 'disabled' : ''}>+</button>
                         </div>
                     </div>
@@ -190,7 +190,7 @@
         }
 
         function updateQuantity(productId, delta) {
-            const product = products.find(p => p.id === productId);
+            const product = products.find(p => p.id == productId);
             if (!product) return;
 
             const input = document.getElementById(`qty-${productId}`);
@@ -219,7 +219,7 @@
             Object.keys(cart).forEach(productId => {
                 const qty = cart[productId];
                 if (qty > 0) {
-                    const product = products.find(p => p.id === productId);
+                    const product = products.find(p => p.id == productId);
                     const subtotal = product.price * qty;
                     total += subtotal;
                     html += `

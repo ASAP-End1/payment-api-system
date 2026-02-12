@@ -42,11 +42,13 @@ public class OrderService {
     private final MembershipService membershipService;
 
     @Transactional
-    public OrderCreateResponse createOrder(OrderCreateRequest request) {
+    public OrderCreateResponse createOrder(OrderCreateRequest request, String email) {
 
         // 1. 사용자 조회
-        User user = userRepository.findById(request.getUserId())
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        log.info("주문 생성 시작 - userId: {}, email: {}", user.getUserId(), email);
 
         // 2. 상품 정보 조회 및 총 금액 계산
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -126,17 +128,27 @@ public class OrderService {
 
     // 주문 내역 조회
     @Transactional(readOnly = true)
-    public List<OrderGetResponse> findAllOrders() {
-        List<Order> orders = orderRepository.findAll();
-        List<OrderGetResponse> orderGetResponses = new ArrayList<>();
+    public List<OrderGetDetailResponse> findAllOrders(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 해당 사용자의 주문만 조회로 수정
+        List<Order> orders = orderRepository.findByUser_UserIdOrderByCreatedAtDesc(user.getUserId());
+
+        List<OrderGetDetailResponse> orderGetResponses = new ArrayList<>();
         for (Order order : orders) {
-            OrderGetResponse orderGetResponse = new OrderGetResponse(
+            OrderGetDetailResponse OrderGetDetailResponse = new OrderGetDetailResponse(
                     order.getId(),
                     order.getOrderNumber(),
                     order.getOrderStatus().name(),
-                    order.getCreatedAt()
+                    order.getCreatedAt(),
+                    order.getTotalAmount(),
+                    order.getUsedPoints(),
+                    order.getFinalAmount(),
+                    order.getEarnedPoints(),
+                    new ArrayList<>()
             );
-            orderGetResponses.add(orderGetResponse);
+            orderGetResponses.add(OrderGetDetailResponse);
         }
         return orderGetResponses;
     }

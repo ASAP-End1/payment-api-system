@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -23,18 +24,20 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<OrderCreateResponse>> createOrder(@RequestBody OrderCreateRequest request)
+    public ResponseEntity<ApiResponse<OrderCreateResponse>> createOrder(@RequestBody OrderCreateRequest request, Principal principal)
     {
-        log.info("주문 생성 요청 - 사용자: {}", request.getUserId());
-        OrderCreateResponse response = orderService.createOrder(request);
+        String email = principal.getName();
+        log.info("주문 생성 요청 - 사용자: {}", email);
+        OrderCreateResponse response = orderService.createOrder(request, email);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(HttpStatus.CREATED, "주문 생성 성공", response));
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<OrderGetResponse>>> getAllOrders(){
+    public ResponseEntity<ApiResponse<List<OrderGetDetailResponse>>> getAllOrders(Principal principal){
+        String email = principal.getName();
         log.info("주문 목록 조회 요청");
-        List<OrderGetResponse> response = orderService.findAllOrders();
+        List<OrderGetDetailResponse> response = orderService.findAllOrders(email);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(HttpStatus.OK, "주문 목록 조회 성공", response));
     }
