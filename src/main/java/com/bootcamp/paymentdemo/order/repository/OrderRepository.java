@@ -14,4 +14,7 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     Optional<Order> findByOrderNumber(String orderNumber);
+
+    // 특정 사용자의 모든 주문 조회
+    List<Order> findByUser_UserIdOrderByCreatedAtDesc(Long userId);
 }
