@@ -71,12 +71,16 @@ public class UserService {
         return new SignupResponse(saveUser.getUserId(), saveUser.getEmail());
     }
 
-    // 로그인 - 인증은 이미 AuthenticationManager가 수행
+    // 로그인
     @Transactional
-    public TokenPair login(String email) {
+    public TokenPair login(String email, String password) {
         User user = userRepository.findByEmail(email).orElseThrow(
                 () -> new UserNotFoundException("사용자가 존재하지 않습니다")
         );
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다");
+        }
 
         // 기존 Refresh Token 모두 무효화
         refreshTokenRepository.revokeAllByUserId(user.getUserId());
@@ -98,13 +102,8 @@ public class UserService {
         return new TokenPair(accessToken, refreshToken, user.getEmail());
     }
 
-    // LoginResponse 생성 헬퍼 메서드
-    public LoginResponse createLoginResponse(String email, String accessToken) {
 
-        return new LoginResponse(email, accessToken);
-    }
-
-    // 로그아웃 - Refresh Token 무효화
+    // 로그아웃
     @Transactional
     public void logout(String email, String accessToken) {
         User user = userRepository.findByEmail(email).orElseThrow(
