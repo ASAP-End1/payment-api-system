@@ -257,7 +257,7 @@ api:
       request:
         fields:
           - name: orderId
-            type: string
+            type: number
             required: true
             description: 주문 ID (서버에서 주문 정보 조회)
           - name: totalAmount

@@ -1,7 +1,6 @@
 package com.bootcamp.paymentdemo.payment.entity;
 
 import com.bootcamp.paymentdemo.common.BaseEntity;
-import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
 import jakarta.persistence.*;
@@ -57,7 +56,6 @@ public class Payment extends BaseEntity {
     public void completePayment(String paymentId) {
         this.paymentId = paymentId;
         this.status = PaymentStatus.PAID;
-        order.completePayment();
     }
 
     public boolean isAlreadyProcessed() {

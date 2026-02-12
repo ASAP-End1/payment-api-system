@@ -37,7 +37,7 @@ public class PaymentService {
     public PaymentCreateResponse createPayment(PaymentCreateRequest request) {
 
         // 1. 주문 정보 조회
-        Order order = orderRepository.findByOrderNumber(request.getOrderId())
+        Order order = orderRepository.findByOrderNumber(request.getOrderNumber())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
 
         BigDecimal pointsToUse = request.getPointsToUse() != null ? request.getPointsToUse() : BigDecimal.ZERO;
@@ -65,7 +65,7 @@ public class PaymentService {
     }
 
     @Transactional
-    public PaymentConfirmResponse confirmPayment(String dbPaymentId, String impUid) {
+    public PaymentConfirmResponse confirmPayment(String dbPaymentId) {
         Payment payment = null;
 
         try {
@@ -74,11 +74,11 @@ public class PaymentService {
                     .orElseThrow(() -> new IllegalArgumentException("결제 건이 존재하지 않습니다."));
 
             if (payment.getStatus() != PaymentStatus.PENDING) {
-                return new PaymentConfirmResponse(true, payment.getOrder().getId().toString(), payment.getStatus().name());
+                return new PaymentConfirmResponse(true, payment.getOrder().getId(),payment.getOrder().getOrderNumber(), payment.getStatus().name());
             }
 
             // 2. PortOne 검증
-            PortOnePaymentResponse portOneResponse = portOneClient.getPayment(impUid);
+            PortOnePaymentResponse portOneResponse = portOneClient.getPayment(dbPaymentId);
 
             // 3. 금액 검증
             BigDecimal expectedPayAmount = payment.getOrder().getFinalAmount();
@@ -93,13 +93,13 @@ public class PaymentService {
                 }
 
                 // PG사 결제 취소
-                portOneClient.cancelPayment(impUid, PortOneCancelRequest.fullCancel("금액 위변조 감지"));
+                portOneClient.cancelPayment(dbPaymentId, PortOneCancelRequest.fullCancel("금액 위변조 감지"));
 
-                return new PaymentConfirmResponse(false, null, "AMOUNT_MISMATCH");
+                return new PaymentConfirmResponse(false, null, payment.getOrder().getOrderNumber(),"AMOUNT_MISMATCH");
             }
             // 4. 결제 성공 처리
             try {
-                payment.completePayment(impUid);
+                payment.completePayment(dbPaymentId);
 
                 orderService.completePayment(payment.getOrder().getId());
                 orderService.confirmOrder(payment.getOrder().getId());
@@ -118,15 +118,15 @@ public class PaymentService {
                 }
 
                 // PG사 취소
-                portOneClient.cancelPayment(impUid, PortOneCancelRequest.fullCancel("서버 오류 자동 취소"));
+                portOneClient.cancelPayment(dbPaymentId, PortOneCancelRequest.fullCancel("서버 오류 자동 취소"));
                 throw e;
             }
 
-            return new PaymentConfirmResponse(true, payment.getOrder().getId().toString(), "PAID");
+            return new PaymentConfirmResponse(true, payment.getOrder().getId(),payment.getOrder().getOrderNumber(), "PAID");
 
         } catch (Exception e) {
             log.error("결제 확정 실패: {}", e.getMessage());
-            return new PaymentConfirmResponse(false, null, "FAILED");
+            return new PaymentConfirmResponse(false, null, payment.getOrder().getOrderNumber(),"FAILED");
         }
     }
 
@@ -136,7 +136,7 @@ public class PaymentService {
             String portOnePaymentId = payload.getData().getPaymentId();
             PortOnePaymentResponse details = portOneClient.getPayment(portOnePaymentId);
             String dbPaymentId = details.id();
-            confirmPayment(dbPaymentId, portOnePaymentId);
+            confirmPayment(dbPaymentId);
         } catch (DataIntegrityViolationException e) {
             log.warn("중복 웹훅 무시");
         } catch (Exception e) {
