@@ -1,7 +1,9 @@
-package com.bootcamp.paymentdemo.security;
+package com.bootcamp.paymentdemo.security.filter;
 
-import com.bootcamp.paymentdemo.user.entity.RefreshToken;
-import com.bootcamp.paymentdemo.user.repository.RefreshTokenRepository;
+import com.bootcamp.paymentdemo.security.provider.JwtTokenProvider;
+import com.bootcamp.paymentdemo.security.entity.RefreshToken;
+import com.bootcamp.paymentdemo.security.repository.AccessTokenBlacklistRepository;
+import com.bootcamp.paymentdemo.security.repository.RefreshTokenRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
@@ -43,11 +45,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final ObjectMapper objectMapper;
+    private final AccessTokenBlacklistRepository blacklistRepository;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, RefreshTokenRepository refreshTokenRepository,ObjectMapper objectMapper) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, RefreshTokenRepository refreshTokenRepository,ObjectMapper objectMapper, AccessTokenBlacklistRepository blacklistRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.refreshTokenRepository = refreshTokenRepository;
         this.objectMapper = objectMapper;
+        this.blacklistRepository = blacklistRepository;
     }
 
     @Override
@@ -63,6 +67,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (token != null) {
                 try {
+                    // 블랙리스트 확인
+                    if (blacklistRepository.existsByToken(token)) {
+                        log.warn("블랙리스트에 있는 토큰 사용 시도");
+                        sendErrorResponse(response, 401, "TOKEN_BLACKLISTED", "Token has been revoked");
+                        return;
+                    }
+
                     // 2. 토큰 유효성 검증
                     jwtTokenProvider.validateToken(token);
 

@@ -1,9 +1,10 @@
-package com.bootcamp.paymentdemo.security;
+package com.bootcamp.paymentdemo.security.controller;
 
 import com.bootcamp.paymentdemo.common.dto.ApiResponse;
 import com.bootcamp.paymentdemo.user.dto.*;
 import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
 import com.bootcamp.paymentdemo.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -151,10 +152,12 @@ public class AuthController {
      * }
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(Principal principal) {
+    public ResponseEntity<ApiResponse<Void>> logout(Principal principal, HttpServletRequest request) {
         log.info("로그아웃 요청: email={}", principal.getName());
 
-        userService.logout(principal.getName());
+        String accessToken = extractAccessToken(request);
+
+        userService.logout(principal.getName(), accessToken);
 
         // Refresh Token 쿠키 삭제
         ResponseCookie deleteCookie = ResponseCookie
@@ -168,6 +171,17 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
                 .body(ApiResponse.success(HttpStatus.OK, "로그아웃되었습니다.", null));
+    }
+
+    // Authorization 헤더에서 Access Token 추출
+    private String extractAccessToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+
+        return null;
     }
 
 
