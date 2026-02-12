@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.point.controller;
 
+import com.bootcamp.paymentdemo.common.dto.ApiResponse;
 import com.bootcamp.paymentdemo.common.dto.PageResponse;
 import com.bootcamp.paymentdemo.point.dto.PointGetResponse;
 import com.bootcamp.paymentdemo.point.service.PointService;
@@ -25,10 +26,12 @@ public class PointController {
 
     // 포인트 내역 조회
     @GetMapping
-    public ResponseEntity<PageResponse<PointGetResponse>> getPointHistory(
+    public ResponseEntity<ApiResponse<PageResponse<PointGetResponse>>> getPointHistory(
             Principal principal,
             @PageableDefault(page = 0, size = 10) Pageable pageable) {
         log.info("포인트 내역 조회 요청: email={}", principal.getName());
-        return ResponseEntity.status(HttpStatus.OK).body(pointService.getPointHistory(principal.getName(), pageable));
+        PageResponse<PointGetResponse> response = pointService.getPointHistory(principal.getName(), pageable);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(HttpStatus.OK, "포인트 내역 조회 성공", response));
     }
 }

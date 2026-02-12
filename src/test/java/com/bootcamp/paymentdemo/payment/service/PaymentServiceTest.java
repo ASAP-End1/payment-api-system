@@ -1,12 +1,13 @@
 package com.bootcamp.paymentdemo.payment.service;
 
-import com.bootcamp.paymentdemo.order.consts.OrderStatus;
+import com.bootcamp.paymentdemo.external.portone.client.PortOneClient;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOneCancelRequest;
+import com.bootcamp.paymentdemo.external.portone.dto.PortOnePaymentResponse;
 import com.bootcamp.paymentdemo.order.entity.Order;
 import com.bootcamp.paymentdemo.order.repository.OrderRepository;
+import com.bootcamp.paymentdemo.order.service.OrderService;
 import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
-import com.bootcamp.paymentdemo.payment.dto.PaymentConfirmResponse;
-import com.bootcamp.paymentdemo.payment.dto.PaymentCreateRequest;
-import com.bootcamp.paymentdemo.payment.dto.PaymentCreateResponse;
+import com.bootcamp.paymentdemo.payment.dto.*;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
 import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,98 +22,156 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.math.BigDecimal;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
 
     @Mock
     private PaymentRepository paymentRepository;
-
     @Mock
     private OrderRepository orderRepository;
+    @Mock
+    private PortOneClient portOneClient;
+    @Mock
+    private OrderService orderService;
 
     @InjectMocks
     private PaymentService paymentService;
 
     private Order testOrder;
+    private final String dbPaymentId = "order_mid_12345";
+    private final String impUid = "imp_987654321";
 
     @BeforeEach
     void setUp() {
-        // 테스트용 주문 객체 생성 (ID 포함)
         testOrder = Order.builder()
                 .orderNumber("ORD-20240101")
                 .totalAmount(new BigDecimal("10000"))
-                .orderStatus(OrderStatus.PENDING_CONFIRMATION)
+                .usedPoints(new BigDecimal("1000"))
+                .finalAmount(new BigDecimal("9000"))
+                .orderStatus(com.bootcamp.paymentdemo.order.consts.OrderStatus.PENDING_PAYMENT) // 이 부분!
                 .build();
 
-        // Reflection을 사용해 ID 강제 주입 (보통 DB가 생성해주지만 테스트를 위해 필요)
         ReflectionTestUtils.setField(testOrder, "id", 1L);
     }
+
     @Test
-    @DisplayName("결제 생성 성공: 주문 조회 후 PENDING 상태의 결제 데이터를 저장한다")
+    @DisplayName("결제 생성 성공")
     void createPayment_Success() {
+        // given
+        PaymentCreateRequest request = new PaymentCreateRequest("ORD-20240101", new BigDecimal("10000"), new BigDecimal("1000"));
+        given(orderRepository.findByOrderNumber(anyString())).willReturn(Optional.of(testOrder));
 
-        // 1. 요청 객체 생성 (orderId는 "1"로 설정)
-        PaymentCreateRequest request = new PaymentCreateRequest("1", new BigDecimal("10000"), BigDecimal.ZERO);
-        given(orderRepository.findByOrderNumber(anyString()))
-                .willReturn(Optional.of(testOrder));
-
-        // [When] 실제 결제 생성 로직 실행
+        // when
         PaymentCreateResponse response = paymentService.createPayment(request);
 
-        // [Then] 결과 검증
+        // then
         assertAll(
                 () -> assertThat(response.isSuccess()).isTrue(),
                 () -> assertThat(response.getStatus()).isEqualTo("PENDING"),
-                () -> assertThat(response.getPaymentId()).startsWith("order_mid_"),
-
-                () -> verify(paymentRepository, times(1)).save(any(Payment.class))
+                () -> verify(paymentRepository).save(any(Payment.class))
         );
     }
 
     @Test
-    @DisplayName("결제 확정 성공 - DB에서 결제 건을 찾아 상태를 PAID로 변경한다")
+    @DisplayName("결제 확정 성공 -> 오더서비스로 전달 예정")
     void confirmPayment_Success() {
         // given
-        String dbPaymentId = "order_mid_12345";
-        String impUid = "imp_987654321";
-
         Payment pendingPayment = Payment.builder()
                 .dbPaymentId(dbPaymentId)
                 .order(testOrder)
-                .totalAmount(new BigDecimal("10000"))
                 .status(PaymentStatus.PENDING)
                 .build();
 
         given(paymentRepository.findByDbPaymentId(dbPaymentId)).willReturn(Optional.of(pendingPayment));
 
+        PortOnePaymentResponse mockResponse = mock(PortOnePaymentResponse.class);
+        PortOnePaymentResponse.Amount mockAmount = mock(PortOnePaymentResponse.Amount.class);
+
+        given(mockAmount.total()).willReturn(new BigDecimal("9000"));
+        given(mockResponse.amount()).willReturn(mockAmount);
+        given(portOneClient.getPayment(impUid)).willReturn(mockResponse);
+
         // when
         PaymentConfirmResponse response = paymentService.confirmPayment(dbPaymentId, impUid);
 
         // then
-        assertThat(response.isSuccess()).isTrue();
-        assertThat(response.getStatus()).isEqualTo("PAID");
-        assertThat(pendingPayment.getStatus()).isEqualTo(PaymentStatus.PAID);
-        assertThat(pendingPayment.getPaymentId()).isEqualTo(impUid);
+        assertAll(
+                () -> assertThat(response.isSuccess()).isTrue(),
+                () -> assertThat(response.getStatus()).isEqualTo("PAID"),
+                () -> verify(orderService).completePayment(testOrder.getId()),
+                () -> verify(orderService).confirmOrder(testOrder.getId()),
+                () -> assertThat(pendingPayment.getStatus()).isEqualTo(PaymentStatus.PAID)
+        );
     }
 
     @Test
-    @DisplayName("결제 확정 실패 - 존재하지 않는 dbPaymentId인 경우 실패 응답을 반환한다")
-    void confirmPayment_Fail_NotFound() {
+    @DisplayName("결제 확정 실패: 포트원에서 준 금액이랑 우리 금액이랑 달라서 실패")
+    void confirmPayment_Fail_AmountMismatch() {
         // given
-        given(paymentRepository.findByDbPaymentId("wrong_id")).willReturn(Optional.empty());
+        Payment pendingPayment = Payment.builder()
+                .dbPaymentId(dbPaymentId)
+                .order(testOrder)
+                .status(PaymentStatus.PENDING)
+                .build();
+
+        given(paymentRepository.findByDbPaymentId(dbPaymentId)).willReturn(Optional.of(pendingPayment));
+
+        PortOnePaymentResponse mockResponse = mock(PortOnePaymentResponse.class);
+        PortOnePaymentResponse.Amount mockAmount = mock(PortOnePaymentResponse.Amount.class);
+
+        given(mockAmount.total()).willReturn(new BigDecimal("5000"));
+        given(mockResponse.amount()).willReturn(mockAmount);
+        given(portOneClient.getPayment(impUid)).willReturn(mockResponse);
 
         // when
-        PaymentConfirmResponse response = paymentService.confirmPayment("wrong_id", "imp_uid");
+        PaymentConfirmResponse response = paymentService.confirmPayment(dbPaymentId, impUid);
 
         // then
-        assertThat(response.isSuccess()).isFalse();
-        assertThat(response.getStatus()).isEqualTo("FAILED");
+        assertAll(
+                () -> assertThat(response.isSuccess()).isFalse(),
+                () -> assertThat(response.getStatus()).isEqualTo("AMOUNT_MISMATCH"),
+                () -> verify(orderService).cancelOrder(eq(testOrder.getId()), contains("위변조")),
+                () -> verify(portOneClient).cancelPayment(eq(impUid), any(PortOneCancelRequest.class))
+        );
+    }
+
+    @Test
+    @DisplayName("결제 확정 실패: 내부로직 문제")
+    void confirmPayment_Fail_InternalError() {
+        // given
+        Payment pendingPayment = Payment.builder()
+                .dbPaymentId(dbPaymentId)
+                .order(testOrder)
+                .status(PaymentStatus.PENDING)
+                .build();
+
+        given(paymentRepository.findByDbPaymentId(dbPaymentId)).willReturn(Optional.of(pendingPayment));
+
+        PortOnePaymentResponse mockResponse = mock(PortOnePaymentResponse.class);
+        PortOnePaymentResponse.Amount mockAmount = mock(PortOnePaymentResponse.Amount.class);
+        given(mockAmount.total()).willReturn(new BigDecimal("9000"));
+        given(mockResponse.amount()).willReturn(mockAmount);
+        given(portOneClient.getPayment(impUid)).willReturn(mockResponse);
+
+
+        doThrow(new RuntimeException("DB 장애")).when(orderService).completePayment(anyLong());
+
+        // when
+        PaymentConfirmResponse response = paymentService.confirmPayment(dbPaymentId, impUid);
+
+        // then
+        assertAll(
+                () -> assertThat(response.isSuccess()).isFalse(),
+                () -> assertThat(response.getStatus()).isEqualTo("FAILED"),
+                () -> verify(orderService).cancelOrder(eq(testOrder.getId()), contains("내부 오류")),
+                () -> verify(portOneClient).cancelPayment(eq(impUid), any(PortOneCancelRequest.class))
+        );
     }
 }
