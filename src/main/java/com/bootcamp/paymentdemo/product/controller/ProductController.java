@@ -32,9 +32,6 @@ public class ProductController {
 
         log.info("상품 목록 조회 완료 - 개수: {}개", products.size()); // 결과 로그
 
-        if(products.isEmpty()){
-            return ResponseEntity.noContent().build(); // 비어있을 경우 204 코드 반환, 공통 응답 처리 의논 필요
-        }
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(HttpStatus.OK, "상품 목록 조회 성공", products));
     }
