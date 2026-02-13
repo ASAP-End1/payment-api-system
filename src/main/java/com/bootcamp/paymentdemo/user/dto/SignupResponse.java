@@ -1,12 +1,15 @@
 package com.bootcamp.paymentdemo.user.dto;
 
-import lombok.*;
+import lombok.Getter;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class SignupResponse {
 
-    private Long userId;
-    private String email;
+    private final Long userId;
+    private final String email;
+
+    public SignupResponse(Long userId, String email) {
+        this.userId = userId;
+        this.email = email;
+    }
 }
