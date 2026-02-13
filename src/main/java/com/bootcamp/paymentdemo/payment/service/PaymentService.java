@@ -80,7 +80,7 @@ public class PaymentService {
 
         try {
             // 1. 조회 및 멱등성 체크
-            payment = paymentRepository.findByDbPaymentId(dbPaymentId)
+            payment = paymentRepository.findByDbPaymentIdWithLock(dbPaymentId)
                     .orElseThrow(() -> new IllegalArgumentException("결제 건이 존재하지 않습니다."));
 
             if (payment.getStatus() != PaymentStatus.PENDING) {
@@ -139,6 +139,7 @@ public class PaymentService {
         }
     }
 
+    @Transactional
     public void processWebhook(PortoneWebhookPayload payload, String webhookId) {
         try {
             saveWebhookEvent(payload, webhookId);

@@ -147,7 +147,7 @@ class PaymentServiceTest {
                 .status(PaymentStatus.PENDING)
                 .build();
 
-        given(paymentRepository.findByDbPaymentId(dbPaymentId)).willReturn(Optional.of(pendingPayment));
+        given(paymentRepository.findByDbPaymentIdWithLock(dbPaymentId)).willReturn(Optional.of(pendingPayment));
 
         PortOnePaymentResponse mockResponse = mock(PortOnePaymentResponse.class);
         PortOnePaymentResponse.Amount mockAmount = mock(PortOnePaymentResponse.Amount.class);
@@ -178,7 +178,7 @@ class PaymentServiceTest {
 
         Payment spyPayment = spy(pendingPayment);
 
-        given(paymentRepository.findByDbPaymentId(dbPaymentId)).willReturn(Optional.of(spyPayment));
+        given(paymentRepository.findByDbPaymentIdWithLock(dbPaymentId)).willReturn(Optional.of(spyPayment));
 
         PortOnePaymentResponse mockResponse = mock(PortOnePaymentResponse.class);
         PortOnePaymentResponse.Amount mockAmount = mock(PortOnePaymentResponse.Amount.class);
@@ -209,7 +209,7 @@ class PaymentServiceTest {
 
         Payment spyPayment = spy(pendingPayment);
 
-        given(paymentRepository.findByDbPaymentId(dbPaymentId)).willReturn(Optional.of(spyPayment));
+        given(paymentRepository.findByDbPaymentIdWithLock(dbPaymentId)).willReturn(Optional.of(spyPayment));
 
         PortOnePaymentResponse mockResponse = mock(PortOnePaymentResponse.class);
         PortOnePaymentResponse.Amount mockAmount = mock(PortOnePaymentResponse.Amount.class);
