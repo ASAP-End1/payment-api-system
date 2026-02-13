@@ -308,11 +308,11 @@ api:
               description: 변경된 주문 상태
 
     cancel-payment:
-      url: /payments/{paymentId}/cancel
+      url: /api/refunds/{dbPaymentId}
       method: POST
       description: 결제 취소/환불 (PortOne 결제 취소 및 주문 상태 업데이트)
       pathParams:
-        - name: paymentId
+        - name: db_payment_id
           description: 결제 ID
       request:
         fields:
@@ -328,9 +328,13 @@ api:
               required: true
               description: 취소 성공 여부
             - name: orderId
-              type: string
+              type: number
               required: false
               description: 주문 ID
+            - name: orderNumber
+              type: String
+              required: false
+              description: 주문 번호
             - name: status
               type: string
               required: false

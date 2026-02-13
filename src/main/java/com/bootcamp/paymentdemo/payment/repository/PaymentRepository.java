@@ -18,7 +18,7 @@ public interface PaymentRepository extends JpaRepository<Payment,Long> {
 
     // 동시적 환불 문제 방지
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM Payment p WHERE p.id = :paymentId")
-    Optional<Payment> findByIdWithLock(@Param("paymentId") Long paymentId);
+    @Query("SELECT p FROM Payment p WHERE p.dbPaymentId = :dbPaymentId")
+    Optional<Payment> findByDbPaymentIdWithLock(@Param("dbPaymentId") String dbPaymentId);
 
 }

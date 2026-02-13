@@ -3,9 +3,9 @@ package com.bootcamp.paymentdemo.refund.dto;
 import lombok.*;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class RefundResponse {
 
-    private Long orderId;
+    private final Long orderId;
+    private final String orderNumber;
 }

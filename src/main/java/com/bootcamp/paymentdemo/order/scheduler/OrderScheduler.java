@@ -22,7 +22,7 @@ public class OrderScheduler {
     private final OrderService orderService;
 
     // 시간이 지나면 자동 확정
-    @Scheduled(cron = "0 * * * * *") // 매 분 0초 마다 실행
+    @Scheduled(cron = "0 0 * * * *") // 매 분 0초 마다 실행
     public void autoConfirmOrder() {
         log.info("자동 주문 확정 스케줄러 실행");
 

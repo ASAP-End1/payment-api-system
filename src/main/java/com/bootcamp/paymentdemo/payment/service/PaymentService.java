@@ -131,6 +131,7 @@ public class PaymentService {
                 throw e;
             }
 
+            payment.getOrder().pendingConfirmation();
             return new PaymentConfirmResponse(payment.getOrder().getId(),payment.getOrder().getOrderNumber());
 
         } catch (Exception e) {

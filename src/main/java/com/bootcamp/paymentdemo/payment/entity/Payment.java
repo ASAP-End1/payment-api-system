@@ -66,7 +66,7 @@ public class Payment extends BaseEntity {
     }
 
     // 환불 시 결제 상태 검증
-    public boolean isCompleted() {
+    public boolean isPaid() {
         return this.status == PaymentStatus.PAID;
     }
 
