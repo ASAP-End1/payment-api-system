@@ -228,4 +228,6 @@ class PaymentServiceTest {
                 () -> verify(portOneClient).cancelPayment(eq(dbPaymentId), any(PortOneCancelRequest.class))
         );
     }
+
+    // 웹훅쪽은 어떻게 테스트 코드를 짜야할지 모르겠어요 ㅠㅜ...
 }
