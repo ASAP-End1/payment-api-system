@@ -25,6 +25,7 @@ repositories {
 
 dependencies {
     // Spring Boot Starters
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -54,6 +55,11 @@ dependencies {
 
     //PortOne
     implementation 'io.portone:server-sdk:0.23.0'
+
+    //for test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-webmvc-test'
+
 }
 
 tasks.named('test') {
