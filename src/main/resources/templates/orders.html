@@ -404,22 +404,19 @@
         function getStatusStyle(status) {
             const styles = {
                 'PENDING_PAYMENT': 'background: #FEF3C7; color: #92400E;',
+                'PENDING_CONFIRMATION': 'background: #DBEAFE; color: #1E40AF;',
                 'CONFIRMED': 'background: #D1FAE5; color: #065F46;',
-                'CANCELLED': 'background: #FEE2E2; color: #991B1B;',
-                'SHIPPED': 'background: #DBEAFE; color: #1E40AF;',
-                'DELIVERED': 'background: #E0E7FF; color: #3730A3;'
+                'CANCELLED': 'background: #FEE2E2; color: #991B1B;'
             };
             return styles[status] || 'background: #F3F4F6; color: #374151;';
         }
 
-        // 상태 텍스트 반환
         function getStatusText(status) {
             const texts = {
                 'PENDING_PAYMENT': '결제 대기',
-                'CONFIRMED': '결제 완료',
-                'CANCELLED': '취소됨',
-                'SHIPPED': '배송중',
-                'DELIVERED': '배송 완료'
+                'PENDING_CONFIRMATION': '확정 대기',
+                'CONFIRMED': '주문 확정',
+                'CANCELLED': '주문 취소'
             };
             return texts[status] || status;
         }
