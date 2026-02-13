@@ -5,6 +5,7 @@ import com.bootcamp.paymentdemo.external.portone.dto.PortOneRefundRequest;
 import com.bootcamp.paymentdemo.external.portone.dto.PortOneRefundResponse;
 import com.bootcamp.paymentdemo.external.portone.error.PortOneErrorCase;
 import com.bootcamp.paymentdemo.membership.service.MembershipService;
+import com.bootcamp.paymentdemo.order.service.OrderService;
 import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
 import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
@@ -38,6 +39,7 @@ public class RefundService {
     private final RefundHistoryService refundHistoryService;
     private final PaymentRepository paymentRepository;
     private final PortOneClient portOneClient;
+    private final OrderService orderService;
     private final ProductService productService;
     private final PointService pointService;
     private final OrderProductRepository orderProductRepository;
@@ -46,7 +48,7 @@ public class RefundService {
     @Transactional
     public RefundResponse refundAll(String dbPaymentId, @Valid RefundRequest refundRequest) {
 
-        Payment lockedPayment = paymentRepository.findByDbPaymentId(dbPaymentId).orElseThrow(
+        Payment lockedPayment = paymentRepository.findByDbPaymentIdWithLock(dbPaymentId).orElseThrow(
                 () -> new RefundException(ERR_PAYMENT_NOT_FOUND)
         );
 
@@ -130,10 +132,7 @@ public class RefundService {
 
         // 결제 및 주문 상태 변경
         payment.refund();
-        payment.getOrder().cancel();
-
-        // 포인트 복구
-        pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());
+        orderService.cancelOrder(payment.getOrder().getId(), reason);
 
         // 상품 재고 복구
         List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(payment.getOrder().getId());
