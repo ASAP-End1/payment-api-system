@@ -10,7 +10,6 @@ import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
 import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
 import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
-import com.bootcamp.paymentdemo.point.service.PointService;
 import com.bootcamp.paymentdemo.product.service.ProductService;
 import com.bootcamp.paymentdemo.refund.dto.RefundRequest;
 import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
@@ -41,7 +40,6 @@ public class RefundService {
     private final PortOneClient portOneClient;
     private final OrderService orderService;
     private final ProductService productService;
-    private final PointService pointService;
     private final OrderProductRepository orderProductRepository;
     private final MembershipService membershipService;
 
