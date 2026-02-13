@@ -3,8 +3,8 @@ package com.bootcamp.paymentdemo.product.service;
 import com.bootcamp.paymentdemo.product.consts.ProductStatus;
 import com.bootcamp.paymentdemo.product.dto.ProductGetResponse;
 import com.bootcamp.paymentdemo.product.entity.Product;
+import com.bootcamp.paymentdemo.product.exception.ProductNotFoundException;
 import com.bootcamp.paymentdemo.product.repository.ProductRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -82,7 +82,7 @@ class ProductServiceTest {
     @DisplayName("상품 단건 조회 실패 - 존재하지 않는 상품")
     void findOneProduct_NotFound() {
         // when & then
-        assertThrows(EntityNotFoundException.class, () -> {
+        assertThrows(ProductNotFoundException.class, () -> {
             productService.findOneProduct(999999L);
         });
     }
@@ -141,7 +141,7 @@ class ProductServiceTest {
     @DisplayName("재고 차감 실패 - 존재하지 않는 상품")
     void decreaseStock_ProductNotFound() {
         // when & then
-        assertThrows(EntityNotFoundException.class, () -> {
+        assertThrows(ProductNotFoundException.class, () -> {
             productService.decreaseStock(999999L, 10);
         });
     }
@@ -187,7 +187,7 @@ class ProductServiceTest {
     @DisplayName("재고 복구 실패 - 존재하지 않는 상품")
     void increaseStock_ProductNotFound() {
         // when & then
-        assertThrows(EntityNotFoundException.class, () -> {
+        assertThrows(ProductNotFoundException.class, () -> {
             productService.increaseStock(999999L, 10);
         });
     }
