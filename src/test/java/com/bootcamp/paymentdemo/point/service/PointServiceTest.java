@@ -43,12 +43,16 @@ class PointServiceTest {
 
     @Mock
     private PointRepository pointRepository;
+
     @Mock
     private PointUsageRepository pointUsageRepository;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private UserPointBalanceRepository userPointBalanceRepository;
+
     @InjectMocks
     private PointService pointService;
 
@@ -63,7 +67,12 @@ class PointServiceTest {
         ReflectionTestUtils.setField(membership, "accRate", BigDecimal.valueOf(1));
         ReflectionTestUtils.setField(membership, "minAmount", BigDecimal.ZERO);
 
-        testUser = User.register("test@test.com", "1234", "test", "010-1234-5678", membership);
+        testUser = User.register(
+                "test@test.com",
+                "encodedPassword",
+                "test",
+                "010-1234-5678",
+                membership);
         ReflectionTestUtils.setField(testUser, "userId", 1L);
 
         testOrder = Order.builder()
@@ -72,7 +81,7 @@ class PointServiceTest {
                 .totalAmount(BigDecimal.valueOf(10000))
                 .usedPoints(BigDecimal.valueOf(400))
                 .finalAmount(BigDecimal.valueOf(9600))
-                .earnedPoints(BigDecimal.ZERO)
+                .earnedPoints(BigDecimal.valueOf(96))
                 .currency("KRW")
                 .orderStatus(OrderStatus.PENDING_PAYMENT)
                 .build();
@@ -80,7 +89,7 @@ class PointServiceTest {
 
         testUserPointBalance = UserPointBalance.builder()
                 .user(testUser)
-                .currentPoints(BigDecimal.valueOf(1000))
+                .currentPoints(BigDecimal.valueOf(500))
                 .build();
         ReflectionTestUtils.setField(testUserPointBalance, "userId", 1L);
     }
@@ -112,7 +121,7 @@ class PointServiceTest {
     }
 
     @Test
-    @DisplayName("포인트 내역 조회 - 실패")
+    @DisplayName("포인트 내역 조회 - 실패 (사용자 없음)")
     void getPointHistory_실패() {
         // Given
         given(userRepository.findByEmail("fail@test.com")).willReturn(Optional.empty());
@@ -129,13 +138,13 @@ class PointServiceTest {
     void checkPointBalance_잔액O() {
         // Given
         given(pointRepository.calculatePointBalance(1L))
-                .willReturn(BigDecimal.valueOf(1000));
+                .willReturn(BigDecimal.valueOf(100));
 
         // When
         BigDecimal result = pointService.checkPointBalance(testUser);
 
         // Then
-        assertThat(result).isEqualByComparingTo(BigDecimal.valueOf(1000));
+        assertThat(result).isEqualByComparingTo(BigDecimal.valueOf(100));
     }
 
     @Test
@@ -170,7 +179,7 @@ class PointServiceTest {
         // Then
         assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(earned2.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(100));
-        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(600));
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(100));
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.SPENT && transaction.getAmount().compareTo(BigDecimal.valueOf(400).negate()) == 0));
@@ -201,7 +210,7 @@ class PointServiceTest {
         // Then
         assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
         assertThat(earned2.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(300));
-        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(1400));
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(900));
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.REFUNDED && transaction.getAmount().compareTo(BigDecimal.valueOf(400)) == 0));
@@ -219,7 +228,7 @@ class PointServiceTest {
         pointService.earnPoints(testUser, testOrder);
 
         // Then
-        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(1096));
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(596));
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
                 transaction.getType() == PointType.EARNED && transaction.getAmount().compareTo(BigDecimal.valueOf(96)) == 0));
@@ -241,7 +250,7 @@ class PointServiceTest {
         pointService.expirePoints();
 
         // Then
-        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(800));
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(300));
         assertThat(earned.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
 
         verify(pointRepository, times(1)).save(argThat(transaction ->
@@ -255,20 +264,6 @@ class PointServiceTest {
     void syncPointBalance_일치() {
         // Given
         given(userPointBalanceRepository.findAll()).willReturn(List.of(testUserPointBalance));
-        given(pointRepository.calculatePointBalance(1L)).willReturn(BigDecimal.valueOf(1000));
-
-        // When
-        pointService.syncPointBalance();
-
-        // Then
-        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(1000));
-    }
-
-    @Test
-    @DisplayName("스냅샷 정합성 보정 테스트 - 불일치")
-    void syncPointBalance_불일치() {
-        // Given
-        given(userPointBalanceRepository.findAll()).willReturn(List.of(testUserPointBalance));
         given(pointRepository.calculatePointBalance(1L)).willReturn(BigDecimal.valueOf(500));
 
         // When
@@ -276,5 +271,19 @@ class PointServiceTest {
 
         // Then
         assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(500));
+    }
+
+    @Test
+    @DisplayName("스냅샷 정합성 보정 테스트 - 불일치")
+    void syncPointBalance_불일치() {
+        // Given
+        given(userPointBalanceRepository.findAll()).willReturn(List.of(testUserPointBalance));
+        given(pointRepository.calculatePointBalance(1L)).willReturn(BigDecimal.valueOf(300));
+
+        // When
+        pointService.syncPointBalance();
+
+        // Then
+        assertThat(testUserPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(300));
     }
 }
