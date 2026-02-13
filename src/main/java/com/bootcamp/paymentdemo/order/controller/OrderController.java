@@ -4,7 +4,6 @@ import com.bootcamp.paymentdemo.common.dto.ApiResponse;
 import com.bootcamp.paymentdemo.order.dto.OrderCreateRequest;
 import com.bootcamp.paymentdemo.order.dto.OrderCreateResponse;
 import com.bootcamp.paymentdemo.order.dto.OrderGetDetailResponse;
-import com.bootcamp.paymentdemo.order.dto.OrderGetResponse;
 import com.bootcamp.paymentdemo.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
