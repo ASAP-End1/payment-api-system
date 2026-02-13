@@ -22,11 +22,11 @@ public class OrderScheduler {
     private final OrderService orderService;
 
     // 시간이 지나면 자동 확정
-    @Scheduled(cron = "0 0 * * * *") // 매 분 0초 마다 실행
+    @Scheduled(cron = "0 */5 * * * *") // 매 분 0초 마다 실행
     public void autoConfirmOrder() {
         log.info("자동 주문 확정 스케줄러 실행");
 
-        LocalDateTime thresholdDate = LocalDateTime.now().minusMinutes(1); // 테스트용 1분 이후 확정
+        LocalDateTime thresholdDate = LocalDateTime.now().minusMinutes(5); // 테스트용 1분 이후 확정
 
         // 현재는 리스트로 가져오는 방식
         List<Order> ordersToConfirm = orderRepository.findByOrderStatusAndCreatedAtBefore(
