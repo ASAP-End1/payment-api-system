@@ -2,8 +2,8 @@ package com.bootcamp.paymentdemo.product.service;
 
 import com.bootcamp.paymentdemo.product.dto.ProductGetResponse;
 import com.bootcamp.paymentdemo.product.entity.Product;
+import com.bootcamp.paymentdemo.product.exception.ProductNotFoundException;
 import com.bootcamp.paymentdemo.product.repository.ProductRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class ProductService {
     public ProductGetResponse findOneProduct(Long productId) {
         return productRepository.findById(productId)
                 .map(this::convertToGetProductResponse
-                ).orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+                ).orElseThrow(() -> new ProductNotFoundException("상품을 찾을 수 없습니다."));
     }
 
     // 변환 로직 Product 엔티티를 GetProductResponse DTO로 매핑하는 공통 메서드(추후 정적 팩토리 메서드로 리팩토링 가능)
@@ -50,7 +50,7 @@ public class ProductService {
     @Transactional
     public void decreaseStock(Long productId, int quantity) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ProductNotFoundException("상품을 찾을 수 없습니다."));
 
         product.decreaseStock(quantity);
 
@@ -62,7 +62,7 @@ public class ProductService {
     @Transactional
     public void increaseStock(Long productId, int quantity) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ProductNotFoundException("상품을 찾을 수 없습니다."));
 
         product.increaseStock(quantity);
 

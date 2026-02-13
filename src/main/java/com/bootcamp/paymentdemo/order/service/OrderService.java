@@ -4,16 +4,18 @@ import com.bootcamp.paymentdemo.membership.service.MembershipService;
 import com.bootcamp.paymentdemo.order.consts.OrderStatus;
 import com.bootcamp.paymentdemo.order.dto.*;
 import com.bootcamp.paymentdemo.order.entity.Order;
+import com.bootcamp.paymentdemo.order.exception.OrderNotFoundException;
 import com.bootcamp.paymentdemo.order.repository.OrderRepository;
 import com.bootcamp.paymentdemo.orderProduct.entity.OrderProduct;
 import com.bootcamp.paymentdemo.orderProduct.repository.OrderProductRepository;
 import com.bootcamp.paymentdemo.point.service.PointService;
 import com.bootcamp.paymentdemo.product.entity.Product;
+import com.bootcamp.paymentdemo.product.exception.ProductNotFoundException;
 import com.bootcamp.paymentdemo.product.repository.ProductRepository;
 import com.bootcamp.paymentdemo.product.service.ProductService;
 import com.bootcamp.paymentdemo.user.entity.User;
+import com.bootcamp.paymentdemo.user.exception.UserNotFoundException;
 import com.bootcamp.paymentdemo.user.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,7 +48,7 @@ public class OrderService {
 
         // 1. 사용자 조회
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         log.info("주문 생성 시작 - userId: {}, email: {}", user.getUserId(), email);
 
@@ -56,7 +58,7 @@ public class OrderService {
 
         for (var itemRequest : request.getOrderItems()) {
             Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new ProductNotFoundException("상품을 찾을 수 없습니다."));
 
             tempItems.add(new TempProductInfo(product, itemRequest.getCount()));
             totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getCount())));
@@ -130,7 +132,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public List<OrderGetDetailResponse> findAllOrders(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         // 해당 사용자의 주문만 조회로 수정
         List<Order> orders = orderRepository.findByUser_UserIdOrderByCreatedAtDesc(user.getUserId());
@@ -157,7 +159,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderGetDetailResponse findOrderDetail(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new OrderNotFoundException("주문을 찾을 수 없습니다."));
 
         List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(orderId);
 
@@ -191,7 +193,7 @@ public class OrderService {
     public void completePayment(Long orderId) {
         // 1. 주문 조회
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new OrderNotFoundException("주문을 찾을 수 없습니다."));
 
         // 2. 결제 완료 처리 (상태 검증은 엔티티 내부에서 처리)
         order.completePayment();
@@ -212,7 +214,7 @@ public class OrderService {
     public void confirmOrder(Long orderId) {
         // 1. 주문 조회
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new OrderNotFoundException("주문을 찾을 수 없습니다."));
 
         // 2. 주문 확정 (상태 검증은 엔티티 내부에서 처리)
         order.confirm();
@@ -239,7 +241,7 @@ public class OrderService {
     public void cancelOrder(Long orderId, String cancelReason) {
         // 1. 주문 조회
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new OrderNotFoundException("주문을 찾을 수 없습니다."));
 
         // 2. 주문 취소 (상태 검증은 엔티티 내부에서 처리)
         order.cancel();
@@ -324,7 +326,7 @@ public class OrderService {
     @Transactional
     public void rollbackUsedPoint(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new OrderNotFoundException("주문을 찾을 수 없습니다."));
 
         if (order.getUsedPoints().compareTo(BigDecimal.ZERO) == 0) {
             return;
