@@ -282,7 +282,7 @@
                                     ${order.totalAmount.toLocaleString()}원
                                 </div>
                             </div>
-                            <button class="btn btn-primary" onclick='openPointsModal("${order.id}")'>
+                            <button class="btn btn-primary" onclick='openPointsModal("${order.orderId}")'>
                                 💰 포인트로 결제
                             </button>
                         </div>
@@ -296,7 +296,7 @@
         // 포인트 모달 열기
         function openPointsModal(orderId) {
             // orders 배열에서 orderId로 주문 찾기
-            const order = orders.find(o => o.id == orderId);
+            const order = orders.find(o => o.orderId == orderId);
 
             if (!order) {
                 showNotification('주문을 찾을 수 없습니다', 'error');
@@ -435,7 +435,7 @@
 
             try {
                 const orderToProcess = {
-                    orderId: selectedOrder.id,
+                    orderId: selectedOrder.orderId,
                     orderNumber: selectedOrder.orderNumber,
                     totalAmount: selectedOrder.totalAmount,
                     currency: selectedOrder.currency || 'KRW'
@@ -450,6 +450,7 @@
 
                 const paymentData = {
                     orderId: orderToProcess.orderId,
+                    orderNumber: orderToProcess.orderNumber,
                     orderName: `주문 ${orderToProcess.orderNumber}`,
                     totalAmount: orderToProcess.totalAmount,
                     pointsToUse: points,  // 포인트 정보 추가

@@ -1,9 +1,10 @@
-package com.bootcamp.paymentdemo.security;
+package com.bootcamp.paymentdemo.security.controller;
 
 import com.bootcamp.paymentdemo.common.dto.ApiResponse;
 import com.bootcamp.paymentdemo.user.dto.*;
 import com.bootcamp.paymentdemo.user.exception.InvalidCredentialsException;
 import com.bootcamp.paymentdemo.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,6 @@ import java.security.Principal;
 public class AuthController {
 
     private final UserService userService;
-    private final AuthenticationManager authenticationManager;
 
     /**
      * 회원가입 API
@@ -84,6 +84,7 @@ public class AuthController {
      *   "message": "로그인 성공",
      *   "data": {
      *       "email": "user@example.com"
+     *       "accessToken": "..."
      *   }
      * }
      */
@@ -92,47 +93,29 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         log.info("로그인 요청: email={}", request.getEmail());
 
-        try {
-            // Spring Security - AuthenticationManager 사용
-            // 내부적으로 CustomUserDetailsService.loadUserByUsername() 호출됨
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
+        UserService.TokenPair tokenPair = userService.login(request.getEmail(), request.getPassword());
 
-            // 인증 성공 시 토큰 생성
-            String email = authentication.getName();
+        LoginResponse response = new LoginResponse(tokenPair.email, tokenPair.accessToken);
 
-            // UserService에 토큰 생성 위임
-            UserService.TokenPair tokenPair = userService.login(email);
+        // Authorization 헤더에 Access Token 포함
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + tokenPair.accessToken);
 
-            LoginResponse response = new LoginResponse(tokenPair.email, tokenPair.accessToken);
+        // Refresh Token은 HttpOnly 쿠키로 저장
+        ResponseCookie refreshCookie = ResponseCookie
+                .from("refreshToken", tokenPair.refreshToken)
+                .httpOnly(true)      // JavaScript 접근 불가 (XSS 방지)
+                .secure(false)      // HTTPS만 (프로덕션: true, 개발: false)
+                .path("/")          // 모든 경로에서 전송
+                .maxAge(7 * 24 * 60 * 60)    // 7일
+                .sameSite("Lax")   // CSRF 방지
+                .build();
 
-            // Authorization 헤더에 Access Token 포함
-            HttpHeaders headers = new HttpHeaders();
-            headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + tokenPair.accessToken);
+        return ResponseEntity.status(HttpStatus.OK)
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .headers(headers)
+                .body(ApiResponse.success(HttpStatus.OK, "로그인 성공", response));
 
-            // Refresh Token은 HttpOnly 쿠키로 저장
-            ResponseCookie refreshCookie = ResponseCookie
-                    .from("refreshToken", tokenPair.refreshToken)
-                    .httpOnly(true)      // JavaScript 접근 불가 (XSS 방지)
-                    .secure(false)      // HTTPS만 (프로덕션: true, 개발: false)
-                    .path("/")          // 모든 경로에서 전송
-                    .maxAge(7 * 24 * 60 * 60)    // 7일
-                    .sameSite("Lax")   // CSRF 방지
-                    .build();
-
-            return ResponseEntity.status(HttpStatus.OK)
-                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                    .headers(headers)
-                    .body(ApiResponse.success(HttpStatus.OK, "로그인 성공", response));
-
-        } catch (AuthenticationException e) {
-            // 인증 실패
-            log.warn("로그인 실패: email={}", request.getEmail());
-            throw new InvalidCredentialsException(
-                    "이메일 또는 비밀번호가 올바르지 않습니다"
-            );
-        }
     }
 
     /**
@@ -151,10 +134,12 @@ public class AuthController {
      * }
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(Principal principal) {
+    public ResponseEntity<ApiResponse<Void>> logout(Principal principal, HttpServletRequest request) {
         log.info("로그아웃 요청: email={}", principal.getName());
 
-        userService.logout(principal.getName());
+        String accessToken = extractAccessToken(request);
+
+        userService.logout(principal.getName(), accessToken);
 
         // Refresh Token 쿠키 삭제
         ResponseCookie deleteCookie = ResponseCookie
@@ -168,6 +153,17 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
                 .body(ApiResponse.success(HttpStatus.OK, "로그아웃되었습니다.", null));
+    }
+
+    // Authorization 헤더에서 Access Token 추출
+    private String extractAccessToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+
+        return null;
     }
 
 

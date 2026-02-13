@@ -143,7 +143,7 @@ async function openPortOnePaymentWithPoints(paymentData) {
         console.log('1단계: 서버에 결제 시작 요청 (포인트 포함)...');
         const createPaymentResult = await makeApiRequest('create-payment', {
             body: {
-                orderId: paymentData.orderId,
+                orderNumber: paymentData.orderNumber,
                 totalAmount: paymentData.totalAmount,
                 pointsToUse: pointsToUse
             }

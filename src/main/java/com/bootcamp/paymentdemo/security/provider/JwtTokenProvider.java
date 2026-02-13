@@ -1,11 +1,9 @@
-package com.bootcamp.paymentdemo.security;
+package com.bootcamp.paymentdemo.security.provider;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -132,4 +130,29 @@ public class JwtTokenProvider {
 
     }
 
+    // Access Token의 만료 시간 추출
+    public LocalDateTime getExpirationDate(String accessToken) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(accessToken)
+                    .getPayload();
+
+            Date expiration = claims.getExpiration();
+            return expiration.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDateTime();
+        } catch (ExpiredJwtException e) {
+            // 이미 만료된 토큰인 경우, 만료 시간 추출
+            Date expiration = e.getClaims().getExpiration();
+            return expiration.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDateTime();
+        } catch (Exception e) {
+            log.error("토큰에서 만료 시간 추출 실패", e);
+            // 토큰이 잘못된 경우, 현재 시간 반환 (즉시 만료 처리)
+            return LocalDateTime.now();
+        }
+    }
 }

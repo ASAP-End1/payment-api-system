@@ -10,6 +10,8 @@ import com.bootcamp.paymentdemo.payment.consts.PaymentStatus;
 import com.bootcamp.paymentdemo.payment.dto.*;
 import com.bootcamp.paymentdemo.payment.entity.Payment;
 import com.bootcamp.paymentdemo.payment.repository.PaymentRepository;
+import com.bootcamp.paymentdemo.user.entity.UserPointBalance;
+import com.bootcamp.paymentdemo.user.repository.UserPointBalanceRepository;
 import com.bootcamp.paymentdemo.webhook.dto.PortoneWebhookPayload;
 import com.bootcamp.paymentdemo.webhook.entity.WebhookEvent;
 import com.bootcamp.paymentdemo.webhook.repository.WebhookRepository;
@@ -32,18 +34,26 @@ public class PaymentService {
     private final PortOneClient portOneClient;
     private final WebhookRepository webhookRepository;
     private final OrderService orderService;
+    private final UserPointBalanceRepository userPointBalanceRepository;
 
     @Transactional
     public PaymentCreateResponse createPayment(PaymentCreateRequest request) {
 
-        // 1. 주문 정보 조회
+        BigDecimal pointsToUse = request.getPointsToUse() != null ? request.getPointsToUse() : BigDecimal.ZERO;
+
         Order order = orderRepository.findByOrderNumber(request.getOrderNumber())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
 
-        BigDecimal pointsToUse = request.getPointsToUse() != null ? request.getPointsToUse() : BigDecimal.ZERO;
-
         if (pointsToUse.compareTo(BigDecimal.ZERO) > 0) {
-            order.applyPointDiscount(pointsToUse); // 금액 계산만 미리 반영
+
+            UserPointBalance userPointBalance = userPointBalanceRepository.findById(order.getUser().getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("사용자의 포인트 정보를 찾을 수 없습니다."));
+
+            if (userPointBalance.getCurrentPoints().compareTo(pointsToUse) < 0) {
+                throw new IllegalArgumentException("포인트 잔액이 부족합니다.");
+            }
+
+            order.applyPointDiscount(pointsToUse);
         }
 
         // 2. 결제 장부 생성 (PENDING)
@@ -70,11 +80,11 @@ public class PaymentService {
 
         try {
             // 1. 조회 및 멱등성 체크
-            payment = paymentRepository.findByDbPaymentId(dbPaymentId)
+            payment = paymentRepository.findByDbPaymentIdWithLock(dbPaymentId)
                     .orElseThrow(() -> new IllegalArgumentException("결제 건이 존재하지 않습니다."));
 
             if (payment.getStatus() != PaymentStatus.PENDING) {
-                return new PaymentConfirmResponse(true, payment.getOrder().getId(),payment.getOrder().getOrderNumber(), payment.getStatus().name());
+                return new PaymentConfirmResponse(payment.getOrder().getId(),payment.getOrder().getOrderNumber());
             }
 
             // 2. PortOne 검증
@@ -87,7 +97,8 @@ public class PaymentService {
             if (expectedPayAmount.compareTo(actualPayAmount) != 0) {
                 log.error("금액 불일치! DB(예상): {}, PortOne(실제): {}", expectedPayAmount, actualPayAmount);
                 try {
-                    orderService.cancelOrder(payment.getOrder().getId(), "결제 금액 위변조 감지 자동 취소");
+                    orderService.rollbackUsedPoint(payment.getOrder().getId());
+                    payment.cancelPointUsage();
                 } catch (Exception ex) {
                     log.error("금액 불일치 주문 취소 중 오류: {}", ex.getMessage());
                 }
@@ -95,14 +106,12 @@ public class PaymentService {
                 // PG사 결제 취소
                 portOneClient.cancelPayment(dbPaymentId, PortOneCancelRequest.fullCancel("금액 위변조 감지"));
 
-                return new PaymentConfirmResponse(false, null, payment.getOrder().getOrderNumber(),"AMOUNT_MISMATCH");
+                return new PaymentConfirmResponse(null, payment.getOrder().getOrderNumber());
             }
             // 4. 결제 성공 처리
             try {
                 payment.completePayment(dbPaymentId);
-
                 orderService.completePayment(payment.getOrder().getId());
-
                 log.info("결제 및 주문 최종 확정 완료: {}", dbPaymentId);
 
             } catch (Exception e) {
@@ -111,7 +120,8 @@ public class PaymentService {
 
                 try {
                     // 주문 취소
-                    orderService.cancelOrder(payment.getOrder().getId(), "결제 시스템 내부 오류");
+                    orderService.rollbackUsedPoint(payment.getOrder().getId());
+                    payment.cancelPointUsage();
                 } catch (Exception ex) {
                     log.warn("주문 취소 처리 중 오류(이미 취소됨 등): {}", ex.getMessage());
                 }
@@ -122,14 +132,15 @@ public class PaymentService {
             }
 
             payment.getOrder().pendingConfirmation();
-            return new PaymentConfirmResponse(true, payment.getOrder().getId(),payment.getOrder().getOrderNumber(), "PAID");
+            return new PaymentConfirmResponse(payment.getOrder().getId(),payment.getOrder().getOrderNumber());
 
         } catch (Exception e) {
             log.error("결제 확정 실패: {}", e.getMessage());
-            return new PaymentConfirmResponse(false, null, payment.getOrder().getOrderNumber(),"FAILED");
+            return new PaymentConfirmResponse(null, payment.getOrder().getOrderNumber());
         }
     }
 
+    @Transactional
     public void processWebhook(PortoneWebhookPayload payload, String webhookId) {
         try {
             saveWebhookEvent(payload, webhookId);

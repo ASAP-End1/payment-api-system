@@ -3,7 +3,11 @@ package com.bootcamp.paymentdemo.user.service;
 import com.bootcamp.paymentdemo.membership.entity.Membership;
 import com.bootcamp.paymentdemo.membership.entity.MembershipGrade;
 import com.bootcamp.paymentdemo.membership.repository.MembershipRepository;
-import com.bootcamp.paymentdemo.security.JwtTokenProvider;
+import com.bootcamp.paymentdemo.security.entity.AccessTokenBlacklist;
+import com.bootcamp.paymentdemo.security.entity.RefreshToken;
+import com.bootcamp.paymentdemo.security.provider.JwtTokenProvider;
+import com.bootcamp.paymentdemo.security.repository.AccessTokenBlacklistRepository;
+import com.bootcamp.paymentdemo.security.repository.RefreshTokenRepository;
 import com.bootcamp.paymentdemo.user.dto.*;
 import com.bootcamp.paymentdemo.user.entity.*;
 import com.bootcamp.paymentdemo.user.exception.*;
@@ -14,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -28,6 +34,7 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final AccessTokenBlacklistRepository blacklistRepository;
 
     private static final MembershipGrade DEFAULT_GRADE = MembershipGrade.NORMAL;
 
@@ -64,12 +71,16 @@ public class UserService {
         return new SignupResponse(saveUser.getUserId(), saveUser.getEmail());
     }
 
-    // 로그인 - 인증은 이미 AuthenticationManager가 수행
+    // 로그인
     @Transactional
-    public TokenPair login(String email) {
+    public TokenPair login(String email, String password) {
         User user = userRepository.findByEmail(email).orElseThrow(
                 () -> new UserNotFoundException("사용자가 존재하지 않습니다")
         );
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다");
+        }
 
         // 기존 Refresh Token 모두 무효화
         refreshTokenRepository.revokeAllByUserId(user.getUserId());
@@ -91,21 +102,21 @@ public class UserService {
         return new TokenPair(accessToken, refreshToken, user.getEmail());
     }
 
-    // LoginResponse 생성 헬퍼 메서드
-    public LoginResponse createLoginResponse(String email, String accessToken) {
 
-        return new LoginResponse(email, accessToken);
-    }
-
-    // 로그아웃 - Refresh Token 무효화
+    // 로그아웃
     @Transactional
-    public void logout(String email) {
+    public void logout(String email, String accessToken) {
         User user = userRepository.findByEmail(email).orElseThrow(
                 () -> new UserNotFoundException("사용자가 존재하지 않습니다")
         );
 
         // 해당 사용자의 모든 Refresh Token 무효화
         refreshTokenRepository.revokeAllByUserId(user.getUserId());
+
+        // Access Token 블랙리스트에 추가
+        LocalDateTime expiresAt = jwtTokenProvider.getExpirationDate(accessToken);
+        AccessTokenBlacklist blacklist = AccessTokenBlacklist.create(accessToken, email, expiresAt);
+        blacklistRepository.save(blacklist);
 
         log.info("로그아웃 완료: email={}, userId={}", user.getEmail(), user.getUserId());
     }
