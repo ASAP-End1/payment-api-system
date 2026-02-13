@@ -46,7 +46,7 @@ public class RefundService {
     @Transactional
     public RefundResponse refundAll(String dbPaymentId, @Valid RefundRequest refundRequest) {
 
-        Payment lockedPayment = paymentRepository.findByDbPaymentIdWithLock(dbPaymentId).orElseThrow(
+        Payment lockedPayment = paymentRepository.findByDbPaymentId(dbPaymentId).orElseThrow(
                 () -> new RefundException(ERR_PAYMENT_NOT_FOUND)
         );
 
@@ -130,6 +130,7 @@ public class RefundService {
 
         // 결제 및 주문 상태 변경
         payment.refund();
+        payment.getOrder().cancel();
 
         // 포인트 복구
         pointService.refundPoints(payment.getOrder().getUser(), payment.getOrder());

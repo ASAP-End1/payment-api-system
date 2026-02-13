@@ -16,9 +16,6 @@ public interface PaymentRepository extends JpaRepository<Payment,Long> {
     @Query("select p from Payment p where p.dbPaymentId = :dbPaymentId")
     Optional<Payment> findByDbPaymentIdWithLock(@Param("dbPaymentId") String dbPaymentId);
 
-    // 동시적 환불 문제 방지
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM Payment p WHERE p.dbPaymentId = :dbPaymentId")
-    Optional<Payment> findByDbPaymentIdWithLock(@Param("dbPaymentId") String dbPaymentId);
+    Optional<Payment> findByDbPaymentId(String dbPaymentId);
 
 }
