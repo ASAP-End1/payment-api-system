@@ -25,7 +25,9 @@ import com.bootcamp.paymentdemo.user.repository.UserGradeHistoryRepository;
 import com.bootcamp.paymentdemo.user.repository.UserPaidAmountRepository;
 import com.bootcamp.paymentdemo.user.repository.UserPointBalanceRepository;
 import com.bootcamp.paymentdemo.user.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.bootcamp.paymentdemo.order.exception.OrderNotFoundException;
+import com.bootcamp.paymentdemo.product.exception.ProductNotFoundException;
+import com.bootcamp.paymentdemo.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -239,7 +241,7 @@ class OrderServiceTest {
         );
 
         // when & then
-        assertThrows(EntityNotFoundException.class, () -> {
+        assertThrows(UserNotFoundException.class, () -> {
             orderService.createOrder(request, "notexist@example.com");
         });
     }
@@ -258,7 +260,7 @@ class OrderServiceTest {
         );
 
         // when & then
-        assertThrows(EntityNotFoundException.class, () -> {
+        assertThrows(ProductNotFoundException.class, () -> {
             orderService.createOrder(request, testUser.getEmail());
         });
     }
@@ -314,7 +316,7 @@ class OrderServiceTest {
     @DisplayName("주문 상세 조회 실패 - 존재하지 않는 주문")
     void findOrderDetail_NotFound() {
         // when & then
-        assertThrows(EntityNotFoundException.class, () -> {
+        assertThrows(OrderNotFoundException.class, () -> {
             orderService.findOrderDetail(999999L);
         });
     }
