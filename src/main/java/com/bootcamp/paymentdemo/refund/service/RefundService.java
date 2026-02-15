@@ -54,7 +54,7 @@ public class RefundService {
 
         String refundGroupId = "rfnd-grp-" + UUID.randomUUID();
 
-        refundHistoryService.saveRequestHistory(dbPaymentId, refundRequest.getReason(), refundGroupId);
+        refundHistoryService.saveRequestHistory(lockedPayment.getId(), lockedPayment.getTotalAmount(), refundRequest.getReason(), refundGroupId);
 
         String portOneRefundId = null;
 
@@ -68,28 +68,28 @@ public class RefundService {
 
             portOneRefundId = portOnePaymentResponse.getCancellation().getId();
 
-            completeRefund(dbPaymentId, refundRequest.getReason(), portOneRefundId, refundGroupId);
+            completeRefund(lockedPayment, refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             return new RefundResponse(lockedPayment.getOrder().getId(), lockedPayment.getOrder().getOrderNumber());
 
         } catch (PortOneException e) {
             log.error("PortOne API 호출 실패 - Payment ID: {}, Refund Group ID: {}", dbPaymentId, refundGroupId, e);
 
-            refundHistoryService.saveFailHistory(dbPaymentId, refundRequest.getReason(), portOneRefundId, refundGroupId);
+            refundHistoryService.saveFailHistory(lockedPayment.getId(), lockedPayment.getTotalAmount(), refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             throw e;
 
         } catch (RefundException e) {
             log.error("서버 내부 오류 발생 - Payment ID: {}, Refund Group ID: {}", dbPaymentId, refundGroupId, e);
 
-            refundHistoryService.saveFailHistory(dbPaymentId, refundRequest.getReason(), portOneRefundId, refundGroupId);
+            refundHistoryService.saveFailHistory(lockedPayment.getId(), lockedPayment.getTotalAmount(), refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             throw e;
 
         } catch (Exception e) {
             log.error("서버 내부 오류 발생 - Payment ID: {}, Refund Group ID: {}", dbPaymentId, refundGroupId, e);
 
-            refundHistoryService.saveFailHistory(dbPaymentId, refundRequest.getReason(), portOneRefundId, refundGroupId);
+            refundHistoryService.saveFailHistory(lockedPayment.getId(), lockedPayment.getTotalAmount(), refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             throw e;
         }
@@ -117,10 +117,7 @@ public class RefundService {
     }
 
     // 환불 완료 로직
-    private void completeRefund(String dbPaymentId, String reason, String portOneRefundId, String refundGroupId) {
-        Payment payment = paymentRepository.findByDbPaymentId(dbPaymentId).orElseThrow(
-                () -> new RefundException(ERR_PAYMENT_NOT_FOUND)
-        );
+    private void completeRefund(Payment payment, String reason, String portOneRefundId, String refundGroupId) {
         Refund completedRefund = Refund.createCompleted(
                 payment.getId(), payment.getTotalAmount(), reason,  portOneRefundId,  refundGroupId
         );
