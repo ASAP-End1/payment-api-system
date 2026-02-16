@@ -50,7 +50,7 @@ public class OrderService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
-        log.info("주문 생성 시작 - userId: {}, email: {}", user.getUserId(), email);
+        log.info("주문 생성 시작: userId={}, email={}", user.getUserId(), email);
 
         // 2. 상품 정보 조회 및 총 금액 계산
         BigDecimal totalAmount = BigDecimal.ZERO;

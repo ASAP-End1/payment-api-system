@@ -24,7 +24,7 @@ public class OrderScheduler {
     // 시간이 지나면 자동 확정
     @Scheduled(cron = "0 */5 * * * *") // 매 분 0초 마다 실행
     public void autoConfirmOrder() {
-        log.info("자동 주문 확정 스케줄러 실행");
+        log.info("자동 주문 확정 스케줄러 시작");
 
         LocalDateTime thresholdDate = LocalDateTime.now().minusMinutes(5); // 테스트용 1분 이후 확정
 
@@ -40,9 +40,9 @@ public class OrderScheduler {
                 orderService.confirmOrder(order.getId());
                 successCount++;
             } catch (Exception e) {
-                log.error("주문 ID {} 자동 확정 실패: {}", order.getId(), e.getMessage());
+                log.error("자동 주문 확정 실패: orderId={}, message={}", order.getId(), e.getMessage());
             }
         }
-        log.info("총 {}건의 주문이 자동으로 확정되었습니다.", successCount);
+        log.info("자동 주문 확정 스케줄러 완료: 처리 건수={}", successCount);
     }
 }

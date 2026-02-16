@@ -69,7 +69,7 @@ public class PaymentService {
 
         paymentRepository.save(payment);
 
-        log.info("결제 대기 장부 생성: DB_ID={}, OrderID={}", dbPaymentId, order.getId());
+        log.info("결제 대기 장부 생성: dbPaymentId={}, orderId={}", dbPaymentId, order.getId());
 
         return new PaymentCreateResponse(true, dbPaymentId, "PENDING");
     }

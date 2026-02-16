@@ -26,11 +26,9 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductGetResponse>>> getAllProducts()
     {
-        log.info("상품 목록 조회"); // 요청 시작 로그
+        log.info("상품 목록 조회 요청");
 
         List<ProductGetResponse> products = productService.findAllProducts();
-
-        log.info("상품 목록 조회 완료 - 개수: {}개", products.size()); // 결과 로그
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(HttpStatus.OK, "상품 목록 조회 성공", products));
@@ -40,7 +38,7 @@ public class ProductController {
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductGetResponse>> getProductById(@PathVariable Long productId)
     {
-        log.info("상품 단건 조회 - ID: {}", productId);
+        log.info("상품 단건 조회 요청: productId={}", productId);
         ProductGetResponse response = productService.findOneProduct(productId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(HttpStatus.OK, "상품 단건 조회 성공", response));
