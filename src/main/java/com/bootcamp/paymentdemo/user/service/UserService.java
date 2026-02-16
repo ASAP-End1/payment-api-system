@@ -125,7 +125,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserSearchResponse getCurrentUser(String email) {
         User user = userRepository.findByEmailWithGrade(email).orElseThrow(
-                () -> new UserNotFoundException("사용자를 찾을 수 없습니다")
+                () -> new UserNotFoundException("사용자를 찾을 수 없습니다.")
         );
 
         UserPointBalance pointBalance = pointBalanceRepository.findByUserId(user.getUserId())
