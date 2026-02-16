@@ -37,7 +37,7 @@ public class PointService {
     @Transactional(readOnly = true)
     public PageResponse<PointGetResponse> getPointHistory(String email, Pageable pageable) {
         User user = userRepository.findByEmail(email).orElseThrow(
-                () ->new UserNotFoundException("사용자가 존재하지 않습니다")
+                () ->new UserNotFoundException("사용자를 찾을 수 없습니다.")
         );
         Page<PointTransaction> pointTransactionList = pointRepository.findPointTransactions(user.getUserId(), pageable);
         Page<PointGetResponse> page = pointTransactionList.map(pointTransaction -> new PointGetResponse(

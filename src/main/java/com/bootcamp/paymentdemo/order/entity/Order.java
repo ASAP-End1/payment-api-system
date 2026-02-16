@@ -90,7 +90,7 @@ public class Order extends BaseEntity {
     // confirmPayment 시 상태 변경
     public void pendingConfirmation() {
         if (this.orderStatus != OrderStatus.PENDING_PAYMENT) {
-            throw new IllegalStateException("결재 대기 상태의 주문만 주문만 확정 대기할 수 있습니다");
+            throw new IllegalStateException("결제 대기 상태의 주문만 확정 대기할 수 있습니다.");
         }
         this.orderStatus = OrderStatus.PENDING_CONFIRMATION;
     }

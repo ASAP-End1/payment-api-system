@@ -42,11 +42,11 @@ public class UserService {
     @Transactional
     public SignupResponse signup(@Valid SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateEmailException("이미 사용 중인 이메일입니다");
+            throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
         }
 
         Membership defaultGrade = gradeRepository.findByGradeName(DEFAULT_GRADE).orElseThrow(
-                () -> new GradeNotFoundException("기본 등급을 찾을 수 없습니다")
+                () -> new GradeNotFoundException("기본 등급을 찾을 수 없습니다.")
         );
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -75,11 +75,11 @@ public class UserService {
     @Transactional
     public TokenPair login(String email, String password) {
         User user = userRepository.findByEmail(email).orElseThrow(
-                () -> new UserNotFoundException("사용자가 존재하지 않습니다")
+                () -> new UserNotFoundException("사용자를 찾을 수 없습니다.")
         );
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다");
+            throw new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         // 기존 Refresh Token 모두 무효화
@@ -107,7 +107,7 @@ public class UserService {
     @Transactional
     public void logout(String email, String accessToken) {
         User user = userRepository.findByEmail(email).orElseThrow(
-                () -> new UserNotFoundException("사용자가 존재하지 않습니다")
+                () -> new UserNotFoundException("사용자를 찾을 수 없습니다.")
         );
 
         // 해당 사용자의 모든 Refresh Token 무효화
