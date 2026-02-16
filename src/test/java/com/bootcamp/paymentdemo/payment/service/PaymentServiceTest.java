@@ -82,7 +82,10 @@ class PaymentServiceTest {
     @Test
     @DisplayName("결제 생성 성공: 포인트 사용 안함")
     void createPayment_Success_NoPoints() {
-        PaymentCreateRequest request = new PaymentCreateRequest("ORD-20240101", new BigDecimal("10000"), null);
+        PaymentCreateRequest request = new PaymentCreateRequest();
+        ReflectionTestUtils.setField(request, "orderNumber", "ORD-20240101");
+        ReflectionTestUtils.setField(request, "totalAmount", new BigDecimal("10000"));
+        ReflectionTestUtils.setField(request, "pointsToUse", null);
 
         given(orderRepository.findByOrderNumber(anyString())).willReturn(Optional.of(testOrder));
 
@@ -100,7 +103,10 @@ class PaymentServiceTest {
     @DisplayName("결제 생성 성공: 포인트 사용")
     void createPayment_Success_WithPoints() {
         BigDecimal pointsToUse = new BigDecimal("1000");
-        PaymentCreateRequest request = new PaymentCreateRequest("ORD-20240101", new BigDecimal("10000"), pointsToUse);
+        PaymentCreateRequest request = new PaymentCreateRequest();
+        ReflectionTestUtils.setField(request, "orderNumber", "ORD-20240101");
+        ReflectionTestUtils.setField(request, "totalAmount", new BigDecimal("10000"));
+        ReflectionTestUtils.setField(request, "pointsToUse", pointsToUse);
 
         given(orderRepository.findByOrderNumber(anyString())).willReturn(Optional.of(testOrder));
 
@@ -123,7 +129,10 @@ class PaymentServiceTest {
     @DisplayName("결제 생성 실패: 포인트 잔액 부족")
     void createPayment_Fail_NotEnoughPoints() {
         BigDecimal pointsToUse = new BigDecimal("5000");
-        PaymentCreateRequest request = new PaymentCreateRequest("ORD-20240101", new BigDecimal("10000"), pointsToUse);
+        PaymentCreateRequest request = new PaymentCreateRequest();
+        ReflectionTestUtils.setField(request, "orderNumber", "ORD-20240101");
+        ReflectionTestUtils.setField(request, "totalAmount", new BigDecimal("10000"));
+        ReflectionTestUtils.setField(request, "pointsToUse", pointsToUse);
 
         given(orderRepository.findByOrderNumber(anyString())).willReturn(Optional.of(testOrder));
 
