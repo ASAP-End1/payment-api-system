@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.order.dto;
 
+import com.bootcamp.paymentdemo.order.entity.Order;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -26,5 +27,18 @@ public class OrderCreateResponse {
         this.finalAmount = finalAmount;
         this.earnedPoints = earnedPoints;
         this.status = status;
+    }
+
+    // 정적 팩토리 메서드
+    public static OrderCreateResponse from(Order order) {
+        return new OrderCreateResponse(
+                order.getId(),
+                order.getOrderNumber(),
+                order.getTotalAmount(),
+                order.getUsedPoints(),
+                order.getFinalAmount(),
+                order.getEarnedPoints(),
+                order.getOrderStatus().name()
+        );
     }
 }

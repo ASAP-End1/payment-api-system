@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.order.dto;
 
+import com.bootcamp.paymentdemo.order.entity.Order;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -43,6 +44,20 @@ public class OrderGetDetailResponse {
 
         // 포인트 요약 자동 생성
         this.pointSummary = new PointSummary(usedPoints, earnedPoints);
+    }
+
+    public static OrderGetDetailResponse from(Order order, List<OrderProductGetResponse> orderProducts) {
+        return new OrderGetDetailResponse(
+                order.getId(),
+                order.getOrderNumber(),
+                order.getOrderStatus().name(),
+                order.getCreatedAt(),
+                order.getTotalAmount(),
+                order.getUsedPoints(),
+                order.getFinalAmount(),
+                order.getEarnedPoints(),
+                orderProducts
+        );
     }
 
     //포인트 요약 정보
