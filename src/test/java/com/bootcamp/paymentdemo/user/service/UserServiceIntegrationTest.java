@@ -27,6 +27,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,10 +68,28 @@ class UserServiceIntegrationTest {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private Membership normalGrade;
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.execute("DELETE FROM access_token_blacklists");
+        jdbcTemplate.execute("DELETE FROM refresh_tokens");
+        jdbcTemplate.execute("DELETE FROM order_products");
+        jdbcTemplate.execute("DELETE FROM payments");
+        jdbcTemplate.execute("DELETE FROM refund_history");
+        jdbcTemplate.execute("DELETE FROM orders");
+        jdbcTemplate.execute("DELETE FROM point_transactions");
+        jdbcTemplate.execute("DELETE FROM user_grade_histories");
+        jdbcTemplate.execute("DELETE FROM user_point_balances");
+        jdbcTemplate.execute("DELETE FROM user_paid_amounts");
+        jdbcTemplate.execute("DELETE FROM users");
+
+        entityManager.flush();
+        entityManager.clear();
+
         normalGrade = membershipRepository.findByGradeName(MembershipGrade.NORMAL)
                 .orElseThrow(() -> new IllegalStateException("NORMAL 등급이 없습니다"));
     }
@@ -320,7 +339,7 @@ class UserServiceIntegrationTest {
     @Test
     @DisplayName("사용자 정보 조회 실패 - 사용자 없음")
     void getCurrentUser_Fail_WhenUserNotFound_WithRealDatabase() {
-        // given - 존재하지 않는 사용자
+        // given
 
         // when & then
         assertThatThrownBy(() -> userService.getCurrentUser("notexist@test.com"))
