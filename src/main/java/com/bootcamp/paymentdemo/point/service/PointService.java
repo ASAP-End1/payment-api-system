@@ -40,15 +40,7 @@ public class PointService {
                 () ->new UserNotFoundException("사용자를 찾을 수 없습니다.")
         );
         Page<PointTransaction> pointTransactionList = pointRepository.findPointTransactions(user.getUserId(), pageable);
-        Page<PointGetResponse> page = pointTransactionList.map(pointTransaction -> new PointGetResponse(
-                pointTransaction.getId(),
-                // EXPIRED 타입은 Order가 null
-                pointTransaction.getOrder() != null ? pointTransaction.getOrder().getId() : null,
-                pointTransaction.getAmount(),
-                pointTransaction.getType(),
-                pointTransaction.getCreatedAt(),
-                pointTransaction.getExpiresAt()
-        ));
+        Page<PointGetResponse> page = pointTransactionList.map(PointGetResponse::from);
 
         return new PageResponse<>(page);
     }

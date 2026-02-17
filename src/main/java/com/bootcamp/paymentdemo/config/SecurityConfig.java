@@ -1,10 +1,12 @@
 package com.bootcamp.paymentdemo.config;
 
+import com.bootcamp.paymentdemo.common.dto.ApiResponse;
 import com.bootcamp.paymentdemo.security.filter.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -17,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.springframework.boot.security.autoconfigure.web.servlet.PathRequest.toStaticResources;
 
@@ -34,10 +37,12 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final ObjectMapper objectMapper;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CorsConfigurationSource corsConfigurationSource) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CorsConfigurationSource corsConfigurationSource, ObjectMapper objectMapper) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.corsConfigurationSource = corsConfigurationSource;
+        this.objectMapper = objectMapper;
     }
 
     @Bean
@@ -61,24 +66,30 @@ public class SecurityConfig {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             response.setCharacterEncoding("UTF-8");
-                            response.getWriter().write(
-                                    "{\"code\":\"UNAUTHORIZED\"," +
-                                            "\"message\":\"Authentication required\"," +
-                                            "\"status\":401," +
-                                            "\"timestamp\":" + System.currentTimeMillis() + "}"
+
+                            // ApiResponse 적용
+                            ApiResponse<Void> apiResponse = ApiResponse.error(
+                                    HttpStatus.UNAUTHORIZED,
+                                    "Authentication required"
                             );
+
+                            String jsonResponse = objectMapper.writeValueAsString(apiResponse);
+                            response.getWriter().write(jsonResponse);
                         })
                         // 권한 없음 시 (403)
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             response.setCharacterEncoding("UTF-8");
-                            response.getWriter().write(
-                                    "{\"code\":\"FORBIDDEN\"," +
-                                            "\"message\":\"Access denied\"," +
-                                            "\"status\":403," +
-                                            "\"timestamp\":" + System.currentTimeMillis() + "}"
+
+                            // ApiResponse 적용
+                            ApiResponse<Void> apiResponse = ApiResponse.error(
+                                    HttpStatus.FORBIDDEN,
+                                    "Access denied"
                             );
+
+                            String jsonResponse = objectMapper.writeValueAsString(apiResponse);
+                            response.getWriter().write(jsonResponse);
                         })
                 )
 

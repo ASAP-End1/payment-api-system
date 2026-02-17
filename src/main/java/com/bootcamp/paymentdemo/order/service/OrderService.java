@@ -117,15 +117,7 @@ public class OrderService {
 
         // 9. 응답 반환 (모든 포인트 정보 포함)
         // 포인트는 결제 완료 시점에 차감됨
-        return new OrderCreateResponse(
-                order.getId(),
-                order.getOrderNumber(),
-                order.getTotalAmount(),
-                order.getUsedPoints(),
-                order.getFinalAmount(),
-                order.getEarnedPoints(),
-                order.getOrderStatus().name()
-        );
+        return OrderCreateResponse.from(order);
     }
 
     // 주문 내역 조회
@@ -137,21 +129,9 @@ public class OrderService {
         // 해당 사용자의 주문만 조회로 수정
         List<Order> orders = orderRepository.findByUser_UserIdOrderByCreatedAtDesc(user.getUserId());
 
-        List<OrderGetDetailResponse> orderGetResponses = new ArrayList<>();
-        for (Order order : orders) {
-            OrderGetDetailResponse OrderGetDetailResponse = new OrderGetDetailResponse(
-                    order.getId(),
-                    order.getOrderNumber(),
-                    order.getOrderStatus().name(),
-                    order.getCreatedAt(),
-                    order.getTotalAmount(),
-                    order.getUsedPoints(),
-                    order.getFinalAmount(),
-                    order.getEarnedPoints(),
-                    new ArrayList<>()
-            );
-            orderGetResponses.add(OrderGetDetailResponse);
-        }
+        List<OrderGetDetailResponse> orderGetResponses = orders.stream()
+                .map(order -> OrderGetDetailResponse.from(order, new ArrayList<>()))
+                .toList();
         return orderGetResponses;
     }
 
@@ -175,17 +155,7 @@ public class OrderService {
 
         log.info("주문 상세 조회: orderId={}, 주문상품 수={}", orderId, orderProductGetResponses.size());
 
-        return new OrderGetDetailResponse(
-                order.getId(),
-                order.getOrderNumber(),
-                order.getOrderStatus().name(),
-                order.getCreatedAt(),
-                order.getTotalAmount(),
-                order.getUsedPoints(),
-                order.getFinalAmount(),
-                order.getEarnedPoints(),
-                orderProductGetResponses
-        );
+        return OrderGetDetailResponse.from(order, orderProductGetResponses);
     }
 
     // 결제 완료 처리 Payment 서비스에서만 호출
