@@ -21,17 +21,25 @@ public class ProductService {
     // 상품 목록 조회
     @Transactional(readOnly = true)
     public List<ProductGetResponse> findAllProducts() {
-        return productRepository.findAll().stream()
+        List<ProductGetResponse> products =  productRepository.findAll().stream()
                 .map(ProductGetResponse::from)
                 .toList();
+
+        log.info("상품 목록 조회 완료: 개수={}", products.size());
+
+        return products;
     }
 
     // 상품 단건 조회
     @Transactional(readOnly = true)
     public ProductGetResponse findOneProduct(Long productId) {
-        return productRepository.findById(productId)
+        ProductGetResponse product = productRepository.findById(productId)
                 .map(ProductGetResponse::from)
                 .orElseThrow(() -> new ProductNotFoundException("상품을 찾을 수 없습니다."));
+
+        log.info("상품 단건 조회 완료: productId={}", productId);
+
+        return product;
     }
 
     // 재고 차감 (주문 생성 시 호출)
