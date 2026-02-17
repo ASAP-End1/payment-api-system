@@ -82,9 +82,9 @@ class PointControllerTest {
                         .param("size", "10"))
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.success").value("false"))
+                .andExpect(jsonPath("$.code").value("401 UNAUTHORIZED"))
                 .andExpect(jsonPath("$.message").value("Authentication required"))
-                .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.data").isEmpty());
     }
 }
