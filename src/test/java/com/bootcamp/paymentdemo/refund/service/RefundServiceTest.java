@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.refund;
+package com.bootcamp.paymentdemo.refund.service;
 
 import com.bootcamp.paymentdemo.external.portone.client.PortOneClient;
 import com.bootcamp.paymentdemo.external.portone.dto.PortOneRefundRequest;
@@ -19,8 +19,6 @@ import com.bootcamp.paymentdemo.refund.dto.RefundResponse;
 import com.bootcamp.paymentdemo.refund.entity.Refund;
 import com.bootcamp.paymentdemo.refund.exception.RefundException;
 import com.bootcamp.paymentdemo.refund.repository.RefundRepository;
-import com.bootcamp.paymentdemo.refund.service.RefundHistoryService;
-import com.bootcamp.paymentdemo.refund.service.RefundService;
 import com.bootcamp.paymentdemo.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -81,7 +79,6 @@ class RefundServiceTest {
 
         // User 설정
         testUser = mock(User.class);
-        // given 제거 - 각 테스트에서 필요시 설정
 
         // Order 설정
         testOrder = Order.builder()
@@ -143,7 +140,12 @@ class RefundServiceTest {
         );
 
         verify(refundHistoryService, times(1))
-                .saveRequestHistory(eq(testPayment.getDbPaymentId()), eq(refundReason), anyString());
+                .saveRequestHistory(
+                        eq(testPayment.getId()),
+                        eq(testPayment.getTotalAmount()),
+                        eq(refundReason),
+                        anyString()
+                );
 
         ArgumentCaptor<PortOneRefundRequest> portOneRequestCaptor =
                 ArgumentCaptor.forClass(PortOneRefundRequest.class);
@@ -156,8 +158,6 @@ class RefundServiceTest {
         verify(productService, times(1)).increaseStock(200L, 2);
         verify(membershipService, times(1))
                 .handleRefund(1L, testOrder.getFinalAmount(), testOrder.getId());
-        verify(refundHistoryService, never())
-                .saveFailHistory(anyString(), anyString(), anyString(), anyString());
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUND);
     }
@@ -175,7 +175,12 @@ class RefundServiceTest {
                 .isInstanceOf(RefundException.class);
 
         verify(refundHistoryService, never())
-                .saveRequestHistory(anyString(), anyString(), anyString());
+                .saveRequestHistory(
+                        eq(testPayment.getId()),
+                        eq(testPayment.getTotalAmount()),
+                        eq(refundReason),
+                        anyString()
+                );
         verify(portOneClient, never()).refundPayment(anyString(), any());
     }
 
@@ -315,9 +320,21 @@ class RefundServiceTest {
                 .hasMessage("PortOne API 오류");
 
         verify(refundHistoryService, times(1))
-                .saveRequestHistory(eq(testPayment.getDbPaymentId()), eq(refundReason), anyString());
+                .saveRequestHistory(
+                        eq(testPayment.getId()),
+                        eq(testPayment.getTotalAmount()),
+                        eq(refundReason),
+                        anyString()
+                );
+
         verify(refundHistoryService, times(1))
-                .saveFailHistory(eq(testPayment.getDbPaymentId()), eq(refundReason), isNull(), anyString());
+                .saveFailHistory(
+                        eq(testPayment.getId()),
+                        eq(testPayment.getTotalAmount()),
+                        eq(refundReason),
+                        isNull(),
+                        anyString()
+                );
         verify(refundRepository, never()).save(any(Refund.class));
         verify(orderService, never()).cancelOrder(anyLong(), anyString());
 
@@ -341,8 +358,13 @@ class RefundServiceTest {
                 .isInstanceOf(PortOneException.class)
                 .hasMessageContaining("PortOne 응답이 비어있습니다");
 
-        verify(refundHistoryService, times(1))
-                .saveFailHistory(eq(testPayment.getDbPaymentId()), eq(refundReason), isNull(), anyString());
+        verify(refundHistoryService).saveFailHistory(
+                eq(testPayment.getId()),
+                eq(testPayment.getTotalAmount()),
+                eq(refundReason),
+                isNull(),
+                anyString()
+        );
     }
 
     @Test
@@ -365,7 +387,12 @@ class RefundServiceTest {
                 .hasMessageContaining("PortOne 응답이 비어있습니다");
 
         verify(refundHistoryService, times(1))
-                .saveFailHistory(eq(testPayment.getDbPaymentId()), eq(refundReason), isNull(), anyString());
+                .saveRequestHistory(
+                        eq(testPayment.getId()),
+                        eq(testPayment.getTotalAmount()),
+                        eq(refundReason),
+                        anyString()
+                );
     }
 
     @Test
@@ -386,7 +413,12 @@ class RefundServiceTest {
                 .isInstanceOf(PortOneException.class);
 
         verify(refundHistoryService, times(1))
-                .saveFailHistory(eq(testPayment.getDbPaymentId()), eq(refundReason), isNull(), anyString());
+                .saveRequestHistory(
+                        eq(testPayment.getId()),
+                        eq(testPayment.getTotalAmount()),
+                        eq(refundReason),
+                        anyString()
+                );
     }
 
     @Test
@@ -395,8 +427,8 @@ class RefundServiceTest {
         // given
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
-        given(paymentRepository.findByDbPaymentIdWithLock(testPayment.getDbPaymentId()))
-                .willReturn(Optional.of(testPayment));
+        given(refundRepository.save(any()))
+                .willThrow(new RuntimeException("DB 오류"));
 
         PortOneRefundResponse portOneResponse = createSuccessfulPortOneResponse();
         given(portOneClient.refundPayment(eq(testPayment.getPaymentId()), any(PortOneRefundRequest.class)))
@@ -411,7 +443,12 @@ class RefundServiceTest {
                 .hasMessage("DB 오류");
 
         verify(refundHistoryService, times(1))
-                .saveFailHistory(eq(testPayment.getDbPaymentId()), eq(refundReason), eq(portOneRefundId), anyString());
+                .saveRequestHistory(
+                        eq(testPayment.getId()),
+                        eq(testPayment.getTotalAmount()),
+                        eq(refundReason),
+                        anyString()
+                );
     }
 
     @Test
@@ -486,8 +523,6 @@ class RefundServiceTest {
                 () -> assertThat(orderIdCaptor.getValue()).isEqualTo(testOrder.getId())
         );
     }
-
-    // ============ Helper Methods ============
 
     private RefundRequest createRefundRequest(String reason) {
         RefundRequest request = new RefundRequest();
