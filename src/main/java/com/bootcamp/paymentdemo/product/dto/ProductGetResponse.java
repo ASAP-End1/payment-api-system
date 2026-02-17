@@ -1,5 +1,6 @@
 package com.bootcamp.paymentdemo.product.dto;
 
+import com.bootcamp.paymentdemo.product.entity.Product;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -21,5 +22,17 @@ public class ProductGetResponse {
         this.stock = stock;
         this.category = category;
         this.status = status;
+    }
+
+    // 정적 팩토리 메서드
+    public static ProductGetResponse from(Product product) {
+        return new ProductGetResponse(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getStock(),
+                product.getCategory(),
+                product.getStatus().name()
+        );
     }
 }

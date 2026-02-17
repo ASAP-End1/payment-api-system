@@ -23,6 +23,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
@@ -94,11 +95,11 @@ class PaymentControllerIntegrationTest {
     @DisplayName("결제 생성 통합 테스트")
     void createPayment() throws Exception {
         // Given
-        PaymentCreateRequest request = new PaymentCreateRequest(
-                "ORD-INTEG-001",
-                new BigDecimal("10000"),
-                BigDecimal.ZERO
-        );
+        PaymentCreateRequest request = new PaymentCreateRequest();
+        ReflectionTestUtils.setField(request, "orderNumber", "ORD-INTEG-001");
+        ReflectionTestUtils.setField(request, "totalAmount", new BigDecimal("10000"));
+        ReflectionTestUtils.setField(request, "pointsToUse", BigDecimal.ZERO);
+
         String jsonRequest = objectMapper.writeValueAsString(request);
 
         // When
