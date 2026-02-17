@@ -73,21 +73,21 @@ public class RefundService {
             return new RefundResponse(lockedPayment.getOrder().getId(), lockedPayment.getOrder().getOrderNumber());
 
         } catch (PortOneException e) {
-            log.error("PortOne API 호출 실패 - Payment ID: {}, Refund Group ID: {}", dbPaymentId, refundGroupId, e);
+            log.error("PortOne API 호출 실패: dbPaymentId={}, refundGroupId={}", dbPaymentId, refundGroupId, e);
 
             refundHistoryService.saveFailHistory(lockedPayment.getId(), lockedPayment.getTotalAmount(), refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             throw e;
 
         } catch (RefundException e) {
-            log.error("서버 내부 오류 발생 - Payment ID: {}, Refund Group ID: {}", dbPaymentId, refundGroupId, e);
+            log.error("서버 내부 오류 발생: dbPaymentId={}, refundGroupId={}", dbPaymentId, refundGroupId, e);
 
             refundHistoryService.saveFailHistory(lockedPayment.getId(), lockedPayment.getTotalAmount(), refundRequest.getReason(), portOneRefundId, refundGroupId);
 
             throw e;
 
         } catch (Exception e) {
-            log.error("서버 내부 오류 발생 - Payment ID: {}, Refund Group ID: {}", dbPaymentId, refundGroupId, e);
+            log.error("서버 내부 오류 발생: dbPaymentId={}, refundGroupId={}", dbPaymentId, refundGroupId, e);
 
             refundHistoryService.saveFailHistory(lockedPayment.getId(), lockedPayment.getTotalAmount(), refundRequest.getReason(), portOneRefundId, refundGroupId);
 

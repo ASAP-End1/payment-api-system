@@ -45,7 +45,7 @@ public class UserPaidAmount {
     // 결제 금액 합산 (결제 요청 금액 -> totalAmount)
     public void addPaidAmount(BigDecimal paymentAmount) {
         if(paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0){
-            throw new IllegalArgumentException("결제 금액은 0보다 커야 합니다");
+            throw new IllegalArgumentException("결제 금액은 0보다 커야 합니다.");
         }
         this.totalPaidAmount = this.totalPaidAmount.add(paymentAmount);
         this.updatedAt = LocalDateTime.now();
@@ -55,7 +55,7 @@ public class UserPaidAmount {
     // 결제 금액 감소 (환불 요청 금액 -> refundAmount)
     public void subtractPaidAmount(BigDecimal refundAmount) {
         if(refundAmount == null || refundAmount.compareTo(BigDecimal.ZERO) <= 0){
-            throw new IllegalArgumentException("환불 금액은 0보다 커야 합니다");
+            throw new IllegalArgumentException("환불 금액은 0보다 커야 합니다.");
         }
         BigDecimal newAmount = this.totalPaidAmount.subtract(refundAmount);
 

@@ -42,7 +42,7 @@ public class PaymentService {
         BigDecimal pointsToUse = request.getPointsToUse() != null ? request.getPointsToUse() : BigDecimal.ZERO;
 
         Order order = orderRepository.findByOrderNumber(request.getOrderNumber())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
         if (pointsToUse.compareTo(BigDecimal.ZERO) > 0) {
 
@@ -69,7 +69,7 @@ public class PaymentService {
 
         paymentRepository.save(payment);
 
-        log.info("결제 대기 장부 생성: DB_ID={}, OrderID={}", dbPaymentId, order.getId());
+        log.info("결제 대기 장부 생성: dbPaymentId={}, orderId={}", dbPaymentId, order.getId());
 
         return new PaymentCreateResponse(true, dbPaymentId, "PENDING");
     }
@@ -81,7 +81,7 @@ public class PaymentService {
         try {
             // 1. 조회 및 멱등성 체크
             payment = paymentRepository.findByDbPaymentIdWithLock(dbPaymentId)
-                    .orElseThrow(() -> new IllegalArgumentException("결제 건이 존재하지 않습니다."));
+                    .orElseThrow(() -> new IllegalArgumentException("결제 건을 찾을 수 없습니다."));
 
             if (payment.getStatus() != PaymentStatus.PENDING) {
                 return new PaymentConfirmResponse(payment.getOrder().getId(),payment.getOrder().getOrderNumber());

@@ -26,7 +26,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderCreateResponse>> createOrder(@RequestBody OrderCreateRequest request, Principal principal)
     {
         String email = principal.getName();
-        log.info("주문 생성 요청 - 사용자: {}", email);
+        log.info("주문 생성 요청: email={}", email);
         OrderCreateResponse response = orderService.createOrder(request, email);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(HttpStatus.CREATED, "주문 생성 성공", response));
@@ -35,7 +35,7 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<OrderGetDetailResponse>>> getAllOrders(Principal principal){
         String email = principal.getName();
-        log.info("주문 목록 조회 요청");
+        log.info("주문 목록 조회 요청: email={}", email);
         List<OrderGetDetailResponse> response = orderService.findAllOrders(email);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(HttpStatus.OK, "주문 목록 조회 성공", response));
@@ -43,7 +43,7 @@ public class OrderController {
 
     @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponse<OrderGetDetailResponse>> getOntOrder(@PathVariable("orderId") Long orderId){
-        log.info("주문 상세 조회 요청 - 주문번호: {}", orderId);
+        log.info("주문 상세 조회 요청: orderId={}", orderId);
         OrderGetDetailResponse response = orderService.findOrderDetail(orderId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(HttpStatus.OK, "주문 상세 조회 성공", response));
@@ -51,7 +51,7 @@ public class OrderController {
 
     @PatchMapping("/{orderId}/confirm")
     public ResponseEntity<ApiResponse<Void>> confirmOrder(@PathVariable("orderId") Long orderId){
-        log.info("주문 수동 확정 요청 - 주문번호: {}", orderId);
+        log.info("주문 수동 확정 요청: orderId={}", orderId);
         orderService.confirmOrder(orderId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(HttpStatus.OK, "주문 확정 성공", null));

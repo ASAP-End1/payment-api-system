@@ -144,7 +144,7 @@ class UserServiceTest {
         // when & then
         assertThatThrownBy(() -> userService.signup(request))
                 .isInstanceOf(DuplicateEmailException.class)
-                .hasMessage("이미 사용 중인 이메일입니다");
+                .hasMessage("이미 사용 중인 이메일입니다.");
 
         verify(userRepository).existsByEmail(request.getEmail());
         verify(userRepository, never()).save(any(User.class));
@@ -166,7 +166,7 @@ class UserServiceTest {
         // when & then
         assertThatThrownBy(() -> userService.signup(request))
                 .isInstanceOf(GradeNotFoundException.class)
-                .hasMessage("기본 등급을 찾을 수 없습니다");
+                .hasMessage("기본 등급을 찾을 수 없습니다.");
 
         verify(membershipRepository).findByGradeName(MembershipGrade.NORMAL);
         verify(userRepository, never()).save(any(User.class));
@@ -215,7 +215,7 @@ class UserServiceTest {
         // when & then
         assertThatThrownBy(() -> userService.login(email, password))
                 .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("사용자가 존재하지 않습니다");
+                .hasMessage("사용자를 찾을 수 없습니다.");
 
         verify(userRepository).findByEmail(email);
         verify(passwordEncoder, never()).matches(anyString(), anyString());
@@ -235,7 +235,7 @@ class UserServiceTest {
         // when & then
         assertThatThrownBy(() -> userService.login(email, wrongPassword))
                 .isInstanceOf(InvalidCredentialsException.class)
-                .hasMessage("이메일 또는 비밀번호가 올바르지 않습니다");
+                .hasMessage("이메일 또는 비밀번호가 올바르지 않습니다.");
 
         verify(userRepository).findByEmail(email);
         verify(passwordEncoder).matches(wrongPassword, testUser.getPassword());
@@ -276,7 +276,7 @@ class UserServiceTest {
         // when & then
         assertThatThrownBy(() -> userService.logout(email, accessToken))
                 .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("사용자가 존재하지 않습니다");
+                .hasMessage("사용자를 찾을 수 없습니다.");
 
         verify(userRepository).findByEmail(email);
         verify(refreshTokenRepository, never()).revokeAllByUserId(anyLong());
@@ -319,7 +319,7 @@ class UserServiceTest {
         // when & then
         assertThatThrownBy(() -> userService.getCurrentUser(email))
                 .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("사용자를 찾을 수 없습니다");
+                .hasMessage("사용자를 찾을 수 없습니다.");
 
         verify(userRepository).findByEmailWithGrade(email);
         verify(userPointBalanceRepository, never()).findByUserId(anyLong());

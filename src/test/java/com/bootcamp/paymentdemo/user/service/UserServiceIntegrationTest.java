@@ -136,7 +136,7 @@ class UserServiceIntegrationTest {
         // when & then
         assertThatThrownBy(() -> userService.signup(duplicateRequest))
                 .isInstanceOf(DuplicateEmailException.class)
-                .hasMessage("이미 사용 중인 이메일입니다");
+                .hasMessage("이미 사용 중인 이메일입니다.");
 
         // DB 확인 - 하나만 저장되어 있어야 함
         List<User> users = userRepository.findAll();
@@ -189,7 +189,7 @@ class UserServiceIntegrationTest {
         // when & then - 잘못된 비밀번호로 로그인 시도
         assertThatThrownBy(() -> userService.login("bcryptuser@test.com", "wrongpassword"))
                 .isInstanceOf(InvalidCredentialsException.class)
-                .hasMessage("이메일 또는 비밀번호가 올바르지 않습니다");
+                .hasMessage("이메일 또는 비밀번호가 올바르지 않습니다.");
 
         // DB 확인 - Refresh Token이 저장되지 않아야 함
         List<RefreshToken> refreshTokens = refreshTokenRepository.findAll();
@@ -204,7 +204,7 @@ class UserServiceIntegrationTest {
         // when & then
         assertThatThrownBy(() -> userService.login("notuser@test.com", "password123"))
                 .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("사용자가 존재하지 않습니다");
+                .hasMessage("사용자를 찾을 수 없습니다.");
     }
 
     @Test
@@ -325,7 +325,7 @@ class UserServiceIntegrationTest {
         // when & then
         assertThatThrownBy(() -> userService.getCurrentUser("notexist@test.com"))
                 .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("사용자를 찾을 수 없습니다");
+                .hasMessage("사용자를 찾을 수 없습니다.");
     }
 
     @Test

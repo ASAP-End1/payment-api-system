@@ -37,7 +37,7 @@ public class PointService {
     @Transactional(readOnly = true)
     public PageResponse<PointGetResponse> getPointHistory(String email, Pageable pageable) {
         User user = userRepository.findByEmail(email).orElseThrow(
-                () ->new UserNotFoundException("사용자가 존재하지 않습니다")
+                () ->new UserNotFoundException("사용자를 찾을 수 없습니다.")
         );
         Page<PointTransaction> pointTransactionList = pointRepository.findPointTransactions(user.getUserId(), pageable);
         Page<PointGetResponse> page = pointTransactionList.map(PointGetResponse::from);
@@ -146,9 +146,11 @@ public class PointService {
 
     // 포인트 소멸
     @Transactional
-    public void expirePoints() {
+    public int expirePoints() {
         // remainingAmount가 0보다 크고, 만료일이 지난 포인트 조회
         List<PointTransaction> earnedTransactionList = pointRepository.findExpiredPoints();
+
+        int successCount = 0;
 
         // PointTransaction에 저장, remainingAmount 0으로 변경
         for (PointTransaction earnedTransaction : earnedTransactionList) {
@@ -162,19 +164,23 @@ public class PointService {
 
                 // 스냅샷 업데이트
                 updatePointBalance(earnedTransaction.getUser(), remaining.negate());
+                successCount++;
 
                 log.info("포인트 소멸 완료: userId={}, 소멸 포인트={}", expiredTransaction.getUser().getUserId(), remaining);
             } catch (Exception e) {
                 log.error("포인트 소멸 실패: pointId={}", earnedTransaction.getId());
             }
         }
+        return successCount;
     }
 
     // 스냅샷 정합성 보정
     @Transactional
-    public void syncPointBalance() {
+    public int syncPointBalance() {
         // UserPointBalance 리스트 조회
         List<UserPointBalance> userPointBalanceList = userPointBalanceRepository.findAll();
+
+        int successCount = 0;
 
         // UserPointBalance의 currentPoints와 실제 포인트가 다르면 보정
         for (UserPointBalance userPointBalance : userPointBalanceList) {
@@ -183,6 +189,7 @@ public class PointService {
                 BigDecimal actualPointBalance = balance != null ? balance : BigDecimal.ZERO;
                 if (actualPointBalance.compareTo(userPointBalance.getCurrentPoints()) != 0) {
                     userPointBalance.syncPointBalance(actualPointBalance);
+                    successCount++;
 
                     log.info("포인트 정합성 보정: userId={}, 실제 포인트 잔액={}", userPointBalance.getUserId(), actualPointBalance);
                 }
@@ -190,6 +197,7 @@ public class PointService {
                 log.error("포인트 정합성 보정 실패: userId={}", userPointBalance.getUserId());
             }
         }
+        return successCount;
     }
 
     // 스냅샷 업데이트
