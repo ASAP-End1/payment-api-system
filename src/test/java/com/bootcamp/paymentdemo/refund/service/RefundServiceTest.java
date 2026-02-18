@@ -120,9 +120,6 @@ class RefundServiceTest {
         given(portOneClient.refundPayment(eq(testPayment.getPaymentId()), any(PortOneRefundRequest.class)))
                 .willReturn(portOneResponse);
 
-        given(paymentRepository.findByDbPaymentId(testPayment.getDbPaymentId()))
-                .willReturn(Optional.of(testPayment));
-
         List<OrderProduct> orderProducts = createOrderProducts(200L, 2);
         given(orderProductRepository.findByOrder_Id(testOrder.getId()))
                 .willReturn(orderProducts);
@@ -427,14 +424,15 @@ class RefundServiceTest {
         // given
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
-        given(refundRepository.save(any()))
-                .willThrow(new RuntimeException("DB 오류"));
-
         PortOneRefundResponse portOneResponse = createSuccessfulPortOneResponse();
+
+        given(paymentRepository.findByDbPaymentIdWithLock(testPayment.getDbPaymentId()))
+                .willReturn(Optional.of(testPayment));
+
         given(portOneClient.refundPayment(eq(testPayment.getPaymentId()), any(PortOneRefundRequest.class)))
                 .willReturn(portOneResponse);
 
-        given(paymentRepository.findByDbPaymentId(testPayment.getDbPaymentId()))
+        given(refundRepository.save(any()))
                 .willThrow(new RuntimeException("DB 오류"));
 
         // when & then
@@ -466,9 +464,6 @@ class RefundServiceTest {
         given(portOneClient.refundPayment(eq(testPayment.getPaymentId()), any(PortOneRefundRequest.class)))
                 .willReturn(portOneResponse);
 
-        given(paymentRepository.findByDbPaymentId(testPayment.getDbPaymentId()))
-                .willReturn(Optional.of(testPayment));
-
         List<OrderProduct> orderProducts = Arrays.asList(
                 createOrderProduct(200L, 3),
                 createOrderProduct(201L, 5)
@@ -498,9 +493,6 @@ class RefundServiceTest {
         PortOneRefundResponse portOneResponse = createSuccessfulPortOneResponse();
         given(portOneClient.refundPayment(eq(testPayment.getPaymentId()), any(PortOneRefundRequest.class)))
                 .willReturn(portOneResponse);
-
-        given(paymentRepository.findByDbPaymentId(testPayment.getDbPaymentId()))
-                .willReturn(Optional.of(testPayment));
 
         List<OrderProduct> orderProducts = createOrderProducts(200L, 2);
         given(orderProductRepository.findByOrder_Id(testOrder.getId()))
