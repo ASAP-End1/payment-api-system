@@ -454,7 +454,7 @@ src/main/java/com/bootcamp/paymentdemo
 
 ## 8. 비즈니스 로직 플로우차트
 
-![img.png](images/business_flow_chart.png)
+![img.jpg](images/business_flow_chart.jpg)
 
 
 ---
