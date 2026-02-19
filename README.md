@@ -761,7 +761,7 @@ src/main/java/com/bootcamp/paymentdemo
     {
         "success": true,
         "code": 200,
-        "message": "주문 상태 변경 성공",
+        "message": "성공",
         "data": {
             "order_id": 2,
             "order_no": "ORD-20260205-0001",
@@ -785,7 +785,7 @@ src/main/java/com/bootcamp/paymentdemo
     {
         "success": true,
         "code": 200,
-        "message": "주문 상태 변경 성공",
+        "message": "성공",
         "data": {
             "order_id": 2,
             "order_no": "ORD-20260205-0001",	
@@ -826,7 +826,7 @@ src/main/java/com/bootcamp/paymentdemo
     {
         "success": true,
         "code": 200,
-        "message": "주문 상태 변경 성공",
+        "message": "성공",
         "data": {
 	        "orderId": 1,
             "status": "환불 완료"
