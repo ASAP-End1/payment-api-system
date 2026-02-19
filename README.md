@@ -10,15 +10,15 @@
 
 ## 목차
 
-1. [프로젝트 개요](#1--프로젝트-개요)
-2. [기술 스택](#2--기술-스택)
-3. [프로젝트 패키지 구조](#3--프로젝트-패키지-구조)
-4. [실행 방법 / 환경 설정](#4--실행-방법--환경-설정)
-5. [도메인별 주요 기능 정리](#5--도메인별-주요-기능-정리)
-6. [API 명세서](#6--api-명세서)
-7. [ERD](#7--erd)
-8. [비즈니스 로직 플로우차트](#8--비즈니스-로직-플로우차트)
-9. [테스트코드 작성 현황](#9--테스트코드-작성-현황)
+1. [프로젝트 개요](#1-프로젝트-개요)
+2. [기술 스택](#2-기술-스택)
+3. [프로젝트 패키지 구조](#3-프로젝트-패키지-구조)
+4. [실행 방법 / 환경 설정](#4-실행-방법--환경-설정)
+5. [도메인별 주요 기능 정리](#5-도메인별-주요-기능)
+6. [API 명세서](#6-api-명세서)
+7. [ERD](#7-erd)
+8. [비즈니스 로직 플로우차트](#8-비즈니스-로직-플로우차트)
+9. [테스트코드 작성 현황](#9-테스트코드-작성-현황-)
 
 ---
 
@@ -383,15 +383,15 @@ src/main/java/com/bootcamp/paymentdemo
 
 ### 유저(User) API
 <details markdown="1">
-  <summary>유저(User) API</summary>
+  <summary>유저(User)</summary>
   <div>
-    
+    1. 
   </div>
 </details>
 
 ### 상품(Product) API
 <details markdown="1">
-  <summary>상품(Product) API</summary>
+  <summary>상품(Product)</summary>
   <div>
 
   </div>
@@ -399,7 +399,7 @@ src/main/java/com/bootcamp/paymentdemo
 
 ### 주문(Order) API
 <details markdown="1">
-  <summary>주문(Order) API</summary>
+  <summary>주문(Order)</summary>
   <div>
 
   </div>
@@ -407,7 +407,7 @@ src/main/java/com/bootcamp/paymentdemo
 
 ### 결제(Payment) API
 <details markdown="1">
-  <summary>결제(Payment) API</summary>
+  <summary>결제(Payment)</summary>
   <div>
 
   </div>
@@ -415,7 +415,7 @@ src/main/java/com/bootcamp/paymentdemo
 
 ### 환불(Refund) API
 <details markdown="1">
-  <summary>환불(Refund) API</summary>
+  <summary>환불(Refund)</summary>
   <div>
 
   </div>
@@ -423,7 +423,7 @@ src/main/java/com/bootcamp/paymentdemo
 
 ### 포인트 (Point) API
 <details markdown="1">
-  <summary>포인트 (Point) API</summary>
+  <summary>포인트 (Point)</summary>
   <div>
 
   </div>
@@ -431,7 +431,7 @@ src/main/java/com/bootcamp/paymentdemo
 
 ### 멤버십 (Membership) API
 <details markdown="1">
-  <summary>멤버십 (Membership) API</summary>
+  <summary>멤버십 (Membership)</summary>
   <div>
 
   </div>
@@ -439,7 +439,7 @@ src/main/java/com/bootcamp/paymentdemo
 
 ### 웹훅(Webhook) API
 <details markdown="1">
-  <summary>웹훅(Webhook) API</summary>
+  <summary>웹훅(Webhook)</summary>
   <div>
 
   </div>
@@ -460,5 +460,117 @@ src/main/java/com/bootcamp/paymentdemo
 ---
 
 ## 9. 테스트코드 작성 현황 
+
+| 도메인        | 테스트 클래스                          | 테스트 유형 |
+|------------|----------------------------------|--------|
+| Security   | AuthControllerTest               | 단위     |
+| User       | UserServiceIntegrationTest       | 통합     |
+| User       | UserServiceTest                  | 단위     |
+| Product    | ProductControllerTest            | 통합     |
+| Product    | ProductServiceTest               | 통합     |
+| Order      | OrderControllerTest              | 통합     |
+| Order      | OrderServiceTest                 | 통합     |
+| Payment    | PaymentControllerIntegrationTest | 통합     |
+| Payment    | PaymentTest                      | 단위     |
+| Payment    | PaymentServiceTest               | 단위     |
+| Refund     | RefundControllerTest             | 통합     |
+| Refund     | RefundServiceTest                | 단위     |
+| Point      | PointControllerTest              | 단위     |
+| Point      | PointServiceIntegrationTest      | 통합     |
+| Point      | PointServiceTest                 | 단위     |
+| Membership | MembershipControllerTest         | 단위     |
+| Membership | MembershipServiceTest            | 통합     |
+
+### 주요 검증 항목
+
+<details markdown="1">
+  <summary>User(인증/인가)</summary>
+  <div>
+    - 회원가입 성공 및 이메일 중복 검증
+    - BCrypt 비밀번호 암호화 확인
+    - 로그인 성공 및 JWT 토큰 발급
+    - 다중 로그인 시 이전 Refresh Token 무효화
+    - 로그아웃 시 Refresh Token 무효화 + Access Token 블랙리스트 추가
+    - 사용자 정보 조회 (포인트, 등급, 결제 금액)
+  </div>
+</details>
+
+<details markdown="1">
+  <summary>Product (상품)</summary>
+  <div>
+    - 상품 목록 조회 및 단건 조회
+    - 재고 차감 성공 및 재고 부족 예외 처리
+    - 재고 복구 성공
+    - 잘못된 수량(0, 음수) 입력 예외 처리
+    - 존재하지 않는 상품 예외 처리
+  </div>
+</details>
+
+<details markdown="1">
+  <summary>Order (주문)</summary>
+  <div>
+    - 주문 생성 성공 (포인트 사용 O/X)
+    - 주문 번호 자동 생성 (ORD-yyyyMMdd-XXXX)
+    - 주문 목록 조회 및 상세 조회
+    - 주문 확정 성공 및 결제 미완료 시 확정 실패
+    - 포인트 사전 검증 (사용 가능 여부)
+  </div>
+</details>
+
+<details markdown="1">
+  <summary>Payment (결제)</summary>
+  <div>
+    - 결제 장부 생성 (포인트 사용 O/X)
+    - 포인트 잔액 부족 시 예외 처리
+    - 결제 확정 성공 (PortOne 금액 일치 검증)
+    - 금액 불일치 시 자동 결제 취소 (보상 트랜잭션)
+    - 내부 로직 오류 시 자동 결제 취소 (보상 트랜잭션)
+    - 결제 상태 변경 (PENDING → PAID)
+    - Entity 비즈니스 로직 (completePayment, isAlreadyProcessed, cancelPointUsage, refund)
+  </div>
+</details>
+
+<details markdown="1">
+  <summary>Point (포인트)</summary>
+  <div>
+    - 포인트 내역 조회 (페이징)
+    - 포인트 잔액 조회 (실시간 SUM)
+    - 포인트 적립 (주문 확정 시)
+    - 포인트 사용 (FIFO 방식 - 만료일 임박 순)
+    - 포인트 환불 복구
+    - 포인트 자동 소멸 (만료일 경과)
+    - 스냅샷 정합성 자동 보정
+    - 적립 → 사용 → 환불 통합 시나리오
+  </div>
+</details>
+
+<details markdown="1">
+  <summary>Refund (환불)</summary>
+  <div>
+    - 환불 성공 (전체 플로우)
+    - 비관적 락을 통한 중복 환불 방지
+    - 이미 환불된 결제 예외 처리
+    - 존재하지 않는 결제 예외 처리
+    - 환불 사유 Validation (빈 문자열, null, 공백)
+    - PortOne API 실패 시 예외 처리
+    - 환불 완료 후 재고 복구 검증
+    - 환불 완료 후 멤버십 등급 갱신 검증
+    - 환불 이력 저장 (요청/성공/실패)
+  </div>
+</details>
+
+<details markdown="1">
+  <summary>Membership (등급 관리)</summary>
+  <div>
+    - 등급 정책 조회 (NORMAL/VIP/VVIP)
+    - 누적 결제 금액 기반 등급 자동 결정
+    - 주문 확정 시 등급 자동 상승
+    - 환불 시 등급 자동 하락
+    - 등급 변경 이력 저장
+  </div>
+</details>
+
+<br/><br/>
+
 
 
