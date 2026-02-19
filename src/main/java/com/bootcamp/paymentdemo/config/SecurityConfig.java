@@ -24,12 +24,7 @@ import tools.jackson.databind.ObjectMapper;
 import static org.springframework.boot.security.autoconfigure.web.servlet.PathRequest.toStaticResources;
 
 /**
- * Spring Security 설정 - JWT 기반 인증
- *
- * TODO: 개선 사항
- * - CORS 설정 추가
- * - 역할 기반 접근 제어 (ROLE_ADMIN, ROLE_USER)
- * - API 엔드포인트별 세밀한 권한 설정
+ * Spring Security 설정 - JWT 기반 인증 및 배포 환경 최적화
  */
 @Configuration
 @EnableWebSecurity
@@ -48,95 +43,68 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // CSRF 비활성화 (JWT 사용 시 불필요)
-            .csrf(AbstractHttpConfigurer::disable)
+                // 1. 보안 기능 비활성화 및 설정
+                .csrf(AbstractHttpConfigurer::disable) // JWT 사용으로 CSRF 비활성화
+                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // CORS 적용
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션 미사용
+                )
 
-            // CORS 적용
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
-
-            // Session 사용 안 함 (Stateless)
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-
-                // 인증/인가 예외처리
+                // 2. 예외 처리 (인증 실패 및 권한 부족)
                 .exceptionHandling(exceptions -> exceptions
-                        // 인증 실패 시 (401)
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             response.setCharacterEncoding("UTF-8");
-
-                            // ApiResponse 적용
-                            ApiResponse<Void> apiResponse = ApiResponse.error(
-                                    HttpStatus.UNAUTHORIZED,
-                                    "Authentication required"
-                            );
-
-                            String jsonResponse = objectMapper.writeValueAsString(apiResponse);
-                            response.getWriter().write(jsonResponse);
+                            ApiResponse<Void> apiResponse = ApiResponse.error(HttpStatus.UNAUTHORIZED, "Authentication required");
+                            response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
                         })
-                        // 권한 없음 시 (403)
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             response.setCharacterEncoding("UTF-8");
-
-                            // ApiResponse 적용
-                            ApiResponse<Void> apiResponse = ApiResponse.error(
-                                    HttpStatus.FORBIDDEN,
-                                    "Access denied"
-                            );
-
-                            String jsonResponse = objectMapper.writeValueAsString(apiResponse);
-                            response.getWriter().write(jsonResponse);
+                            ApiResponse<Void> apiResponse = ApiResponse.error(HttpStatus.FORBIDDEN, "Access denied");
+                            response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
                         })
                 )
 
-            // 요청 권한 설정
-            .authorizeHttpRequests(authorize -> authorize
-                     // 1) 정적 리소스
-                    .requestMatchers(toStaticResources().atCommonLocations()).permitAll()
+                // 3. 경로별 권한 설정
+                .authorizeHttpRequests(authorize -> authorize
+                        // 1) 정적 리소스 및 기본 페이지 (배포 환경에서 누락되기 쉬운 경로들)
+                        .requestMatchers(toStaticResources().atCommonLocations()).permitAll()
+                        .requestMatchers("/", "/index.html", "/favicon.ico", "/css/**", "/js/**", "/assets/**", "/lib/**").permitAll()
 
-                    // 2) 템플릿 페이지 렌더링
-                    .requestMatchers(HttpMethod.GET, "/").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/pages/**").permitAll()
+                        // 2) 뷰 페이지 접근 허용
+                        .requestMatchers(HttpMethod.GET, "/pages/**", "/login", "/signup").permitAll()
 
-                    // 3) 공개 API
-                    .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
+                        // 3) 공용 API 및 웹훅
+                        .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/portone-webhook").permitAll()
 
-                    // 웹훅 테스트를 위해서 추가한 것 (삭제 예정)
-                    .requestMatchers(HttpMethod.POST, "/portone-webhook").permitAll()
+                        // 4) 인증 API (회원가입, 로그인) - 메서드 구분 없이 모두 허용으로 변경
+                        .requestMatchers("/api/login", "/api/signup").permitAll()
 
-                    // 4) 인증 API (회원가입, 로그인)
-                    .requestMatchers(HttpMethod.POST, "/api/login", "/api/signup").permitAll()
+                        // 5) 인증이 필요한 API
+                        .requestMatchers("/api/logout", "/api/me").authenticated()
+                        .requestMatchers("/api/**").authenticated()
 
-                    // 5) 그 외 API는 인증 필요
-                    .requestMatchers(HttpMethod.POST, "/api/logout").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/me").authenticated()
-                    .requestMatchers("/api/**").authenticated()
+                        // 6) 그 외 모든 요청은 인증 필요
+                        .anyRequest().authenticated()
+                )
 
-                    // 6) 나머지 전부 인증 필요
-                    .anyRequest().authenticated()
-            )
-
-            // JWT 필터 추가
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // 4. JWT 필터 배치
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    /**
-     * PasswordEncoder Bean
-     */
     @Bean
     public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }
