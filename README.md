@@ -742,15 +742,14 @@ src/main/java/com/bootcamp/paymentdemo
   <summary>결제(Payment)</summary>
   <div>
 
-### 1. 결제 시도 기록
+### 1. 결제 준비(장부 생성)
 
-- URL: `/api/payments`
+- URL: `/api/payment/create`
 - Method: `POST`
 - Request Body:
     ```json
     {
         "order_id": 2,
-        "order_no": "ORD-20260205-0001",
 	    "totalAmount" : 1000,
 	    "usePoint" : 100
     }
@@ -761,10 +760,8 @@ src/main/java/com/bootcamp/paymentdemo
     {
         "success": true,
         "code": 200,
-        "message": "주문 상태 변경 성공",
+        "message": "성공",
         "data": {
-            "order_id": 2,
-            "order_no": "ORD-20260205-0001",
 	        "success" : true,
 	        "paymentId" : 12345678,
 	        "status" : "Pending"
@@ -777,7 +774,7 @@ src/main/java/com/bootcamp/paymentdemo
 
 ### 2. 결제 확정
 
-- URL: `/api/payments/{paymentId}/confirm`
+- URL: `/api/payment/{dbPaymentId}/confirm`
 - Method: `POST`
 - Request Body:
 - Response:
@@ -785,7 +782,7 @@ src/main/java/com/bootcamp/paymentdemo
     {
         "success": true,
         "code": 200,
-        "message": "주문 상태 변경 성공",
+        "message": "성공",
         "data": {
             "order_id": 2,
             "order_no": "ORD-20260205-0001",	
@@ -826,7 +823,7 @@ src/main/java/com/bootcamp/paymentdemo
     {
         "success": true,
         "code": 200,
-        "message": "주문 상태 변경 성공",
+        "message": "성공",
         "data": {
 	        "orderId": 1,
             "status": "환불 완료"
