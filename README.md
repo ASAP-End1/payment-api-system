@@ -381,12 +381,126 @@ src/main/java/com/bootcamp/paymentdemo
 
 ## 6. API 명세서
 
+공통 사항
+- API Header
+  - Content-Type: application/json
+  - Authorization: Bearer {TOKEN} (회원가입, 로그인 제외)
+
 ### 유저(User) API
-<details markdown="1">
+<details>
   <summary>유저(User)</summary>
-  <div>
-    1. 
-  </div>
+  <div markdown="1">
+
+### 1. 회원가입
+- URL: `/api/signup`
+- Method: `POST`
+- Request Body:
+    ```json
+    {
+          "username": "테스트",
+          "email": "test1@example.com",
+          "password": "password123",
+          "phoneNumber": "010-1111-2222"
+    }
+    ```
+
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 201,
+        "message": "회원가입 성공",
+        "data": {
+          "userId": 1,
+          "email": "test1@example.com"
+        }
+    }
+    ```
+- Response Code `201 Created`
+- ERROR
+    
+  - 입력값 검증 실패: 400 Bad Request
+  - 이미 존재하는 이메일인 경우: 409 Conflict
+
+### 2. 로그인
+
+- URL: `/api/login`
+- Method: `POST`
+- Request Body:
+    ```json
+    {
+          "email": "test1@example.com",
+          "password": "password123"
+    }
+    ```
+
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 200,
+        "message": "성공",
+        "data": {
+          "email": "user@example.com",
+          "accessToken": "Bearer ..."
+        }
+    }
+    ```
+- Response Code `200 OK`
+- ERROR
+
+    - 입력값 검증 실패: 400 Bad Request
+    - 잘못된 비밀번호일 경우: 401 Unauthorized
+
+### 3. 로그아웃
+
+- URL: `/api/logout`
+- Method: `POST`
+- Request Body:
+
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 200,
+        "message": "로그아웃 성공",
+        "data": {} 
+    }
+    ```
+- Response Code `200 OK`
+- ERROR
+
+    - 사용자 없음: 400 Bad Request
+    - 인증 실패(토큰 없음/만료): 401 Unauthorized
+
+### 4. 내 정보 조회
+
+- URL: `/api/me`
+- Method: `GET`
+- Request Body:
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 200,
+        "message": "성공",
+        "data": {       
+            "userId": "1",
+            "email": "user@test.com",
+            "name": "테스트",
+            "phone": "010-1234-5678",
+            "pointBalance": 0.00,
+           "totalPaidAmount": 0.00,
+           "currentGrade": "NORMAL"
+        }
+    }
+    ```
+- Response Code `200 OK`
+- ERROR
+
+  - 토큰 없이 보호된 API 접근할 경우: 401 Unauthorized
+
+    </div>
 </details>
 
 ### 상품(Product) API
@@ -394,6 +508,71 @@ src/main/java/com/bootcamp/paymentdemo
   <summary>상품(Product)</summary>
   <div>
 
+### 1. 상품 목록 조회
+
+- URL: `/api/products`
+- Method: `GET`
+- Request Body:
+
+- Response:
+    ```json
+    {
+       "success": true,
+       "code": 200,
+       "message": "성공",
+       "data": [
+            {
+              "product_id": 1,
+              "name": "기계식 키보드",
+              "price": 150000,
+              "stock_quantity": 10,
+              "status": "ON_SALE",
+              "category": "ELECTRONICS"
+            },
+            {
+              "product_id": 2,
+              "name": "게이밍 마우스",
+              "price": 50000,
+              "stock_quantity": 5,
+              "status": "ON_SALE",
+              "category": "ELECTRONICS"
+            }
+       ]
+    }
+    ```
+- Response Code `200 OK`
+- ERROR
+
+    - 서버 내부 오류: 500 Internal Server Error
+
+### 1. 상품 단건 조회
+
+- URL: `/api/products/{productId}`
+- Method: `GET`
+- Request Body:
+
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 200,
+        "message": "성공",
+        "data": {
+            "product_id": 1,
+            "name": "기계식 키보드",
+            "price": 150000,
+            "stock_quantity": 10,
+            "description": "무선 사용이 가능한 청축 기계식 키보드.",
+            "status": "ON_SALE",
+            "category": "ELECTRONICS"
+        }
+    }
+    ```
+- Response Code `200 OK`
+- ERROR
+  - 존재하지 않는 상품 조회 요청: 404 Not Found
+  - 잘못된 상품ID 형식: 400 Bad Request
+  
   </div>
 </details>
 
@@ -401,6 +580,159 @@ src/main/java/com/bootcamp/paymentdemo
 <details markdown="1">
   <summary>주문(Order)</summary>
   <div>
+
+### 1. 주문 생성
+
+- URL: `/api/orders`
+- Method: `POST`
+- Request Body:
+    ```json
+    {
+        "userId": 1,
+          "order_items": [
+            {
+                "product_id": 1,
+                "stock_quantity": 1
+            },
+            {
+                "product_id": 2,
+                "stock_quantity": 2
+            }
+        ]
+      }
+  ```
+
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 201,
+        "message": "주문 생성 성공",
+        "data": {
+            "order_id": 2,
+            "order_no": "ORD-20260205-0001",
+            "total_amount": 250000,
+            "status": "PAYMENT_WAITING",
+            "ordered_at": "2026-02-05T14:30:00"
+        }
+    }
+  ```
+- Response Code `201 Created`
+- ERROR
+
+    - 재고 부족, 1회 최대 주문 수량 초과, 유효하지 않은 상품 ID 포함 시: 400 Bad Request
+    - 인증 실패(토큰 없음/만료): 401 Unauthorized
+
+
+### 2. 주문 내역 조회
+
+- URL: `/api/orders`
+- Method: `GET`
+- Request Body:
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 200,
+        "message": "성공",
+        "data": [
+           {
+              "order_id": 2,
+              "order_no": "ORD-20260205-0001",
+              "total_amount": 250000,
+              "status": "PAYMENT_WAITING",
+              "ordered_at": "2026-02-05T14:30:00"
+           },
+           {
+              "order_id": 1,
+              "order_no": "ORD-20260201-0001",
+              "total_amount": 15000,
+              "status": "ORDER_COMPLETED",
+              "ordered_at": "2026-02-01T09:00:00"
+           }
+        ]
+    }
+    ```
+- Response Code `200 OK`
+- ERROR
+    - 인증 실패(토큰 없음/만료): 401 Unauthorized
+
+### 3. 주문 상세 조회
+
+- URL: `/api/orders/{orderId}`
+- Method: `GET`
+- Request Body:
+- Response:
+  ```json
+  {
+        "success": true,
+        "code": 200,
+        "message": "성공",
+        "data": {
+          "order_id": 2,
+          "order_no": "ORD-20260205-0001",
+          "userId": 1,
+          "total_amount": 250000,
+          "status": "PAYMENT_WAITING",
+          "ordered_at": "2026-02-05T14:30:00",
+          "order_items": [
+            {
+              "order_items_id": 1,
+              "product_id": 1,
+              "name": "기계식 키보드",
+              "price": 150000,
+              "stock_quantity": 1
+            },
+            {
+              "order_items_id": 2,
+              "product_id": 2,
+              "name": "게이밍 마우스",
+              "price": 50000,
+              "stock_quantity": 2
+            }
+          ]
+        }
+  }
+    ```
+
+- Response Code `200 OK`
+- ERROR
+    - 본인의 주문이 아닌 경우 조회 불가: 403 Forbidden
+    - 존재하지 않는 주문 ID: 404 Not Found
+
+
+### 4. 주문 확정
+
+- URL: `/api/orders/{orderId}/confirm`
+- Method: `PATCH`
+- Request Body:
+    ```json
+    {
+        "status": "CONFIRMED"
+    }
+  ```
+
+- Response:
+    ```json
+    {
+      "success": true,
+      "code": 200,
+      "message": "주문 상태 변경 성공",
+      "data": {
+        "order_id": 2,
+        "status": "CONFIRMED",
+        "updated_at": "2026-02-05T14:35:00"
+      }
+    }   
+  ```
+- Response Code `200 OK`
+- ERROR
+
+    - 불가능한 상태 변경 시도: 400 Bad Request
+    - 권한 없음: 403 Forbidden
+    - 주문 없음: 404 Not Found
+
+
 
   </div>
 </details>
@@ -410,6 +742,66 @@ src/main/java/com/bootcamp/paymentdemo
   <summary>결제(Payment)</summary>
   <div>
 
+### 1. 결제 시도 기록
+
+- URL: `/api/payments`
+- Method: `POST`
+- Request Body:
+    ```json
+    {
+        "order_id": 2,
+        "order_no": "ORD-20260205-0001",
+	    "totalAmount" : 1000,
+	    "usePoint" : 100
+    }
+  ```
+
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 200,
+        "message": "주문 상태 변경 성공",
+        "data": {
+            "order_id": 2,
+            "order_no": "ORD-20260205-0001",
+	        "success" : true,
+	        "paymentId" : 12345678,
+	        "status" : "Pending"
+      }
+    }   
+  ```
+- Response Code `200 OK`
+- ERROR
+
+
+### 2. 결제 확정
+
+- URL: `/api/payments/{paymentId}/confirm`
+- Method: `POST`
+- Request Body:
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 200,
+        "message": "주문 상태 변경 성공",
+        "data": {
+            "order_id": 2,
+            "order_no": "ORD-20260205-0001",	
+	        "success" : true,
+	        "paymentId" : 12345678,
+	        "status" : "Paid"
+        }
+    }
+  ```
+- Response Code `200 OK`
+- ERROR
+
+    - paymentId 가 DB내에 존재하는것과 올바르지 않을 때: 404 Not Found
+    - 이미 처리된 결제일때: 400 Bad Request
+
+
   </div>
 </details>
 
@@ -417,6 +809,36 @@ src/main/java/com/bootcamp/paymentdemo
 <details markdown="1">
   <summary>환불(Refund)</summary>
   <div>
+
+### 전액 환불 처리
+
+- URL: `/api/refunds/{dbPaymentId}`
+- Method: `POST`
+- Request Body:
+    ```json
+    {
+        "reason": "상품 불량"
+    }
+  ```
+
+- Response:
+    ```json
+    {
+        "success": true,
+        "code": 200,
+        "message": "주문 상태 변경 성공",
+        "data": {
+	        "orderId": 1,
+            "status": "환불 완료"
+        }
+    }   
+  ```
+- Response Code `200 OK`
+- ERROR
+
+    - 인증 실패(토큰 없음/만료): 401 Unauthorized
+    - 결제 정보를 찾을 수 없을 경우: 404 Not Found
+    - 환불을 진행할 수 없는 상태일 경우: 409 Conflict
 
   </div>
 </details>
@@ -426,6 +848,58 @@ src/main/java/com/bootcamp/paymentdemo
   <summary>포인트 (Point)</summary>
   <div>
 
+### 포인트 이력 조회
+
+- URL: `/api/points`
+- Method: `GET`
+- Request Body:
+
+- Response:
+    ```json
+    {
+      "success": true,
+      "code": 200,
+      "message": "성공",
+      "data": [
+	      {
+          "id": 4,
+          "orderId": "ORD-20260205-0003",
+          "points": -500,
+          "type": "SPENT",
+          "createdAt": "2026-02-05T21:00:00",
+          "expiresAt": null
+        },
+	    {
+          "id": 3,
+          "orderId": null,
+          "points": -300,
+          "type": "EXPIRED",
+          "createdAt": "2026-02-05T18:00:00",
+          "expiresAt": null
+        },
+        {
+          "id": 2,
+          "orderId": "ORD-20260205-0001",
+          "points": 200,
+          "type": "REFUNDED",
+          "createdAt": "2026-02-05T14:00:00",
+          "expiresAt": null
+        },
+        {
+          "id": 1,
+          "orderId": "ORD-20260205-0002",
+          "points": 500,
+          "type": "EARNED",
+          "createdAt": "2026-02-05T09:00:00",
+          "expiresAt": "2027-02-05T09:00:00"
+        }
+      ]
+    }
+  ```
+- Response Code `200 OK`
+- ERROR
+
+    - 인증 실패(토큰 없음/만료): 401 Unauthorized
   </div>
 </details>
 
@@ -433,6 +907,44 @@ src/main/java/com/bootcamp/paymentdemo
 <details markdown="1">
   <summary>멤버십 (Membership)</summary>
   <div>
+
+### 포인트 이력 조회
+
+- URL: `/api/membership`
+- Method: `GET`
+- Request Body:
+
+- Response:
+   ```json
+    {
+        "success": true,
+        "code": 200,
+        "message": "성공",
+        "data": [
+            {
+              "gradeName": "NORMAL",
+              "accRate": 1.00,
+              "minAmount": 0.00
+            },
+            {
+              "gradeName": "VIP",
+              "accRate": 5.00,
+              "minAmount": 50001.00
+            },
+            {
+              "gradeName": "VVIP",
+              "accRate": 10.00,
+              "minAmount": 150000.00
+            }
+        ]
+    }
+
+    ```
+- Response Code `200 OK`
+- ERROR
+
+    - 인증 실패(토큰 없음/만료): 401 Unauthorized
+
 
   </div>
 </details>
