@@ -30,7 +30,7 @@ jobs:
           chmod +x gradlew
           ./gradlew build --no-daemon
         env:
-          SPRING_DATASOURCE_URL: "jdbc:h2:mem:lunch;MODE=MySQL"
+          SPRING_DATASOURCE_URL: "jdbc:h2:mem:test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS TEST"
           SPRING_DATASOURCE_DRIVER_CLASS_NAME: "org.h2.Driver"
           SPRING_JPA_DATABASE_PLATFORM: "org.hibernate.dialect.H2Dialect"
           SPRING_JPA_HIBERNATE_DDL_AUTO: "create"

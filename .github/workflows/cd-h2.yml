@@ -95,7 +95,7 @@ jobs:
               "docker pull \"$DOCKERHUB_USERNAME/lunch-app:$IMAGE_TAG\"",
               "docker stop lunch-app || true",
               "docker rm lunch-app || true",
-              "docker run -d --name lunch-app -p 8080:8080 -e \"SPRING_DATASOURCE_URL=jdbc:h2:mem:lunch;MODE=MySQL\" -e \"SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver\" -e \"SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect\" -e \"SPRING_JPA_HIBERNATE_DDL_AUTO=create\" -e \"SPRING_FLYWAY_ENABLED=false\" --restart always \"$DOCKERHUB_USERNAME/lunch-app:$IMAGE_TAG\"",
+              "docker run -d --name lunch-app -p 8080:8080 -e \"SPRING_DATASOURCE_URL=jdbc:h2:mem:test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS TEST\" -e \"SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver\" -e \"SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect\" -e \"SPRING_JPA_HIBERNATE_DDL_AUTO=create\" -e \"SPRING_FLYWAY_ENABLED=false\" --restart always \"$DOCKERHUB_USERNAME/lunch-app:$IMAGE_TAG\"",
               "docker ps | grep lunch-app",
               "docker logs --tail 50 lunch-app || true"
             ]
