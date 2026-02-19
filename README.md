@@ -545,7 +545,7 @@ src/main/java/com/bootcamp/paymentdemo
 
     - 서버 내부 오류: 500 Internal Server Error
 
-### 1. 상품 단건 조회
+### 2. 상품 단건 조회
 
 - URL: `/api/products/{productId}`
 - Method: `GET`
