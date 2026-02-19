@@ -34,6 +34,7 @@ jobs:
       - name: Build JAR (Gradle)
         run: |
           set -euo pipefail
+          chmod +x gradlew
           ./gradlew --no-daemon bootJar -x test
           ls -al build/libs
 
