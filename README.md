@@ -905,7 +905,7 @@ src/main/java/com/bootcamp/paymentdemo
   <summary>멤버십 (Membership)</summary>
   <div>
 
-### 포인트 이력 조회
+### 등급 정책 조회
 
 - URL: `/api/membership`
 - Method: `GET`
