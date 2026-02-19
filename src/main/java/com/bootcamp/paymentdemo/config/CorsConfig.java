@@ -13,7 +13,7 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("http://localhost:8080", "https://3.36.92.169.nip.io"));
+        config.setAllowedOrigins(Arrays.asList("http://localhost:8080", "https://3.36.92.169.nip.io","https://surab.cloud"));
         config.setAllowedMethods(Arrays.asList("*"));
         config.setAllowedHeaders(Arrays.asList("*"));
 
