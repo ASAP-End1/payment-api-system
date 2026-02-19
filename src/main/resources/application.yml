@@ -6,11 +6,11 @@ spring:
     active: local    # application-local.yml 파일 생성해 local에서 DB연결
 
   datasource:
-  # localhost:3306 뒤의 'payment_db'는 실제 생성하신 스키마(데이터베이스) 이름으로 바꿔주세요.
-   url: jdbc:mysql://localhost:3306/test
-   driver-class-name: com.mysql.cj.jdbc.Driver
-   username: root        # MySQL 아이디 (보통 root)
-   password: 1234 # MySQL 설치 시 설정한 비밀번호로 변경하세요!
+    # localhost:3306 뒤의 'payment_db'는 실제 생성하신 스키마(데이터베이스) 이름으로 바꿔주세요.
+    url: jdbc:mysql://localhost:3306/test
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root        # MySQL 아이디 (보통 root)
+    password: 1234 # MySQL 설치 시 설정한 비밀번호로 변경하세요!
 
   jpa:
     hibernate:
@@ -20,6 +20,11 @@ spring:
       hibernate:
         format_sql: true  # (선택사항 - SQL 포맷팅)
 
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
 
   # 클라이언트 API 계약 설정 파일 import
   config:
