@@ -949,13 +949,6 @@ src/main/java/com/bootcamp/paymentdemo
   </div>
 </details>
 
-### 웹훅(Webhook) API
-<details markdown="1">
-  <summary>웹훅(Webhook)</summary>
-  <div>
-
-  </div>
-</details>
 
 ---
 
