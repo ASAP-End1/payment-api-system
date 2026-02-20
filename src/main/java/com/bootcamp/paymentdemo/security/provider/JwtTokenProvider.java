@@ -14,10 +14,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
-/**
- * JWT 토큰 생성 및 검증 유틸리티
- * 개선할 부분: Refresh Token, Token Expiry 관리, Claims 커스터마이징 등
- */
+
 @Slf4j
 @Component
 public class JwtTokenProvider {
@@ -32,19 +29,12 @@ public class JwtTokenProvider {
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenValidityInMilliseconds = tokenValidityInSeconds * 1000;
-        this.refreshTokenValidityInMilliseconds = tokenValidityInSeconds * 1000 * 7; // 7배 (7일)
+        this.refreshTokenValidityInMilliseconds = tokenValidityInSeconds * 1000 * 7;
     }
 
-    /**
-     * JWT 토큰 생성
-     *
-     * TODO: 개선 사항
-     * - 사용자 역할(Role) 정보 추가
-     * - 추가 Claims 정보 (이름, 이메일 등)
-     * - Refresh Token 발급 로직
-     */
 
-    // Access Token 생성
+
+
     public String createAccessToken(String email) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + accessTokenValidityInMilliseconds);
@@ -58,7 +48,7 @@ public class JwtTokenProvider {
             .compact();
     }
 
-    // Refresh Token 생성
+
     public String createRefreshToken(String email) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
@@ -72,16 +62,14 @@ public class JwtTokenProvider {
             .compact();
     }
 
-    // Refresh Token의 만료 시간 반환
+
     public LocalDateTime getRefreshTokenExpiryDate() {
         Date expiryDate = new Date(System.currentTimeMillis() + refreshTokenValidityInMilliseconds);
         return expiryDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
 
-    /**
-     * JWT 토큰에서 사용자 이름 추출
-     */
+
     public String getEmail(String token) {
         try {
             Claims claims = Jwts.parser()
@@ -97,14 +85,7 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * JWT 토큰 유효성 검증
-     *
-     * TODO: 개선 사항
-     * - 토큰 블랙리스트 체크 (로그아웃된 토큰)
-     * - 토큰 갱신 로직
-     * - 상세한 예외 처리
-     */
+
     public void validateToken(String token) {
         Jwts.parser()
                 .verifyWith(secretKey)
@@ -113,7 +94,7 @@ public class JwtTokenProvider {
 
     }
 
-    // 토큰 타입 확인 (access/refresh)
+
     public String getTokenType(String token) {
         try{
             Claims claims = Jwts.parser()
@@ -130,7 +111,7 @@ public class JwtTokenProvider {
 
     }
 
-    // Access Token의 만료 시간 추출
+
     public LocalDateTime getExpirationDate(String accessToken) {
         try {
             Claims claims = Jwts.parser()
@@ -144,14 +125,14 @@ public class JwtTokenProvider {
                     .atZone(ZoneId.systemDefault())
                     .toLocalDateTime();
         } catch (ExpiredJwtException e) {
-            // 이미 만료된 토큰인 경우, 만료 시간 추출
+
             Date expiration = e.getClaims().getExpiration();
             return expiration.toInstant()
                     .atZone(ZoneId.systemDefault())
                     .toLocalDateTime();
         } catch (Exception e) {
             log.error("토큰에서 만료 시간 추출 실패", e);
-            // 토큰이 잘못된 경우, 현재 시간 반환 (즉시 만료 처리)
+
             return LocalDateTime.now();
         }
     }

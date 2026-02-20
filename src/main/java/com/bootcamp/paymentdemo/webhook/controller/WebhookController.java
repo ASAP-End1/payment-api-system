@@ -28,10 +28,10 @@ public class WebhookController {
     @PostMapping(value = "/portone-webhook", consumes = "application/json")
     public ResponseEntity<Void> handlePortoneWebhook(
 
-            // 1. 원문 바디
+
             @RequestBody byte[] rawBody,
 
-            // 2. PortOne V2 필수 헤더 (검증용)
+
             @RequestHeader("webhook-id") String webhookId,
             @RequestHeader("webhook-timestamp") String webhookTimestamp,
             @RequestHeader("webhook-signature") String webhookSignature
@@ -39,15 +39,15 @@ public class WebhookController {
         String bodyString = new String(rawBody, StandardCharsets.UTF_8);
 
         try {
-            // 3. 검증
+
             verifier.verify(bodyString, webhookId, webhookSignature, webhookTimestamp);
 
             log.info("[PORTONE_WEBHOOK] 검증 성공: id={}", webhookId);
 
-            // 4. 검증 통과 후 DTO 변환
+
             PortoneWebhookPayload payload = objectMapper.readValue(rawBody, PortoneWebhookPayload.class);
 
-            // 5. 서비스 로직 호출 -> 결제 서비스로 전달
+
             paymentService.processWebhook(payload, webhookId);
 
             return ResponseEntity.ok().build();

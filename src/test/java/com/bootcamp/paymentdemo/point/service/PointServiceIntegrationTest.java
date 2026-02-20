@@ -64,7 +64,7 @@ class PointServiceIntegrationTest {
                 () -> new IllegalStateException("NORMAL 등급이 없습니다")
         );
 
-        // 테스트 사용자 생성
+
         testUser = User.register(
                 "test@test.com",
                 "encodedPassword",
@@ -74,7 +74,7 @@ class PointServiceIntegrationTest {
         );
         userRepository.save(testUser);
 
-        // 테스트 포인트 잔액 생성
+
         testUserPointBalance = UserPointBalance.builder()
                 .user(testUser)
                 .currentPoints(BigDecimal.ZERO)
@@ -85,22 +85,22 @@ class PointServiceIntegrationTest {
     @Test
     @DisplayName("포인트 적립 -> 사용 -> 환불 통합 테스트")
     void pointIntegrationTest() {
-        // given - 포인트 적립
-        // 20000, 30000원 결제 -> 200포인트, 300포인트 적립
+
+
         Order earnOrder1 = createOrder(BigDecimal.valueOf(20000), BigDecimal.ZERO, BigDecimal.valueOf(200));
         Order earnOrder2 = createOrder(BigDecimal.valueOf(30000), BigDecimal.ZERO, BigDecimal.valueOf(300));
         pointService.earnPoints(testUser, earnOrder1);
         pointService.earnPoints(testUser, earnOrder2);
 
-        // then
+
         assertThat(pointService.checkPointBalance(testUser)).isEqualByComparingTo(BigDecimal.valueOf(500));
 
-        // when
-        // 400포인트 사용
+
+
         Order useOrder = createOrder(BigDecimal.valueOf(10000), BigDecimal.valueOf(400), BigDecimal.valueOf(96));
         pointService.usePoints(testUser, useOrder);
 
-        // then
+
         assertThat(pointService.checkPointBalance(testUser)).isEqualByComparingTo(BigDecimal.valueOf(100));
 
         PointTransaction earned1 = pointRepository.findByOrderIdAndType(earnOrder1.getId(), PointType.EARNED).get();
@@ -113,11 +113,11 @@ class PointServiceIntegrationTest {
         assertThat(usages.get(0).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
         assertThat(usages.get(1).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
 
-        // when
-        // 환불 -> 400포인트 복구
+
+
         pointService.refundPoints(testUser, useOrder);
 
-        // then
+
         assertThat(pointService.checkPointBalance(testUser)).isEqualByComparingTo(BigDecimal.valueOf(500));
 
         assertThat(earned1.getRemainingAmount()).isEqualByComparingTo(BigDecimal.valueOf(200));
@@ -127,19 +127,19 @@ class PointServiceIntegrationTest {
     @Test
     @DisplayName("포인트 소멸 테스트")
     void expirePoints() {
-        // given
+
         Order earnOrder = createOrder(BigDecimal.valueOf(10000), BigDecimal.ZERO, BigDecimal.valueOf(100));
         pointService.earnPoints(testUser, earnOrder);
 
-        // 포인트 만료일 어제로 설정
+
         PointTransaction earned = pointRepository.findByOrderIdAndType(earnOrder.getId(), PointType.EARNED).get();
         ReflectionTestUtils.setField(earned, "expiresAt", LocalDate.now().minusDays(1));
         pointRepository.save(earned);
 
-        // when
+
         pointService.expirePoints();
 
-        // then
+
         assertThat(pointService.checkPointBalance(testUser)).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(earned.getRemainingAmount()).isEqualByComparingTo(BigDecimal.ZERO);
     }
@@ -147,23 +147,23 @@ class PointServiceIntegrationTest {
     @Test
     @DisplayName("포인트 정합성 보정 테스트")
     void syncPointBalance() {
-        // given
+
         Order earnOrder = createOrder(BigDecimal.valueOf(10000), BigDecimal.ZERO, BigDecimal.valueOf(100));
         pointService.earnPoints(testUser, earnOrder);
 
-        // 포인트 잔액 잘못된 값으로 설정
+
         UserPointBalance userPointBalance = userPointBalanceRepository.findByUserId(testUser.getUserId()).get();
         ReflectionTestUtils.setField(userPointBalance, "currentPoints", BigDecimal.valueOf(150));
         userPointBalanceRepository.save(userPointBalance);
 
-        // when
+
         pointService.syncPointBalance();
 
-        // then
+
         assertThat(userPointBalance.getCurrentPoints()).isEqualByComparingTo(BigDecimal.valueOf(100));
     }
 
-    // 주문 생성 메서드
+
     private Order createOrder(BigDecimal totalAmount, BigDecimal usedPoints, BigDecimal earnedPoints) {
         Order order = Order.builder()
                 .user(testUser)

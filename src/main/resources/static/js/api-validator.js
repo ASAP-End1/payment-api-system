@@ -1,38 +1,29 @@
-/**
- * API 응답 검증 유틸리티
- * client-api-config.yml의 스키마 기반으로 동적 검증
- */
 
-/**
- * YML 스키마 기반 API 응답 검증
- * @param {string} endpointKey - API 엔드포인트 키 (예: 'login', 'get-current-user')
- * @param {object} response - API 응답 데이터
- * @param {object} headers - API 응답 헤더 (옵션)
- * @returns {boolean} 검증 성공 여부
- */
+
+
 function validateApiResponse(endpointKey, response, headers = null) {
-    // YML에서 로드한 계약 정보 가져오기
+
     const contract = window.APP_RUNTIME?.config?.api?.endpoints?.[endpointKey];
 
     if (!contract) {
         console.warn(`[API Validator] No contract found for endpoint: ${endpointKey}`);
-        return true; // 스키마 없으면 검증 스킵
+        return true;
     }
 
     const errors = [];
 
-    // ========================================
-    // Response Body 검증
-    // ========================================
+
+
+
     if (contract.response?.body) {
         const bodySchema = contract.response.body;
 
-        // Array 타입 검증
+
         if (bodySchema.type === 'array') {
             if (!Array.isArray(response)) {
                 errors.push(`응답이 배열이어야 하지만 ${typeof response} 타입입니다.`);
             } else if (bodySchema.items) {
-                // 배열 아이템 필드 검증 (첫 번째 아이템만 체크)
+
                 if (response.length > 0) {
                     bodySchema.items.forEach(fieldDef => {
                         validateField(response[0], fieldDef, errors, '배열 첫 번째 아이템');
@@ -40,7 +31,7 @@ function validateApiResponse(endpointKey, response, headers = null) {
                 }
             }
         }
-        // Object 타입 검증
+
         else if (bodySchema.fields) {
             bodySchema.fields.forEach(fieldDef => {
                 validateField(response, fieldDef, errors);
@@ -48,9 +39,9 @@ function validateApiResponse(endpointKey, response, headers = null) {
         }
     }
 
-    // ========================================
-    // Response Headers 검증
-    // ========================================
+
+
+
     if (contract.response?.headers && headers) {
         contract.response.headers.forEach(headerDef => {
             if (headerDef.required) {
@@ -62,14 +53,14 @@ function validateApiResponse(endpointKey, response, headers = null) {
         });
     }
 
-    // ========================================
-    // 검증 실패 시 알림 표시
-    // ========================================
+
+
+
     if (errors.length > 0) {
         const expectedFormat = buildExpectedFormatMessage(contract);
         const howToFix = buildHowToFixMessage(endpointKey, errors, contract, response);
 
-        // Console에 상세 정보 출력
+
         console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.error('⚠️ API 응답 형식 오류');
         console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -86,7 +77,7 @@ function validateApiResponse(endpointKey, response, headers = null) {
         console.error('실제 응답 데이터:', response);
         console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-        // 화면에 간단한 알림 표시
+
         showApiValidationError(endpointKey, contract, errors);
 
         return false;
@@ -95,21 +86,19 @@ function validateApiResponse(endpointKey, response, headers = null) {
     return true;
 }
 
-/**
- * 필드 검증 헬퍼 함수
- */
+
 function validateField(data, fieldDef, errors, context = '') {
     const fieldName = fieldDef.name;
     const fieldValue = data[fieldName];
     const prefix = context ? `${context}.` : '';
 
-    // 필수 필드 검증
+
     if (fieldDef.required && (fieldValue === undefined || fieldValue === null)) {
         errors.push(`필수 필드 누락: ${prefix}${fieldName}`);
         return;
     }
 
-    // 타입 검증 (값이 존재하는 경우만)
+
     if (fieldValue !== undefined && fieldValue !== null) {
         const actualType = Array.isArray(fieldValue) ? 'array' : typeof fieldValue;
         const expectedType = fieldDef.type;
@@ -123,13 +112,11 @@ function validateField(data, fieldDef, errors, context = '') {
     }
 }
 
-/**
- * 기대하는 형식 메시지 생성
- */
+
 function buildExpectedFormatMessage(contract) {
     const parts = [];
 
-    // Response Body 형식
+
     if (contract.response?.body) {
         const bodySchema = contract.response.body;
 
@@ -156,7 +143,7 @@ function buildExpectedFormatMessage(contract) {
         }
     }
 
-    // Response Headers 형식
+
     if (contract.response?.headers) {
         const requiredHeaders = contract.response.headers.filter(h => h.required);
         if (requiredHeaders.length > 0) {
@@ -170,35 +157,24 @@ function buildExpectedFormatMessage(contract) {
     return parts.join('\n');
 }
 
-/**
- * API 엔드포인트 URL 가져오기 (헬퍼 함수)
- * @param {string} endpointKey - API 엔드포인트 키
- * @returns {string|null} API URL
- */
+
 function getApiUrl(endpointKey) {
     const contract = window.APP_RUNTIME?.config?.api?.endpoints?.[endpointKey];
     return contract?.url || null;
 }
 
-/**
- * API 엔드포인트 Method 가져오기 (헬퍼 함수)
- * @param {string} endpointKey - API 엔드포인트 키
- * @returns {string|null} HTTP Method
- */
+
 function getApiMethod(endpointKey) {
     const contract = window.APP_RUNTIME?.config?.api?.endpoints?.[endpointKey];
     return contract?.method || 'GET';
 }
 
-/**
- * 수정 방법 메시지 생성
- */
+
 function buildHowToFixMessage(endpointKey, errors, contract, response) {
     const parts = [];
     parts.push('📝 수정 방법 (아래 중 하나 선택):');
     parts.push('');
 
-    // 에러 분석
     const missingFields = [];
     const typeErrors = [];
     const headerErrors = [];
@@ -216,7 +192,6 @@ function buildHowToFixMessage(endpointKey, errors, contract, response) {
         }
     });
 
-    // 1️⃣ 백엔드 수정 (가장 일반적)
     parts.push('1️⃣ 백엔드 수정 (권장)');
     if (missingFields.length > 0) {
         parts.push('   Controller에서 응답에 다음 필드를 추가하세요:');
@@ -245,7 +220,6 @@ function buildHowToFixMessage(endpointKey, errors, contract, response) {
     }
     parts.push('');
 
-    // 2️⃣ YML 수정 (유연성)
     parts.push('2️⃣ YML 수정 (client-api-config.yml)');
     parts.push(`   ${endpointKey} > response > body > fields`);
     if (missingFields.length > 0) {
@@ -260,13 +234,11 @@ function buildHowToFixMessage(endpointKey, errors, contract, response) {
     }
     parts.push('');
 
-    // 3️⃣ 실제 응답 확인
     parts.push('3️⃣ 실제 응답 확인 (Console 탭)');
     parts.push('   개발자 도구 > Console 탭에서 실제 응답을 확인하세요.');
     parts.push('   실제 응답과 YML 스키마를 비교해보세요.');
     parts.push('');
 
-    // 실제 응답 미리보기
     if (response && Object.keys(response).length > 0) {
         parts.push('💡 실제 응답 (처음 3개 필드):');
         const actualFields = Object.keys(response).slice(0, 3);
@@ -283,17 +255,13 @@ function buildHowToFixMessage(endpointKey, errors, contract, response) {
     return parts.join('\n');
 }
 
-/**
- * 필드 정의 찾기
- */
+
 function findFieldDefinition(contract, fieldName) {
     if (!contract?.response?.body?.fields) return null;
     return contract.response.body.fields.find(f => f.name === fieldName);
 }
 
-/**
- * 필드 예시 값 생성
- */
+
 function getFieldExample(fieldDef) {
     if (!fieldDef) return 'null';
 
@@ -313,11 +281,9 @@ function getFieldExample(fieldDef) {
     }
 }
 
-/**
- * API 검증 에러를 화면에 표시
- */
+
 function showApiValidationError(endpointKey, contract, errors) {
-    // 간단한 요약 메시지
+
     const errorCount = errors.length;
     const firstError = errors[0];
 

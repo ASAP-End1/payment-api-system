@@ -33,7 +33,7 @@ public class PointService {
     private final UserRepository userRepository;
     private final UserPointBalanceRepository userPointBalanceRepository;
 
-    // 포인트 내역 조회
+
     @Transactional(readOnly = true)
     public PageResponse<PointGetResponse> getPointHistory(String email, Pageable pageable) {
         User user = userRepository.findByEmail(email).orElseThrow(
@@ -45,7 +45,7 @@ public class PointService {
         return new PageResponse<>(page);
     }
 
-    // 포인트 잔액 조회
+
     @Transactional(readOnly = true)
     public BigDecimal checkPointBalance(User user) {
         BigDecimal balance = pointRepository.calculatePointBalance(user.getUserId());
@@ -55,19 +55,19 @@ public class PointService {
         return balance != null ? balance : BigDecimal.ZERO;
     }
 
-    // 포인트 사용
+
     @Transactional
     public void usePoints(User user, Order order) {
         BigDecimal usedPoints = order.getUsedPoints();
 
-        // 사용 가능한 적립 포인트 조회
-        // 만료일 임박한 포인트부터 사용
+
+
         List<PointTransaction> earnedTransactionList = pointRepository.findAvailablePoints(user.getUserId());
 
-        // 차감하고 남은 포인트
+
         BigDecimal remaining = usedPoints;
 
-        // 조회한 포인트 PointUsage에 저장, 잔액 차감
+
         for (PointTransaction earnedTransaction : earnedTransactionList) {
             BigDecimal deductAmount;
             if (remaining.compareTo(earnedTransaction.getRemainingAmount()) >= 0) {
@@ -84,17 +84,17 @@ public class PointService {
             if (remaining.compareTo(BigDecimal.ZERO) == 0) break;
         }
 
-        // 실제 사용된 포인트 계산
+
         BigDecimal actualUsedPoints = usedPoints.subtract(remaining);
 
-        // 실제 사용된 포인트만큼만 기록
+
         if (actualUsedPoints.compareTo(BigDecimal.ZERO) > 0) {
-            // 사용 포인트 내역 PointTransaction에 저장
+
             PointTransaction spentTransaction = new PointTransaction(
                     user, order, actualUsedPoints.negate(), PointType.SPENT);
             pointRepository.save(spentTransaction);
 
-            // 스냅샷 업데이트
+
             updatePointBalance(user, actualUsedPoints.negate());
 
             log.info("포인트 사용 완료: userId={}, orderId={}, 요청 포인트={}, 실제 사용={}",
@@ -105,54 +105,54 @@ public class PointService {
         }
     }
 
-    // 포인트 복구
+
     @Transactional
     public void refundPoints(User user, Order order) {
-        // 주문 id로 사용한 포인트 내역 조회
+
         List<PointUsage> pointUsageList = pointUsageRepository.findByOrderId(order.getId());
 
-        // remainingAmount 복구
+
         for (PointUsage pointUsage : pointUsageList) {
             pointUsage.getPointTransaction().restore(pointUsage.getAmount());
         }
 
-        // 환불 포인트 내역 PointTransaction에 저장
+
         PointTransaction refundedTransaction = new PointTransaction(
                 user, order, order.getUsedPoints(), PointType.REFUNDED);
         pointRepository.save(refundedTransaction);
 
-        // 스냅샷 업데이트
+
         updatePointBalance(user, order.getUsedPoints());
 
         log.info("포인트 환불 완료: userId={}, orderId={}, 환불 포인트={}", user.getUserId(), order.getId(), order.getUsedPoints());
     }
 
-    // 포인트 적립
+
     @Transactional
     public void earnPoints(User user, Order order) {
-        // 주문의 적립 포인트
+
         BigDecimal pointsToEarn = order.getEarnedPoints();
 
-        // 적립 포인트 내역 PointTransaction에 저장
+
         PointTransaction earnedTransaction = new PointTransaction(
                 user, order, pointsToEarn, PointType.EARNED);
         pointRepository.save(earnedTransaction);
 
-        // 스냅샷 업데이트
+
         updatePointBalance(user, pointsToEarn);
 
         log.info("포인트 적립 완료: userId={}, orderId={}, 적립 포인트={}", user.getUserId(), order.getId(), pointsToEarn);
     }
 
-    // 포인트 소멸
+
     @Transactional
     public int expirePoints() {
-        // remainingAmount가 0보다 크고, 만료일이 지난 포인트 조회
+
         List<PointTransaction> earnedTransactionList = pointRepository.findExpiredPoints();
 
         int successCount = 0;
 
-        // PointTransaction에 저장, remainingAmount 0으로 변경
+
         for (PointTransaction earnedTransaction : earnedTransactionList) {
             try {
                 BigDecimal remaining = earnedTransaction.getRemainingAmount();
@@ -162,7 +162,7 @@ public class PointService {
 
                 earnedTransaction.deduct(remaining);
 
-                // 스냅샷 업데이트
+
                 updatePointBalance(earnedTransaction.getUser(), remaining.negate());
                 successCount++;
 
@@ -174,15 +174,15 @@ public class PointService {
         return successCount;
     }
 
-    // 스냅샷 정합성 보정
+
     @Transactional
     public int syncPointBalance() {
-        // UserPointBalance 리스트 조회
+
         List<UserPointBalance> userPointBalanceList = userPointBalanceRepository.findAll();
 
         int successCount = 0;
 
-        // UserPointBalance의 currentPoints와 실제 포인트가 다르면 보정
+
         for (UserPointBalance userPointBalance : userPointBalanceList) {
             try {
                 BigDecimal balance = pointRepository.calculatePointBalance(userPointBalance.getUserId());
@@ -200,7 +200,7 @@ public class PointService {
         return successCount;
     }
 
-    // 스냅샷 업데이트
+
     private void updatePointBalance(User user, BigDecimal amount) {
         UserPointBalance userPointBalance = userPointBalanceRepository.findByUserId(user.getUserId()).get();
         userPointBalance.updatePointBalance(amount);

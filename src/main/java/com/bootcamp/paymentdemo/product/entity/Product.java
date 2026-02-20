@@ -43,7 +43,7 @@ public class Product extends BaseEntity {
         this.status = status;
     }
 
-    // 재고 차감 (주문 생성 시)
+
     public void decreaseStock(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("차감할 수량은 0보다 커야 합니다.");
@@ -57,7 +57,7 @@ public class Product extends BaseEntity {
         this.stock -= quantity;
     }
 
-    // 재고 복구 (주문 취소/환불 시)
+
     public void increaseStock(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("복구할 수량은 0보다 커야 합니다.");

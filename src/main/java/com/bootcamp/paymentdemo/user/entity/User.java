@@ -32,7 +32,7 @@ public class User extends Base {
     @JoinColumn(name = "current_grade_id", nullable = false)
     private Membership currentGrade;
 
-    // 정적 팩토리 메서드 - 회원가입용
+
     public static User register(
             String email,
             String encodedPassword,
@@ -53,7 +53,7 @@ public class User extends Base {
 
 
 
-    // 사용자 멤버십 등급 업데이트
+
     public void updateGrade(Membership grade) {
         this.currentGrade = grade;
     }

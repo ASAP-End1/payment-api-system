@@ -19,7 +19,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    // 1. 결제 준비 (장부 생성)
+
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<PaymentCreateResponse>> createPayment(@RequestBody PaymentCreateRequest request) {
         log.info("결제 생성 요청: orderNumber={}", request.getOrderNumber());
@@ -28,10 +28,10 @@ public class PaymentController {
                 .body(ApiResponse.success(HttpStatus.CREATED, "결제 생성 성공", response));
     }
 
-    // 2. 결제 확정 (검증 및 상태 변경)
+
     @PostMapping("/{dbPaymentId}/confirm")
     public ResponseEntity<ApiResponse<PaymentConfirmResponse>> confirmPayment(
-            @PathVariable String dbPaymentId) { // 포트원의 imp_uid를 파라미터로 받음
+            @PathVariable String dbPaymentId) {
 
         log.info("결제 확정 요청: dbPaymentId={}", dbPaymentId);
         PaymentConfirmResponse response = paymentService.confirmPayment(dbPaymentId);

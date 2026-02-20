@@ -19,12 +19,12 @@ public class PortOneSdkWebhookVerifier {
 
     @PostConstruct
     void init() {
-        // application.yml에서 가져온 secret으로 검증기 초기화
+
         this.webhookVerifier = new WebhookVerifier(webhookSecret);
         log.info("포트원 웹훅 검증기 초기화, yml 파일내에 설정해둔 secret값으로 초기화 완료");
     }
 
-    // 웹훅 이벤트 검증
+
     public Webhook verify(String msgBody, String msgId, String msgSignature, String msgTimestamp)
             throws WebhookVerificationException {
         return webhookVerifier.verify(msgBody, msgId, msgSignature, msgTimestamp);

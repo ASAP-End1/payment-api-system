@@ -27,11 +27,11 @@ public class PointGetResponse {
         this.expiresAt = expiresAt;
     }
 
-    // 정적 팩토리 메서드
+
     public static PointGetResponse from(PointTransaction pointTransaction) {
         return new PointGetResponse(
                 pointTransaction.getId(),
-                // EXPIRED 타입은 Order가 null
+
                 pointTransaction.getOrder() != null ? pointTransaction.getOrder().getId() : null,
                 pointTransaction.getAmount(),
                 pointTransaction.getType(),

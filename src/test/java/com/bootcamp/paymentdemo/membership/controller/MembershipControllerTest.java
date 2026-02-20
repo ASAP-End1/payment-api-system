@@ -73,11 +73,11 @@ class MembershipControllerTest {
     @Test
     @DisplayName("멤버십 등급 조회 성공")
     void getAllGrades_Success() throws Exception {
-        // given
+
         List<Membership> grades = Arrays.asList(normalGrade, vipGrade, vvipGrade);
         given(membershipService.getAllGradePolices()).willReturn(grades);
 
-        // when & then
+
         mockMvc.perform(get("/api/membership")
                         .with(csrf()))
                 .andDo(print())
@@ -87,15 +87,15 @@ class MembershipControllerTest {
                 .andExpect(jsonPath("$.message").value("멤버십 등급 정책 조회 성공"))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(3))
-                // NORMAL 등급 검증
+
                 .andExpect(jsonPath("$.data[0].gradeName").value("NORMAL"))
                 .andExpect(jsonPath("$.data[0].accRate").value(0.01))
                 .andExpect(jsonPath("$.data[0].minAmount").value(0))
-                // VIP 등급 검증
+
                 .andExpect(jsonPath("$.data[1].gradeName").value("VIP"))
                 .andExpect(jsonPath("$.data[1].accRate").value(0.03))
                 .andExpect(jsonPath("$.data[1].minAmount").value(50001))
-                // VVIP 등급 검증
+
                 .andExpect(jsonPath("$.data[2].gradeName").value("VVIP"))
                 .andExpect(jsonPath("$.data[2].accRate").value(0.05))
                 .andExpect(jsonPath("$.data[2].minAmount").value(150000));

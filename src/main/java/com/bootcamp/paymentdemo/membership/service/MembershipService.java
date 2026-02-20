@@ -30,36 +30,36 @@ public class MembershipService {
     private final UserPaidAmountRepository userPaidAmountRepository;
     private final UserGradeHistoryRepository userGradeHistoryRepository;
 
-    // 등급 기준 금액
-    private static final BigDecimal NORMAL_MAX = new BigDecimal("50000");   // 5만원 이하
-    private static final BigDecimal VIP_MAX = new BigDecimal("149999");     // 10만원 이하 -> 상의 후 변경 필요
-    private static final BigDecimal VVIP_MIN = new BigDecimal("150000");    // 15만원 이상
 
-    // 멤버십 등급 정책 조회
+    private static final BigDecimal NORMAL_MAX = new BigDecimal("50000");
+    private static final BigDecimal VIP_MAX = new BigDecimal("149999");
+    private static final BigDecimal VVIP_MIN = new BigDecimal("150000");
+
+
     @Transactional(readOnly = true)
     public List<Membership> getAllGradePolices() {
         return membershipRepository.findAll();
     }
 
-    // 총 결제 금액으로 등급 결정 (총 결제금액 -> 해당하는 등급 출력)
+
     public Membership determineGrade(BigDecimal totalPaidAmount) {
         if (totalPaidAmount.compareTo(VVIP_MIN) >= 0) {
-            // 15만원 이상 - VVIP
+
             return membershipRepository.findByGradeName(MembershipGrade.VVIP).orElseThrow(
                     () -> new MembershipNotFoundException("VVIP 등급을 찾을 수 없습니다"));
         } else if (totalPaidAmount.compareTo(NORMAL_MAX) > 0 && totalPaidAmount.compareTo(VIP_MAX) <= 0) {
-            // 5만원 초과 ~ 149999원 이하 - VIP
+
             return membershipRepository.findByGradeName(MembershipGrade.VIP).orElseThrow(
                     () -> new MembershipNotFoundException("VIP 등급을 찾을 수 없습니다"));
         } else {
-            // 5만원 이하 - NORMAL
+
             return membershipRepository.findByGradeName(MembershipGrade.NORMAL).orElseThrow(
                     () -> new MembershipNotFoundException("NORMAL 등급을 찾을 수 없습니다"));
         }
     }
 
-    // 사용자 등급 업데이트
-    // userId, orderId(등급 변경을 발생시킨 주문 id), reason(등급 변경 사유)
+
+
     @Transactional
     public boolean updateUserGrade(Long userId, Long orderId, String reason) {
 
@@ -73,19 +73,19 @@ public class MembershipService {
 
         BigDecimal totalPaidAmount = userPaidAmount.getTotalPaidAmount();
 
-        // 새로운 등급 결정
+
         Membership newGrade = determineGrade(totalPaidAmount);
 
-        // 현재 등급과 비교
+
         Membership currentGrade = user.getCurrentGrade();
 
         if (currentGrade.getGradeName() == newGrade.getGradeName()) {
             log.debug("등급 변경 없음: userId={}, grade={}, amount={}",
                     userId, currentGrade.getGradeName(), totalPaidAmount);
-            return false; // 등급 변경 없음
+            return false;
         }
 
-        // 등급 변경
+
         boolean upgraded = newGrade.getMinAmount().compareTo(currentGrade.getMinAmount()) > 0;
 
         log.info("등급 {} 감지: userId={}, {} → {}, amount={}",
@@ -95,11 +95,11 @@ public class MembershipService {
                 newGrade.getGradeName(),
                 totalPaidAmount);
 
-        // User 엔티티 멤버십 등급 업데이트
+
         user.updateGrade(newGrade);
         userRepository.save(user);
 
-        // 등급 변경 이력 저장
+
         UserGradeHistory history = UserGradeHistory.createChange(
                 user,
                 currentGrade,
@@ -109,11 +109,11 @@ public class MembershipService {
         );
         userGradeHistoryRepository.save(history);
 
-        return true; // 등급 변경됨
+        return true;
     }
 
-    // 주문 확정 시 총 결제 금액 증가 & 등급 업데이트
-    // userId, orderAmount(포인트 차감 후 금액-finalAmount), orderId(등급 변경을 발생시킨 주문 id)
+
+
     @Transactional
     public void handleOrderCompleted(Long userId, BigDecimal orderAmount, Long orderId) {
 
@@ -130,7 +130,7 @@ public class MembershipService {
                 orderAmount,
                 userPaidAmount.getTotalPaidAmount());
 
-        // 등급 업데이트
+
         boolean gradeChanged = updateUserGrade(userId, orderId, "주문 확정");
 
         if (gradeChanged) {
@@ -138,8 +138,8 @@ public class MembershipService {
         }
     }
 
-    // 환불 완료 시 총 결제 금액 차감 & 등급 업데이트
-    // userId, refundAmount(환불 금액), orderId(등급 변경을 발생시킨 주문 id)
+
+
     @Transactional
     public void handleRefund(Long userId, BigDecimal refundAmount, Long orderId) {
 
@@ -156,7 +156,7 @@ public class MembershipService {
                 refundAmount,
                 userPaidAmount.getTotalPaidAmount());
 
-        // 등급 업데이트
+
         boolean gradeChanged = updateUserGrade(userId, orderId, "환불");
 
         if (gradeChanged) {

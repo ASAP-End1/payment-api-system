@@ -25,16 +25,16 @@ public class OrderProduct extends BaseEntity {
     private Order order;
 
     @Column(name = "product_id", nullable = false)
-    private Long productId;   // 원본 상품 참조 ID (스냅샷)
+    private Long productId;
 
     @Column(name = "product_name", nullable = false, length = 200)
-    private String productName; // 주문 당시 상품명 (스냅샷)
+    private String productName;
 
     @Column(name = "order_price", nullable = false, precision = 18, scale = 2)
-    private BigDecimal orderPrice; // 주문 당시 가격 (스냅샷)
+    private BigDecimal orderPrice;
 
     @Column(nullable = false)
-    private int count;        // 수량
+    private int count;
 
     @Builder
     public OrderProduct(Order order, Long productId, String productName, BigDecimal orderPrice, int count) {

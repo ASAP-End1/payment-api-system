@@ -103,7 +103,7 @@ class UserServiceTest {
     @Test
     @DisplayName("회원가입 성공")
     void signup_Success(){
-        // given
+
         SignupRequest request = new SignupRequest();
 
         given(userRepository.existsByEmail(request.getEmail())).willReturn(false);
@@ -114,10 +114,10 @@ class UserServiceTest {
         given(userPaidAmountRepository.save(any(UserPaidAmount.class))).willReturn(UserPaidAmount.createDefault(testUser));
         given(userGradeHistoryRepository.save(any(UserGradeHistory.class))).willReturn(UserGradeHistory.createInitial(testUser, normalGrade));
 
-        // when
+
         SignupResponse response = userService.signup(request);
 
-        // then
+
         assertThat(response).isNotNull();
         assertThat(response.getEmail()).isEqualTo("test@example.com");
 
@@ -132,7 +132,7 @@ class UserServiceTest {
     @Test
     @DisplayName("회원가입 실패 - 이메일 중복")
     void signup_Fail_EmailDuplication(){
-        // given
+
         SignupRequest request = new SignupRequest();
         ReflectionTestUtils.setField(request, "name", "중복유저");
         ReflectionTestUtils.setField(request, "email", "duplicate@test.com");
@@ -141,7 +141,7 @@ class UserServiceTest {
 
         given(userRepository.existsByEmail(request.getEmail())).willReturn(true);
 
-        // when & then
+
         assertThatThrownBy(() -> userService.signup(request))
                 .isInstanceOf(DuplicateEmailException.class)
                 .hasMessage("이미 사용 중인 이메일입니다.");
@@ -153,7 +153,7 @@ class UserServiceTest {
     @Test
     @DisplayName("회원가입 실패 - 기본 등급 미존재")
     void signup_Fail_NoDefaultGrade(){
-        // given
+
         SignupRequest request = new SignupRequest();
         ReflectionTestUtils.setField(request, "name", "신규유저");
         ReflectionTestUtils.setField(request, "email", "newuser@test.com");
@@ -163,7 +163,7 @@ class UserServiceTest {
         given(userRepository.existsByEmail(request.getEmail())).willReturn(false);
         given(membershipRepository.findByGradeName(MembershipGrade.NORMAL)).willReturn(Optional.empty());
 
-        // when & then
+
         assertThatThrownBy(() -> userService.signup(request))
                 .isInstanceOf(GradeNotFoundException.class)
                 .hasMessage("기본 등급을 찾을 수 없습니다.");
@@ -175,7 +175,7 @@ class UserServiceTest {
     @Test
     @DisplayName("로그인 성공")
     void login_Success(){
-        // given
+
         String email = "test@example.com";
         String password = "password123";
 
@@ -186,10 +186,10 @@ class UserServiceTest {
         given(jwtTokenProvider.getRefreshTokenExpiryDate()).willReturn(LocalDateTime.now().plusDays(7));
         given(refreshTokenRepository.save(any(RefreshToken.class))).willReturn(null);
 
-        // when
+
         UserService.TokenPair result = userService.login(email, password);
 
-        // then
+
         assertThat(result).isNotNull();
         assertThat(result.accessToken).isEqualTo("access-token-12345");
         assertThat(result.refreshToken).isEqualTo("refresh-token-67890");
@@ -206,13 +206,13 @@ class UserServiceTest {
     @Test
     @DisplayName("로그인 실패 - 사용자 없음")
     void login_Fail_UserNotFound(){
-        // given
+
         String email = "notuser@test.com";
         String password = "password123";
 
         given(userRepository.findByEmail(email)).willReturn(Optional.empty());
 
-        // when & then
+
         assertThatThrownBy(() -> userService.login(email, password))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessage("사용자를 찾을 수 없습니다.");
@@ -225,14 +225,14 @@ class UserServiceTest {
     @Test
     @DisplayName("로그인 실패 - 비밀번호 불일치")
     void login_Fail_WrongPassword(){
-        // given
+
         String email = "test@test.com";
         String wrongPassword = "wrongpassword";
 
         given(userRepository.findByEmail(email)).willReturn(Optional.of(testUser));
         given(passwordEncoder.matches(wrongPassword, testUser.getPassword())).willReturn(false);
 
-        // when & then
+
         assertThatThrownBy(() -> userService.login(email, wrongPassword))
                 .isInstanceOf(InvalidCredentialsException.class)
                 .hasMessage("이메일 또는 비밀번호가 올바르지 않습니다.");
@@ -245,7 +245,7 @@ class UserServiceTest {
     @Test
     @DisplayName("로그아웃 성공")
     void logout_Success(){
-        // given
+
         String email = "test@example.com";
         String accessToken = "access-token-12345";
         LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);
@@ -254,10 +254,10 @@ class UserServiceTest {
         given(jwtTokenProvider.getExpirationDate(accessToken)).willReturn(expiresAt);
         given(blacklistRepository.save(any(AccessTokenBlacklist.class))).willReturn(null);
 
-        // when
+
         userService.logout(email, accessToken);
 
-        // then
+
         verify(userRepository).findByEmail(email);
         verify(refreshTokenRepository).revokeAllByUserId(testUser.getUserId());
         verify(jwtTokenProvider).getExpirationDate(accessToken);
@@ -267,13 +267,13 @@ class UserServiceTest {
     @Test
     @DisplayName("로그아웃 실패 - 사용자 없음")
     void logout_Fail_UserNotFound(){
-        // given
+
         String email = "notexist@test.com";
         String accessToken = "access-token-12345";
 
         given(userRepository.findByEmail(email)).willReturn(Optional.empty());
 
-        // when & then
+
         assertThatThrownBy(() -> userService.logout(email, accessToken))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessage("사용자를 찾을 수 없습니다.");
@@ -286,7 +286,7 @@ class UserServiceTest {
     @Test
     @DisplayName("사용자 정보 조회 성공")
     void getCurrentUser_Success(){
-        // given
+
         String email = "test@example.com";
         UserPointBalance pointBalance = UserPointBalance.createDefault(testUser);
         UserPaidAmount paidAmount = UserPaidAmount.createDefault(testUser);
@@ -295,11 +295,11 @@ class UserServiceTest {
         given(userPointBalanceRepository.findByUserId(testUser.getUserId())).willReturn(Optional.of(pointBalance));
         given(userPaidAmountRepository.findByUserId(testUser.getUserId())).willReturn(Optional.of(paidAmount));
 
-        // when
+
         when(normalGrade.getGradeName()).thenReturn(MembershipGrade.NORMAL);
         UserSearchResponse response = userService.getCurrentUser(email);
 
-        // then
+
         assertThat(response).isNotNull();
         assertThat(response.getEmail()).isEqualTo(email);
 
@@ -311,12 +311,12 @@ class UserServiceTest {
     @Test
     @DisplayName("사용자 정보 조회 실패 - 사용자 없음")
     void getCurrentUser_Fail_UserNotFound(){
-        // given
+
         String email = "notuser@test.com";
 
         given(userRepository.findByEmailWithGrade(email)).willReturn(Optional.empty());
 
-        // when & then
+
         assertThatThrownBy(() -> userService.getCurrentUser(email))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessage("사용자를 찾을 수 없습니다.");

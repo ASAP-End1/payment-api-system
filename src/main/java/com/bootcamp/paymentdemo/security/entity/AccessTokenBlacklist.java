@@ -19,16 +19,16 @@ public class AccessTokenBlacklist {
     private Long tokenId;
 
     @Column(nullable = false, unique = true)
-    private String token;  // 무효화된 access token
+    private String token;
 
     @Column(nullable = false)
-    private String email;  // 토큰 소유자
+    private String email;
 
     @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt; // 토큰 만료 시간
+    private LocalDateTime expiresAt;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;  // 블랙리스트 추가 시간
+    private LocalDateTime createdAt;
 
     public static AccessTokenBlacklist create(String accessToken, String email, LocalDateTime expiresAt) {
         AccessTokenBlacklist blacklist = new AccessTokenBlacklist();

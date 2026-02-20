@@ -54,19 +54,19 @@ public class PointTransaction {
         this.amount = amount.setScale(0, RoundingMode.HALF_UP);
         this.type = type;
 
-        // 적립일 때 남은 금액, 만료일 자동 설정
+
         if (type == PointType.EARNED) {
             this.remainingAmount = amount.setScale(0, RoundingMode.HALF_UP);
             this.expiresAt = LocalDate.now().plusYears(1);
         }
     }
 
-    // 잔여 포인트 차감 메서드
+
     public void deduct(BigDecimal amount) {
         this.remainingAmount = this.remainingAmount.subtract(amount);
     }
 
-    // 잔여 포인트 복구 메서드
+
     public void restore(BigDecimal amount) {
         this.remainingAmount = this.remainingAmount.add(amount);
     }

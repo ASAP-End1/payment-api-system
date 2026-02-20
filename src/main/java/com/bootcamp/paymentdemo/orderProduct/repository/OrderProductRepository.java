@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface OrderProductRepository extends JpaRepository<OrderProduct, Long> {
 
-    // 주문 ID로 주문 상품 목록 조회
-    // order.id를 통해 조회 (네스티드 프로퍼티)
+
+
     List<OrderProduct> findByOrder_Id(Long orderId);
 }

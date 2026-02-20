@@ -18,7 +18,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    // 상품 목록 조회
+
     @Transactional(readOnly = true)
     public List<ProductGetResponse> findAllProducts() {
         List<ProductGetResponse> products =  productRepository.findAll().stream()
@@ -30,7 +30,7 @@ public class ProductService {
         return products;
     }
 
-    // 상품 단건 조회
+
     @Transactional(readOnly = true)
     public ProductGetResponse findOneProduct(Long productId) {
         ProductGetResponse product = productRepository.findById(productId)
@@ -42,7 +42,7 @@ public class ProductService {
         return product;
     }
 
-    // 재고 차감 (주문 생성 시 호출)
+
     @Transactional
     public void decreaseStock(Long productId, int quantity) {
         Product product = productRepository.findById(productId)
@@ -54,7 +54,7 @@ public class ProductService {
                 productId, product.getName(), quantity, product.getStock());
     }
 
-    // 재고 복구 (주문 취소/환불 시 호출)
+
     @Transactional
     public void increaseStock(Long productId, int quantity) {
         Product product = productRepository.findById(productId)

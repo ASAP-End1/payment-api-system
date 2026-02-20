@@ -30,14 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * JWT 토큰 인증 필터
- * 모든 요청에서 JWT 토큰을 검증하고 SecurityContext에 인증 정보 설정
- *
- * TODO: 개선 사항
- * - 역할(Role) 정보를 토큰에서 추출
- * - 예외 처리 개선
- */
+
 @Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -62,30 +55,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         try {
-            // 1. Request Header에서 JWT 토큰 추출
+
             String token = getJwtFromRequest(request);
 
             if (token != null) {
                 try {
-                    // 블랙리스트 확인
+
                     if (blacklistRepository.existsByToken(token)) {
                         log.warn("블랙리스트에 있는 토큰 사용 시도");
                         sendErrorResponse(response, 401, "TOKEN_BLACKLISTED", "Token has been revoked");
                         return;
                     }
 
-                    // 2. 토큰 유효성 검증
+
                     jwtTokenProvider.validateToken(token);
 
-                    // 3. Access Token인지 확인
+
                     String tokenType = jwtTokenProvider.getTokenType(token);
 
                     if ("access".equals(tokenType)) {
-                        // 정상 Access Token
+
                         processAuthentication(token, request);
 
                     } else if ("refresh".equals(tokenType)) {
-                        // Refresh Token으로 API 접근 시도
+
                         log.warn("Refresh Token으로 API 접근 시도: uri={}", request.getRequestURI());
                         sendErrorResponse(
                                 response,
@@ -93,25 +86,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 "REFRESH_TOKEN_NOT_ALLOWED",
                                 "Refresh Token cannot be used for API authentication"
                         );
-                        return;  // 필터 체인 중단
+                        return;
                     }
                 } catch (ExpiredJwtException e) {
-                    // 만료된 토큰 처리 (Access Token 만료 -> Refresh Token으로 갱신)
+
                     log.info("Access Token 만료 감지 - 갱신 시도: uri={}", request.getRequestURI());
 
                     String newAccessToken = tryRefreshToken(request);
 
                     if (newAccessToken != null) {
-                        // 갱신 성공
+
                         processAuthentication(newAccessToken, request);
 
-                        // 새 Access Token을 응답 헤더에 추가
+
                         response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + newAccessToken);
 
                         log.info("Access Token 갱신 성공: uri={}", request.getRequestURI());
 
                     } else {
-                        // Refresh Token도 없거나 만료
+
                         log.warn("Refresh Token 갱신 실패 - 로그인 필요: uri={}", request.getRequestURI());
                         sendErrorResponse(
                                 response,
@@ -119,13 +112,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 "TOKEN_EXPIRED",
                                 "Both Access Token and Refresh Token expired. Please login again."
                         );
-                        return; // 필터 체인 중단
+                        return;
                     }
                 }
             }
 
         }  catch (MalformedJwtException e) {
-            // 잘못된 형식의 토큰
+
             log.warn("잘못된 형식의 JWT 토큰: uri={}, message={}", request.getRequestURI(), e.getMessage());
             sendErrorResponse(
                     response,
@@ -136,7 +129,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
 
         } catch (SignatureException e) {
-            // 서명 검증 실패
+
             log.warn("JWT 서명 검증 실패: uri={}, message={}", request.getRequestURI(), e.getMessage());
             sendErrorResponse(
                     response,
@@ -147,7 +140,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
 
         } catch (Exception e) {
-            // 기타 예외
+
             log.error("JWT 인증 처리 중 예외 발생: uri={}", request.getRequestURI(), e);
             sendErrorResponse(
                     response,
@@ -163,18 +156,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
 
-    // Refresh Token으로 새 Access Token 발급 시도
-    // -> return 새 Access Token (실패 시 null)
+
+
     private String tryRefreshToken(HttpServletRequest request) {
         try {
-            // 1. 쿠키에서 Refresh Token 추출
+
             String refreshToken = getRefreshTokenFromCookie(request);
             if (refreshToken == null) {
                 log.warn("Refresh Token 쿠키 없음");
                 return null;
             }
 
-            // 2. Refresh Token 검증
+
             jwtTokenProvider.validateToken(refreshToken);
 
             String tokenType = jwtTokenProvider.getTokenType(refreshToken);
@@ -183,7 +176,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return null;
             }
 
-            // 3. DB에서 Refresh Token 조회
+
             RefreshToken storedToken = refreshTokenRepository
                     .findByToken(refreshToken)
                     .orElse(null);
@@ -193,26 +186,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return null;
             }
 
-            // 4. 무효화 여부 확인
+
             if (storedToken.getRevoked()) {
                 log.warn("무효화된 Refresh Token");
                 return null;
             }
 
-            // 5. 만료 확인
+
             if (storedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
                 log.warn("만료된 Refresh Token");
                 return null;
             }
 
-            // 6. 이메일 추출 및 새 Access Token 발급
+
             String email = jwtTokenProvider.getEmail(refreshToken);
             if (email == null) {
                 log.warn("Refresh Token에서 이메일 추출 실패");
                 return null;
             }
 
-            // 새 Access Token 생성
+
             String newAccessToken = jwtTokenProvider.createAccessToken(email);
 
             log.info("새 Access Token 발급 성공: email={}", email);
@@ -228,7 +221,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    // 인증 처리 (SecurityContext에 인증 정보 설정)
+
     private void processAuthentication(String token, HttpServletRequest request) {
         String email = jwtTokenProvider.getEmail(token);
 
@@ -247,10 +240,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    /**
-     * Request Header에서 JWT 토큰 추출
-     * Authorization: Bearer {token}
-     */
+
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
 
@@ -261,7 +251,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    // 쿠키에서 Refresh Token 추출
+
     private String getRefreshTokenFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
@@ -275,14 +265,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .orElse(null);
     }
 
-    // 에러 응답 전송
+
     private void sendErrorResponse(
             HttpServletResponse response,
             int status,
             String errorCode,
             String message
     ) throws IOException {
-        // 이미 응답이 commit된 경우 무시
+
         if (response.isCommitted()) {
             log.warn("응답이 이미 commit되어 에러 응답을 보낼 수 없습니다");
             return;

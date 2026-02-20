@@ -38,7 +38,7 @@ public class UserService {
 
     private static final MembershipGrade DEFAULT_GRADE = MembershipGrade.NORMAL;
 
-    // 회원가입
+
     @Transactional
     public SignupResponse signup(@Valid SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -54,15 +54,15 @@ public class UserService {
         User user = User.register(request.getEmail(), encodedPassword, request.getName(), request.getPhone(), defaultGrade);
         User saveUser = userRepository.save(user);
 
-        // 포인트 잔액 초기화
+
         UserPointBalance pointBalance = UserPointBalance.createDefault(saveUser);
         pointBalanceRepository.save(pointBalance);
 
-        // 총 결제 금액 초기화
+
         UserPaidAmount paidAmount = UserPaidAmount.createDefault(saveUser);
         userPaidAmountRepository.save(paidAmount);
 
-        // 등급 변경 이력 초기 생성
+
         UserGradeHistory history = UserGradeHistory.createInitial(saveUser, defaultGrade);
         userGradeHistoryRepository.save(history);
 
@@ -71,7 +71,7 @@ public class UserService {
         return new SignupResponse(saveUser.getUserId(), saveUser.getEmail());
     }
 
-    // 로그인
+
     @Transactional
     public TokenPair login(String email, String password) {
         User user = userRepository.findByEmail(email).orElseThrow(
@@ -82,14 +82,14 @@ public class UserService {
             throw new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        // 기존 Refresh Token 모두 무효화
+
         refreshTokenRepository.revokeAllByUserId(user.getUserId());
 
-        // Access Token & Refresh Token 생성
+
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
 
-        // Refresh Token DB 저장
+
         RefreshToken refreshTokenEntity = RefreshToken.createToken(
                 user,
                 refreshToken,
@@ -103,17 +103,17 @@ public class UserService {
     }
 
 
-    // 로그아웃
+
     @Transactional
     public void logout(String email, String accessToken) {
         User user = userRepository.findByEmail(email).orElseThrow(
                 () -> new UserNotFoundException("사용자를 찾을 수 없습니다.")
         );
 
-        // 해당 사용자의 모든 Refresh Token 무효화
+
         refreshTokenRepository.revokeAllByUserId(user.getUserId());
 
-        // Access Token 블랙리스트에 추가
+
         LocalDateTime expiresAt = jwtTokenProvider.getExpirationDate(accessToken);
         AccessTokenBlacklist blacklist = AccessTokenBlacklist.create(accessToken, email, expiresAt);
         blacklistRepository.save(blacklist);
@@ -121,7 +121,7 @@ public class UserService {
         log.info("로그아웃 완료: email={}, userId={}", user.getEmail(), user.getUserId());
     }
 
-    // 내 정보 조회
+
     @Transactional(readOnly = true)
     public UserSearchResponse getCurrentUser(String email) {
         User user = userRepository.findByEmailWithGrade(email).orElseThrow(
@@ -130,7 +130,7 @@ public class UserService {
 
         UserPointBalance pointBalance = pointBalanceRepository.findByUserId(user.getUserId())
                 .orElseGet(() -> {
-                    // 포인트 잔액이 없는 경우 기본값 생성
+
                     UserPointBalance newBalance = UserPointBalance.createDefault(user);
                     return pointBalanceRepository.save(newBalance);
                 });
@@ -146,7 +146,7 @@ public class UserService {
 
 
 
-    // Token Pair
+
     public static class TokenPair {
         public final String accessToken;
         public final String refreshToken;

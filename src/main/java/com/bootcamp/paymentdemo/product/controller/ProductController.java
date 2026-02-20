@@ -22,7 +22,7 @@ public class ProductController {
 
     private final ProductService productService;
 
-    // 상품 전체 조회
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductGetResponse>>> getAllProducts()
     {
@@ -34,7 +34,7 @@ public class ProductController {
                 .body(ApiResponse.success(HttpStatus.OK, "상품 목록 조회 성공", products));
     }
 
-    // 상품 단건 조회 (productId 경로 변수로 전달받은 상품)
+
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductGetResponse>> getProductById(@PathVariable Long productId)
     {

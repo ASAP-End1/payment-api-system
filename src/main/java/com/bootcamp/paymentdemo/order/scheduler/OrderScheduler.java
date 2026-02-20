@@ -21,20 +21,19 @@ public class OrderScheduler {
     private final OrderRepository orderRepository;
     private final OrderService orderService;
 
-    // 시간이 지나면 자동 확정
-    @Scheduled(cron = "0 * * * * *") // 매 분 0초 마다 실행
+
+    @Scheduled(cron = "0 0/30 * * * *")
     public void autoConfirmOrder() {
         log.info("자동 주문 확정 스케줄러 시작");
 
-        LocalDateTime thresholdDate = LocalDateTime.now().minusMinutes(1); // 테스트용 1분 이후 확정
+        LocalDateTime thresholdDate = LocalDateTime.now().minusDays(7);
 
-        // 현재는 리스트로 가져오는 방식
         List<Order> ordersToConfirm = orderRepository.findByOrderStatusAndCreatedAtBefore(
                 OrderStatus.PENDING_CONFIRMATION,
                 thresholdDate
         );
 
-        int successCount = 0; // 성공 횟수 담기(로그를 정확하게 표시하기 위해)
+        int successCount = 0;
         for (Order order : ordersToConfirm) {
             try {
                 orderService.confirmOrder(order.getId());

@@ -106,11 +106,11 @@ class RefundControllerIntegrationTest {
     void setUp() {
         portOnePaymentId = "portone-payment-123";
 
-        // Membership
+
         normalGrade = membershipRepository.findByGradeName(MembershipGrade.NORMAL)
                 .orElseThrow(() -> new IllegalStateException("NORMAL 등급이 없습니다"));
 
-        // User
+
         User user = User.register("test@example.com", "pw", "테스터", "010-1234-5678", normalGrade);
         savedUser = userRepository.save(user);
 
@@ -118,11 +118,11 @@ class RefundControllerIntegrationTest {
 
         userPaidAmountRepository.save(userPaidAmount);
 
-        // Product
+
         Product product = new Product("테스트 상품", new BigDecimal(5000), 100, "테스트", ProductStatus.FOR_SALE);
         savedProduct = productRepository.save(product);
 
-        // Order
+
         Order order = Order.builder()
                 .orderNumber("ORD-REFUND-001")
                 .user(savedUser)
@@ -135,7 +135,7 @@ class RefundControllerIntegrationTest {
                 .build();
         savedOrder = orderRepository.save(order);
 
-        // Payment
+
         Payment payment = Payment.builder()
                 .dbPaymentId("db1")
                 .order(savedOrder)
@@ -149,15 +149,15 @@ class RefundControllerIntegrationTest {
     @Test
     @DisplayName("환불 성공 - 전체 플로우 검증")
     void refundSuccess() throws Exception {
-        // Given
+
         String dbPaymentId = "db1";
 
-        // PortOne 응답 Mock
+
         PortOneRefundResponse mockResponse = createSuccessfulPortOneResponse();
         given(portOneClient.refundPayment(eq(portOnePaymentId), any()))
                 .willReturn(mockResponse);
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -170,20 +170,20 @@ class RefundControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").exists());
 
-        // 검증: PortOne API 호출 확인
+
         verify(portOneClient, times(1)).refundPayment(eq(portOnePaymentId), any());
     }
 
     @Test
     @DisplayName("이미 환불된 결제 - 예외 발생")
     void refundAlreadyRefunded() throws Exception {
-        // Given: 결제를 이미 환불된 상태로 변경
+
         savedPayment.refund();
         paymentRepository.save(savedPayment);
 
         String dbPaymentId = "db1";
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -200,10 +200,10 @@ class RefundControllerIntegrationTest {
     @Test
     @DisplayName("존재하지 않는 결제 - 예외 발생")
     void refundPaymentNotFound() throws Exception {
-        // Given
+
         String dbPaymentId = "db999";
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -220,10 +220,10 @@ class RefundControllerIntegrationTest {
     @Test
     @DisplayName("환불 사유가 빈 문자열일 때 - Validation 실패")
     void refundEmptyReason() throws Exception {
-        // Given
+
         String dbPaymentId = "db1";
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -238,10 +238,10 @@ class RefundControllerIntegrationTest {
     @Test
     @DisplayName("환불 사유가 공백만 있을 때 - Validation 실패")
     void refundBlankReason() throws Exception {
-        // Given
+
         String dbPaymentId = "db1";
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -256,10 +256,10 @@ class RefundControllerIntegrationTest {
     @Test
     @DisplayName("환불 사유가 null일 때 - Validation 실패")
     void refundNullReason() throws Exception {
-        // Given
+
         String dbPaymentId = "db1";
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -273,34 +273,34 @@ class RefundControllerIntegrationTest {
     @Test
     @DisplayName("잘못된 JSON 형식 - Bad Request")
     void refundInvalidJson() throws Exception {
-        // Given
+
         String dbPaymentId = "db1";
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ invalid json }"))
                 .andDo(print())
-                .andExpect(status().is5xxServerError()); // GlobalExceptionHandler가 500으로 처리
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
     @DisplayName("Request Body가 없을 때 - Bad Request")
     void refundNoRequestBody() throws Exception {
-        // Given
+
         String dbPaymentId = "db1";
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().is5xxServerError()); // GlobalExceptionHandler가 500으로 처리
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
     @DisplayName("PathVariable이 비어있을 때 - Not Found")
     void refundEmptyPathVariable() throws Exception {
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -309,16 +309,16 @@ class RefundControllerIntegrationTest {
                                 }
                                 """))
                 .andDo(print())
-                .andExpect(status().is5xxServerError()); // 라우팅 에러로 500 발생
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
     @DisplayName("Content-Type이 없을 때 - Unsupported Media Type")
     void refundNoContentType() throws Exception {
-        // Given
+
         String dbPaymentId = "db1";
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .content("""
                                 {
@@ -326,16 +326,16 @@ class RefundControllerIntegrationTest {
                                 }
                                 """))
                 .andDo(print())
-                .andExpect(status().is5xxServerError()); // GlobalExceptionHandler가 500으로 처리
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
     @DisplayName("Content-Type이 잘못되었을 때 - Unsupported Media Type")
     void refundWrongContentType() throws Exception {
-        // Given
+
         String dbPaymentId = "db1";
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.TEXT_PLAIN)
                         .content("""
@@ -344,20 +344,20 @@ class RefundControllerIntegrationTest {
                                 }
                                 """))
                 .andDo(print())
-                .andExpect(status().is5xxServerError()); // GlobalExceptionHandler가 500으로 처리
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
     @DisplayName("PortOne API 실패 - 서버 에러")
     void refundPortOneApiFailure() throws Exception {
-        // Given
+
         String dbPaymentId = "db1";
 
-        // PortOne API 호출 시 예외 발생
+
         given(portOneClient.refundPayment(eq(portOnePaymentId), any()))
                 .willThrow(new RuntimeException("PortOne API 오류"));
 
-        // When & Then
+
         mockMvc.perform(post("/api/refunds/{dbPaymentId}", dbPaymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""

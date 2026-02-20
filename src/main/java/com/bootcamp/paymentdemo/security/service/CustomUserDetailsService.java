@@ -28,8 +28,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 ));
 
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())  // principal로 사용될 값
-                .password(user.getPassword())  // 암호화된 비밀번호
+                .username(user.getEmail())
+                .password(user.getPassword())
                 .authorities(Collections.singletonList(
                         new SimpleGrantedAuthority("ROLE_USER")
                 ))

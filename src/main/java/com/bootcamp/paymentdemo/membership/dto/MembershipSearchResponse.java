@@ -8,9 +8,9 @@ import java.math.BigDecimal;
 @Getter
 public class MembershipSearchResponse {
 
-    private final String gradeName;           // 등급명
-    private final BigDecimal accRate;         // 적립률
-    private final BigDecimal minAmount;       // 최소 결제 금액
+    private final String gradeName;
+    private final BigDecimal accRate;
+    private final BigDecimal minAmount;
 
     public MembershipSearchResponse(String gradeName, BigDecimal accRate, BigDecimal minAmount) {
         this.gradeName = gradeName;

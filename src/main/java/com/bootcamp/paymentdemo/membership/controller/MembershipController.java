@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class MembershipController {
     private final MembershipService membershipService;
 
-    // 멤버십 등급 정책 조회
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<MembershipSearchResponse>>> getAllGrades() {
         List<Membership> grades = membershipService.getAllGradePolices();

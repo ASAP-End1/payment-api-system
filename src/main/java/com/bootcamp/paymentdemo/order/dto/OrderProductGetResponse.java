@@ -9,9 +9,9 @@ public class OrderProductGetResponse {
 
     private final Long productId;
     private final String productName;
-    private final BigDecimal orderPrice;  // 주문 당시 가격
-    private final int count;              // 수량
-    private final BigDecimal subtotal;    // 소계 (가격 × 수량)
+    private final BigDecimal orderPrice;
+    private final int count;
+    private final BigDecimal subtotal;
 
     public OrderProductGetResponse(Long productId, String productName,
                                    BigDecimal orderPrice, int count) {

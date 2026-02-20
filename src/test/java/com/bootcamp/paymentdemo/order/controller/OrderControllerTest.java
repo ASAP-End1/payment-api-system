@@ -89,7 +89,7 @@ class OrderControllerTest {
         normalGrade = membershipRepository.findByGradeName(MembershipGrade.NORMAL)
                 .orElseThrow(() -> new IllegalStateException("NORMAL 등급이 없습니다"));
 
-        // 테스트 사용자 생성
+
         testUser = User.register(
                 "ordercontroller@example.com",
                 "encodedPassword",
@@ -99,19 +99,19 @@ class OrderControllerTest {
         );
         testUser = userRepository.save(testUser);
 
-        // 총 결제 금액 초기화
+
         UserPaidAmount paidAmount = UserPaidAmount.createDefault(testUser);
         userPaidAmountRepository.save(paidAmount);
 
-        // 초기 등급 이력 생성
+
         UserGradeHistory initialHistory = UserGradeHistory.createInitial(testUser, normalGrade);
         userGradeHistoryRepository.save(initialHistory);
 
-        // 포인트 잔액 초기화
+
         UserPointBalance pointBalance = UserPointBalance.createDefault(testUser);
         userPointBalanceRepository.save(pointBalance);
 
-        // 포인트 초기화 (10,000원)
+
         PointTransaction initialPoint = new PointTransaction(
                 testUser,
                 null,
@@ -120,7 +120,7 @@ class OrderControllerTest {
         );
         pointRepository.save(initialPoint);
 
-        // 테스트 상품 생성
+
         testProduct1 = new Product(
                 "컨트롤러 테스트 상품 1",
                 new BigDecimal("5000"),
@@ -144,7 +144,7 @@ class OrderControllerTest {
     @DisplayName("POST /api/orders - 주문 생성 성공")
     @WithMockUser(username = "ordercontroller@example.com")
     void createOrder_Success() throws Exception {
-        // given
+
         String requestJson = String.format("""
                 {
                     "userId": %d,
@@ -158,7 +158,7 @@ class OrderControllerTest {
                 }
                 """, testUser.getUserId(), testProduct1.getId());
 
-        // when & then
+
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
@@ -179,7 +179,7 @@ class OrderControllerTest {
     @DisplayName("POST /api/orders - 주문 생성 성공 (포인트 사용)")
     @WithMockUser(username = "ordercontroller@example.com")
     void createOrder_Success_WithPoints() throws Exception {
-        // given
+
         String requestJson = String.format("""
                 {
                     "userId": %d,
@@ -193,7 +193,7 @@ class OrderControllerTest {
                 }
                 """, testUser.getUserId(), testProduct1.getId());
 
-        // when & then
+
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
@@ -210,7 +210,7 @@ class OrderControllerTest {
     @DisplayName("GET /api/orders - 주문 목록 조회 성공")
     @WithMockUser(username = "ordercontroller@example.com")
     void getAllOrders_Success() throws Exception {
-        // given - 주문 생성
+
         List<OrderProductRequest> items = List.of(
                 new OrderProductRequest(testProduct1.getId(), 1)
         );
@@ -221,7 +221,7 @@ class OrderControllerTest {
         );
         orderService.createOrder(request, testUser.getEmail());
 
-        // when & then
+
         mockMvc.perform(get("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -236,7 +236,7 @@ class OrderControllerTest {
     @DisplayName("GET /api/orders/{orderId} - 주문 상세 조회 성공")
     @WithMockUser(username = "ordercontroller@example.com")
     void getOneOrder_Success() throws Exception {
-        // given - 주문 생성
+
         List<OrderProductRequest> items = List.of(
                 new OrderProductRequest(testProduct1.getId(), 2),
                 new OrderProductRequest(testProduct2.getId(), 1)
@@ -248,7 +248,7 @@ class OrderControllerTest {
         );
         var createResponse = orderService.createOrder(request, testUser.getEmail());
 
-        // when & then
+
         mockMvc.perform(get("/api/orders/{orderId}", createResponse.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -266,7 +266,7 @@ class OrderControllerTest {
     @DisplayName("GET /api/orders/{orderId} - 존재하지 않는 주문 조회 실패")
     @WithMockUser(username = "ordercontroller@example.com")
     void getOneOrder_NotFound() throws Exception {
-        // when & then
+
         mockMvc.perform(get("/api/orders/{orderId}", 999999L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -277,7 +277,7 @@ class OrderControllerTest {
     @DisplayName("PATCH /api/orders/{orderId}/confirm - 주문 확정 성공")
     @WithMockUser(username = "ordercontroller@example.com")
     void confirmOrder_Success() throws Exception {
-        // given - 주문 생성 및 결제 완료
+
         List<OrderProductRequest> items = List.of(
                 new OrderProductRequest(testProduct1.getId(), 2)
         );
@@ -289,7 +289,7 @@ class OrderControllerTest {
         var createResponse = orderService.createOrder(request, testUser.getEmail());
         orderService.completePayment(createResponse.getId());
 
-        // when & then
+
         mockMvc.perform(patch("/api/orders/{orderId}/confirm", createResponse.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -302,7 +302,7 @@ class OrderControllerTest {
     @DisplayName("PATCH /api/orders/{orderId}/confirm - 결제 미완료 주문 확정 실패")
     @WithMockUser(username = "ordercontroller@example.com")
     void confirmOrder_Fail_NotPaid() throws Exception {
-        // given - 주문 생성만 (결제 미완료)
+
         List<OrderProductRequest> items = List.of(
                 new OrderProductRequest(testProduct1.getId(), 1)
         );
@@ -313,7 +313,7 @@ class OrderControllerTest {
         );
         var createResponse = orderService.createOrder(request, testUser.getEmail());
 
-        // when & then
+
         mockMvc.perform(patch("/api/orders/{orderId}/confirm", createResponse.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())

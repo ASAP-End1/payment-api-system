@@ -1,8 +1,4 @@
-/**
- * 런타임 설정 로더
- * 페이지 로드 시 /api/public/config에서 설정을 가져옵니다
- * 모든 페이지는 API 호출 전에 설정 로드가 완료될 때까지 기다려야 합니다
- */
+
 
 window.APP_RUNTIME = {
     loaded: false,
@@ -11,17 +7,14 @@ window.APP_RUNTIME = {
     error: null
 };
 
-/**
- * 서버에서 설정 로드
- * @returns {Promise<Object>} 설정 객체
- */
+
 async function loadConfig() {
     if (window.APP_RUNTIME.loaded) {
         return window.APP_RUNTIME.config;
     }
 
     if (window.APP_RUNTIME.loading) {
-        // 기존 로드가 완료될 때까지 대기
+
         return new Promise((resolve, reject) => {
             const checkInterval = setInterval(() => {
                 if (window.APP_RUNTIME.loaded) {
@@ -50,7 +43,7 @@ async function loadConfig() {
 
         console.log('설정 로드 완료:', config);
 
-        // 설정으로 UI 업데이트
+
         updateConfigDisplay(config);
 
         return config;
@@ -62,14 +55,12 @@ async function loadConfig() {
     }
 }
 
-/**
- * 로드된 설정으로 네비게이션 바 업데이트
- */
+
 function updateConfigDisplay(config) {
-    // 설정 배지가 있으면 업데이트
+
     const configBadges = document.querySelectorAll('.config-badge-container');
     if (configBadges.length > 0 && config) {
-        // 첫 번째 채널 키 가져오기 (toss 또는 kg-inicis)
+
         const channelKeys = config.portone.channelKeys || {};
         const firstChannelKey = Object.values(channelKeys)[0] || 'N/A';
 
@@ -82,10 +73,7 @@ function updateConfigDisplay(config) {
     }
 }
 
-/**
- * 설정 가져오기 (로드되지 않았으면 대기)
- * @returns {Promise<Object>} 설정 객체
- */
+
 async function getConfig() {
     if (!window.APP_RUNTIME.loaded) {
         await loadConfig();
@@ -93,15 +81,7 @@ async function getConfig() {
     return window.APP_RUNTIME.config;
 }
 
-/**
- * 엔드포인트 키로 전체 API URL 생성
- * @param {string} endpointKey - config.api.endpoints의 키
- * @param {Object|Array|string} params - 경로 파라미터
- *   - Object: {paymentId: 'PAY-123'} - 이름으로 매핑
- *   - Array: ['PAY-123'] - 순서대로 매핑
- *   - String: 'PAY-123' - 첫 번째 파라미터에 매핑
- * @returns {Promise<string>} 전체 URL
- */
+
 async function buildApiUrl(endpointKey, params = {}) {
     const config = await getConfig();
     const endpointContract = config.api.endpoints[endpointKey];
@@ -110,14 +90,13 @@ async function buildApiUrl(endpointKey, params = {}) {
         throw new Error(`엔드포인트 '${endpointKey}'를 설정에서 찾을 수 없습니다`);
     }
 
-    // URL 가져오기
+
     let url = endpointContract.url;
 
-    // URL에서 경로 파라미터 이름 추출 (예: /api/payments/{paymentId} → ['paymentId'])
-    const urlParamNames = (url.match(/\{([^}]+)\}/g) || [])
-        .map(p => p.slice(1, -1)); // {paramName} → paramName
 
-    // 파라미터가 없으면 바로 반환
+    const urlParamNames = (url.match(/\{([^}]+)\}/g) || [])
+        .map(p => p.slice(1, -1));
+
     if (urlParamNames.length === 0) {
         return config.api.baseUrl + url;
     }

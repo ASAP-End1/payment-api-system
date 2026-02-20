@@ -1,7 +1,7 @@
-/* Modern Commerce Demo UI - Responsive 2-Column Layout */
+
 
 :root {
-    /* Light Mode Colors */
+
     --primary: #4f46e5;
     --primary-dark: #4338ca;
     --secondary: #06b6d4;
@@ -17,14 +17,14 @@
     --shadow: rgba(0, 0, 0, 0.1);
     --shadow-lg: rgba(0, 0, 0, 0.15);
 
-    /* Spacing */
+
     --spacing-xs: 0.5rem;
     --spacing-sm: 1rem;
     --spacing-md: 1.5rem;
     --spacing-lg: 2rem;
     --spacing-xl: 3rem;
 
-    /* Border Radius */
+
     --radius-sm: 0.5rem;
     --radius-md: 0.75rem;
     --radius-lg: 1rem;
@@ -62,7 +62,7 @@ body {
     transition: background-color 0.3s, color 0.3s;
 }
 
-/* Navbar */
+
 .navbar {
     background: var(--bg-primary);
     border-bottom: 1px solid var(--border);
@@ -133,7 +133,7 @@ body {
     transform: scale(1.1);
 }
 
-/* Config Badge */
+
 .config-badge-container {
     display: flex;
     flex-direction: column;
@@ -154,7 +154,7 @@ body {
     white-space: nowrap;
 }
 
-/* Main Layout - 2 Column */
+
 .main-container {
     max-width: 1600px;
     margin: 0 auto;
@@ -164,7 +164,7 @@ body {
     gap: var(--spacing-lg);
 }
 
-/* Responsive Navbar */
+
 @media (max-width: 1400px) {
     .navbar-container {
         padding: var(--spacing-sm);
@@ -229,7 +229,7 @@ body {
     }
 }
 
-/* Content Area */
+
 .content-area {
     background: var(--bg-primary);
     padding: var(--spacing-lg);
@@ -237,7 +237,7 @@ body {
     box-shadow: 0 4px 20px var(--shadow);
 }
 
-/* API Panel (Right Side) */
+
 .api-panel {
     background: var(--bg-primary);
     border-radius: var(--radius-xl);
@@ -311,7 +311,7 @@ body {
     color: var(--danger);
 }
 
-/* Cards */
+
 .card {
     background: var(--bg-secondary);
     padding: var(--spacing-lg);
@@ -351,7 +351,7 @@ body {
     gap: var(--spacing-sm);
 }
 
-/* Buttons */
+
 .btn {
     padding: 0.75rem 1.5rem;
     border: none;
@@ -430,7 +430,7 @@ body {
     flex-wrap: wrap;
 }
 
-/* Form Elements */
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -458,7 +458,7 @@ body {
     border-color: var(--primary);
 }
 
-/* Product/Plan Cards */
+
 .product-card, .plan-card {
     background: var(--bg-primary);
     padding: var(--spacing-lg);
@@ -525,7 +525,7 @@ body {
     color: var(--text-primary);
 }
 
-/* Features List */
+
 .features-list {
     list-style: none;
     display: flex;
@@ -547,7 +547,7 @@ body {
     font-size: 1.2rem;
 }
 
-/* Loading Skeleton */
+
 .skeleton {
     background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
     background-size: 200% 100%;
@@ -560,7 +560,7 @@ body {
     100% { background-position: -200% 0; }
 }
 
-/* Alerts */
+
 .alert {
     padding: var(--spacing-md);
     border-radius: var(--radius-md);
@@ -591,7 +591,7 @@ body {
     color: var(--danger);
 }
 
-/* Code Block */
+
 .code-block {
     background: var(--bg-secondary);
     padding: var(--spacing-md);
@@ -602,7 +602,7 @@ body {
     border: 1px solid var(--border);
 }
 
-/* Utility Classes */
+
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .mt-1 { margin-top: var(--spacing-sm); }
@@ -615,7 +615,7 @@ body {
 .p-2 { padding: var(--spacing-md); }
 .p-3 { padding: var(--spacing-lg); }
 
-/* Scrollbar Styling */
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -634,7 +634,7 @@ body {
     background: var(--text-secondary);
 }
 
-/* Cart Summary */
+
 .cart-summary {
     background: var(--bg-primary);
     padding: var(--spacing-lg);

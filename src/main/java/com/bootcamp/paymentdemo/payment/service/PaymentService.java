@@ -56,7 +56,7 @@ public class PaymentService {
             order.applyPointDiscount(pointsToUse);
         }
 
-        // 2. 결제 장부 생성 (PENDING)
+
         String dbPaymentId = "order_mid_" + System.currentTimeMillis();
 
         Payment payment = Payment.builder()
@@ -79,7 +79,7 @@ public class PaymentService {
         Payment payment = null;
 
         try {
-            // 1. 조회 및 멱등성 체크
+
             payment = paymentRepository.findByDbPaymentIdWithLock(dbPaymentId)
                     .orElseThrow(() -> new IllegalArgumentException("결제 건을 찾을 수 없습니다."));
 
@@ -87,10 +87,10 @@ public class PaymentService {
                 return new PaymentConfirmResponse(payment.getOrder().getId(),payment.getOrder().getOrderNumber());
             }
 
-            // 2. PortOne 검증
+
             PortOnePaymentResponse portOneResponse = portOneClient.getPayment(dbPaymentId);
 
-            // 3. 금액 검증
+
             BigDecimal expectedPayAmount = payment.getOrder().getFinalAmount();
             BigDecimal actualPayAmount = portOneResponse.amount().total();
 
@@ -103,30 +103,30 @@ public class PaymentService {
                     log.error("금액 불일치 주문 취소 중 오류: {}", ex.getMessage());
                 }
 
-                // PG사 결제 취소
+
                 portOneClient.cancelPayment(dbPaymentId, PortOneCancelRequest.fullCancel("금액 위변조 감지"));
 
                 return new PaymentConfirmResponse(null, payment.getOrder().getOrderNumber());
             }
-            // 4. 결제 성공 처리
+
             try {
                 payment.completePayment(dbPaymentId);
                 orderService.completePayment(payment.getOrder().getId());
                 log.info("결제 및 주문 최종 확정 완료: {}", dbPaymentId);
 
             } catch (Exception e) {
-                // 5. 보상 트랜잭션 (롤백)
+
                 log.error("내부 처리 실패, 자동 취소 진행: {}", e.getMessage());
 
                 try {
-                    // 주문 취소
+
                     orderService.rollbackUsedPoint(payment.getOrder().getId());
                     payment.cancelPointUsage();
                 } catch (Exception ex) {
                     log.warn("주문 취소 처리 중 오류(이미 취소됨 등): {}", ex.getMessage());
                 }
 
-                // PG사 취소
+
                 portOneClient.cancelPayment(dbPaymentId, PortOneCancelRequest.fullCancel("서버 오류 자동 취소"));
                 throw e;
             }

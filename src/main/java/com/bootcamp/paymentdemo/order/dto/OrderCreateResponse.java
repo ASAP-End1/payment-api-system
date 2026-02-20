@@ -10,10 +10,10 @@ public class OrderCreateResponse {
 
     private final Long id;
     private final String orderNumber;
-    private final BigDecimal totalAmount;      // 포인트 차감 전 총 금액
-    private final BigDecimal usedPoints;       // 사용된 포인트
-    private final BigDecimal finalAmount;      // 포인트 차감 후 최종 결제 금액
-    private final BigDecimal earnedPoints;     // 적립될 포인트
+    private final BigDecimal totalAmount;
+    private final BigDecimal usedPoints;
+    private final BigDecimal finalAmount;
+    private final BigDecimal earnedPoints;
     private final String status;
 
 
@@ -29,7 +29,7 @@ public class OrderCreateResponse {
         this.status = status;
     }
 
-    // 정적 팩토리 메서드
+
     public static OrderCreateResponse from(Order order) {
         return new OrderCreateResponse(
                 order.getId(),

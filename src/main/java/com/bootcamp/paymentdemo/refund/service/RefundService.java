@@ -95,7 +95,7 @@ public class RefundService {
         }
     }
 
-    // 환불 가능 상태 검증
+
     private void validateRefundable(Payment payment) {
 
         if(payment.getOrder().isCanceled()) {
@@ -116,27 +116,27 @@ public class RefundService {
 
     }
 
-    // 환불 완료 로직
+
     private void completeRefund(Payment payment, String reason, String portOneRefundId, String refundGroupId) {
         Refund completedRefund = Refund.createCompleted(
                 payment.getId(), payment.getTotalAmount(), reason,  portOneRefundId,  refundGroupId
         );
 
-        // 환불 완료 이력 저장
+
         refundRepository.save(completedRefund);
 
-        // 결제 및 주문 상태 변경
+
         payment.refund();
         orderService.cancelOrder(payment.getOrder().getId(), reason);
 
-        // 상품 재고 복구
+
         List<OrderProduct> orderProducts = orderProductRepository.findByOrder_Id(payment.getOrder().getId());
 
         orderProducts.forEach(orderProduct ->
                 productService.increaseStock(orderProduct.getProductId(), orderProduct.getCount())
         );
 
-        // 멤버십 갱신
+
         membershipService.handleRefund(
                 payment.getOrder().getUser().getUserId(),
                 payment.getOrder().getFinalAmount(),

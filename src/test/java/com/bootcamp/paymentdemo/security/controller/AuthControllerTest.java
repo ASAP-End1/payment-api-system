@@ -62,7 +62,7 @@ class AuthControllerTest {
     private UserService.TokenPair tokenPair;
     private UserSearchResponse userSearchResponse;
 
-    // Principal 직접 주입
+
     private RequestPostProcessor principal(String username) {
         return request -> {
             request.setUserPrincipal(() -> username);
@@ -72,17 +72,17 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        // 테스트용 회원가입 응답
+
         signupResponse = new SignupResponse(1L, "test@test.com");
 
-        // 테스트용 토큰
+
         tokenPair = new UserService.TokenPair(
                 "access-token-12345",
                 "refresh-token-67890",
                 "test@test.com"
         );
 
-        // 테스트용 사용자 정보
+
         userSearchResponse = new UserSearchResponse(
                 1L,
                 "test@test.com",
@@ -98,7 +98,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("회원가입 성공 - 201 Created")
     void signup_Success() throws Exception {
-        // given
+
         SignupRequest request = new SignupRequest();
         ReflectionTestUtils.setField(request, "name", "홍길동");
         ReflectionTestUtils.setField(request, "email", "test@test.com");
@@ -107,7 +107,7 @@ class AuthControllerTest {
 
         given(userService.signup(any(SignupRequest.class))).willReturn(signupResponse);
 
-        // when & then
+
         mockMvc.perform(post("/api/signup")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -126,7 +126,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("회원가입 실패 - 이메일 중복")
     void signup_Fail_EmailDuplication() throws Exception {
-        // given
+
         SignupRequest request = new SignupRequest();
         ReflectionTestUtils.setField(request, "name", "홍길동");
         ReflectionTestUtils.setField(request, "email", "duplicate@test.com");
@@ -136,7 +136,7 @@ class AuthControllerTest {
         given(userService.signup(any(SignupRequest.class)))
                 .willThrow(new DuplicateEmailException("이미 사용 중인 이메일입니다"));
 
-        // when & then
+
         mockMvc.perform(post("/api/signup")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -152,14 +152,14 @@ class AuthControllerTest {
     @Test
     @DisplayName("회원가입 실패 - 입력값 유효성 검증" )
     void signup_Fail_Validation() throws Exception {
-        // given
+
         SignupRequest invalidRequest = new SignupRequest();
         ReflectionTestUtils.setField(invalidRequest, "name", "");
         ReflectionTestUtils.setField(invalidRequest, "email", "testemail");
         ReflectionTestUtils.setField(invalidRequest, "password", "");
         ReflectionTestUtils.setField(invalidRequest, "phone", "010");
 
-        // when & then
+
         mockMvc.perform(post("/api/signup")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -173,14 +173,14 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그인 성공")
     void login_Sccess() throws Exception {
-        // given
+
         LoginRequest request = new LoginRequest();
         ReflectionTestUtils.setField(request, "email", "test@test.com");
         ReflectionTestUtils.setField(request, "password", "password123");
 
         given(userService.login(anyString(), anyString())).willReturn(tokenPair);
 
-        // when & then
+
         mockMvc.perform(post("/api/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -206,7 +206,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그인 실패 - 비밀번호 불일치")
     void login_Fail_PasswordMismatch() throws Exception {
-        // given
+
         LoginRequest request = new LoginRequest();
         ReflectionTestUtils.setField(request, "email", "test@test.com");
         ReflectionTestUtils.setField(request, "password", "wrongpassword");
@@ -214,7 +214,7 @@ class AuthControllerTest {
         given(userService.login(anyString(), anyString()))
                 .willThrow(new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다"));
 
-        // when & then
+
         mockMvc.perform(post("/api/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -230,7 +230,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그인 실패 - 사용자 없음")
     void login_Fail_WhenUserNotFound_Returns404NotFound() throws Exception {
-        // given
+
         LoginRequest request = new LoginRequest();
         ReflectionTestUtils.setField(request, "email", "notuser@test.com");
         ReflectionTestUtils.setField(request, "password", "password123");
@@ -238,7 +238,7 @@ class AuthControllerTest {
         given(userService.login(anyString(), anyString()))
                 .willThrow(new UserNotFoundException("사용자가 존재하지 않습니다"));
 
-        // when & then
+
         mockMvc.perform(post("/api/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -254,10 +254,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그아웃 성공")
     void logout_Success() throws Exception {
-        // given
+
         willDoNothing().given(userService).logout(anyString(), anyString());
 
-        // when & then
+
         mockMvc.perform(post("/api/logout")
                         .with(csrf())
                         .with(principal("test@test.com"))
@@ -278,10 +278,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("사용자 정보 조회 성공")
     void getCurrentUser_Success() throws Exception {
-        // given
+
         given(userService.getCurrentUser(anyString())).willReturn(userSearchResponse);
 
-        // when & then
+
         mockMvc.perform(get("/api/me")
                         .with(csrf())
                         .with(principal("test@test.com"))
@@ -304,11 +304,11 @@ class AuthControllerTest {
     @Test
     @DisplayName("사용자 정보 조회 실패 - 사용자 없음")
     void getCurrentUser_Fail_UserNotFound() throws Exception {
-        // given
+
         given(userService.getCurrentUser(anyString()))
                 .willThrow(new UserNotFoundException("사용자를 찾을 수 없습니다"));
 
-        // when & then
+
         mockMvc.perform(get("/api/me")
                         .with(csrf())
                         .with(principal("notexist@test.com")))

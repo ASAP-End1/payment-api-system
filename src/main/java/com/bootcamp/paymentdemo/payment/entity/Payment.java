@@ -21,11 +21,11 @@ public class Payment extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 우리 서버가 생성한 ID (결제 요청 시 사용)
+
     @Column(name = "db_payment_id", unique = true, nullable = false)
     private String dbPaymentId;
 
-    // PortOne에서 발급받은 영수증 ID (결제 완료 후 기록)
+
     @Column(name = "payment_id", unique = true)
     private String paymentId;
 
@@ -52,7 +52,7 @@ public class Payment extends BaseEntity {
         this.status = status;
     }
 
-    // 결제 완료 시 호출
+
     public void completePayment(String paymentId) {
         this.paymentId = paymentId;
         this.status = PaymentStatus.PAID;
@@ -65,17 +65,17 @@ public class Payment extends BaseEntity {
                 this.status == PaymentStatus.FAIL;
     }
 
-    // 환불 시 결제 상태 검증
+
     public boolean isPaid() {
         return this.status == PaymentStatus.PAID;
     }
 
-    // 환불 시 결제 상태 검증
+
     public boolean isRefund() {
         return this.status == PaymentStatus.REFUND;
     }
 
-    // 환불 후 상태 변경
+
     public void refund() {
         this.status = PaymentStatus.REFUND;
     }

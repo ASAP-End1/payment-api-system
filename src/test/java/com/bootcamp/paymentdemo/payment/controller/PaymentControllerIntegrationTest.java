@@ -94,7 +94,7 @@ class PaymentControllerIntegrationTest {
     @Test
     @DisplayName("결제 생성 통합 테스트")
     void createPayment() throws Exception {
-        // Given
+
         PaymentCreateRequest request = new PaymentCreateRequest();
         ReflectionTestUtils.setField(request, "orderNumber", "ORD-INTEG-001");
         ReflectionTestUtils.setField(request, "totalAmount", new BigDecimal("10000"));
@@ -102,14 +102,14 @@ class PaymentControllerIntegrationTest {
 
         String jsonRequest = objectMapper.writeValueAsString(request);
 
-        // When
+
         mockMvc.perform(post("/api/payment/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest))
                 .andDo(print())
                 .andExpect(status().isCreated());
 
-        // Then
+
         Payment savedPayment = paymentRepository.findAll().stream()
                 .filter(p -> p.getOrder().getOrderNumber().equals("ORD-INTEG-001"))
                 .findFirst()
@@ -122,7 +122,7 @@ class PaymentControllerIntegrationTest {
     @Test
     @DisplayName("결제 확정 통합 테스트")
     void confirmPayment() throws Exception {
-        // Given
+
         String dbPaymentId = "imp_test_1234";
         Payment pendingPayment = Payment.builder()
                 .dbPaymentId(dbPaymentId)
@@ -139,13 +139,13 @@ class PaymentControllerIntegrationTest {
         given(mockResponse.amount()).willReturn(mockAmount);
         given(portOneClient.getPayment(dbPaymentId)).willReturn(mockResponse);
 
-        // When
+
         mockMvc.perform(post("/api/payment/" + dbPaymentId + "/confirm")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        // Then
+
         Payment confirmedPayment = paymentRepository.findByDbPaymentIdWithLock(dbPaymentId)
                 .orElseThrow(() -> new AssertionError("결제 정보를 찾을 수 없습니다."));
         assertThat(confirmedPayment.getStatus()).isEqualTo(PaymentStatus.PAID);

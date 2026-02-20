@@ -19,13 +19,7 @@ public class ConfigController {
     private final ClientApiProperties clientApiProperties;
     private final AppProperties appProperties;
 
-    /**
-     * GET /api/public/config
-     * 프론트엔드 런타임 설정을 반환합니다.
-     * - PortOne 채널 정보
-     * - 클라이언트 API 계약 정보 (URL, 요청/응답 스키마)
-     * - UI 브랜딩 정보
-     */
+
     @GetMapping("/config")
     public ResponseEntity<PublicConfigResponse> getPublicConfig() {
         PublicConfigResponse response = PublicConfigResponse.builder()

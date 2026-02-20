@@ -33,7 +33,7 @@ public class Refund {
     @Column(name = "status", nullable = false, length = 20)
     private RefundStatus status;
 
-    // PortOne에서 반환하는 환불 ID
+
     @Column(name = "portone_refund_id")
     private String portOneRefundId;
 
@@ -55,7 +55,7 @@ public class Refund {
         this.refundedAt = LocalDateTime.now();
     }
 
-    // 환불 요청 이력 생성
+
     public static Refund createRequest(Long paymentId, BigDecimal refundAmount, String reason, String refundGroupId) {
         return Refund.builder()
                 .paymentId(paymentId)
@@ -67,7 +67,7 @@ public class Refund {
                 .build();
     }
 
-    // 환불 완료 이력 생성
+
     public static Refund createCompleted(Long paymentId, BigDecimal refundAmount, String reason, String portOneRefundId, String refundGroupId) {
         return Refund.builder()
                 .paymentId(paymentId)
@@ -80,7 +80,7 @@ public class Refund {
     }
 
 
-    // 환불 실패 이력 생성
+
     public static Refund createFailed(Long paymentId, BigDecimal refundAmount, String reason, String portOneRefundId, String refundGroupId) {
         return Refund.builder()
                 .paymentId(paymentId)

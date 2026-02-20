@@ -14,9 +14,9 @@ public class UserSearchResponse {
     private final String name;
     private final String phone;
 
-    private final BigDecimal pointBalance;     // 포인트 정보
-    private final BigDecimal totalPaidAmount;   // 총 결제 금액
-    private final String currentGrade;          // 현재 멤버십 등급 정보
+    private final BigDecimal pointBalance;
+    private final BigDecimal totalPaidAmount;
+    private final String currentGrade;
 
     public UserSearchResponse(Long userId, String email, String name, String phone, BigDecimal pointBalance, BigDecimal totalPaidAmount, String currentGrade) {
         this.userId = userId;
@@ -28,7 +28,7 @@ public class UserSearchResponse {
         this.currentGrade = currentGrade;
     }
 
-    // 정적 팩토리 메서드
+
     public static UserSearchResponse from(User user, UserPointBalance userPointBalance, UserPaidAmount userpaidAmount) {
         return new UserSearchResponse(
                 user.getUserId(),

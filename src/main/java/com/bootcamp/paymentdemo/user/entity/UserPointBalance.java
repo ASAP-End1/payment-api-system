@@ -35,7 +35,7 @@ public class UserPointBalance {
     private LocalDateTime updatedAt;
 
 
-    // 회원가입시 유저 포인트 초기화
+
     public static UserPointBalance createDefault(User user) {
         return UserPointBalance.builder()
                 .user(user)
@@ -43,12 +43,12 @@ public class UserPointBalance {
                 .build();
     }
 
-    // 잔여 포인트 스냅샷 정합성 보정
+
     public void syncPointBalance(BigDecimal amount) {
         this.currentPoints = amount;
     }
 
-    // 잔여 포인트 스냅샷 업데이트
+
     public void updatePointBalance(BigDecimal amount) {
         this.currentPoints = this.currentPoints.add(amount);
     }

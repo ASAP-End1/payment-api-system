@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-// 사용자 멤버십 등급 변경 이력
+
 @Entity
 @Table(name = "user_grade_histories")
 @Getter
@@ -26,33 +26,33 @@ public class UserGradeHistory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "from_grade_id")
-    private Membership fromGrade;   // 변경 전 등급 (예: NORMAL)
+    private Membership fromGrade;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "to_grade_id", nullable = false)
-    private Membership toGrade;    // 변경 후 등급 (예: VIP)
+    private Membership toGrade;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @Column(name = "trigger_order_id")
-    private Long triggerOrderId;   // 등급 변경을 발생시킨 주문 id
+    private Long triggerOrderId;
 
     @Column(name = "reason", length = 100)
     private String reason;
 
-    // 회원가입 시 등급 이력 생성
+
     public static UserGradeHistory createInitial(User user, Membership toGrade) {
         UserGradeHistory history = new UserGradeHistory();
         history.user = user;
         history.fromGrade = null;
-        history.toGrade = toGrade;   // 회원가입시 NORMAL 등급 부여
+        history.toGrade = toGrade;
         history.updatedAt = LocalDateTime.now();
         history.reason = "회원가입";
         return history;
     }
 
-    // 결제/환불로 인한 등급 변경 이력
+
     public static UserGradeHistory createChange(
             User user,
             Membership fromGrade,

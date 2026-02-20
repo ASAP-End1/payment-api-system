@@ -24,7 +24,7 @@ public class PointController {
 
     private final PointService pointService;
 
-    // 포인트 내역 조회
+
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<PointGetResponse>>> getPointHistory(
             Principal principal,

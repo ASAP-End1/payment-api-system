@@ -24,7 +24,7 @@ public class ProductGetResponse {
         this.status = status;
     }
 
-    // 정적 팩토리 메서드
+
     public static ProductGetResponse from(Product product) {
         return new ProductGetResponse(
                 product.getId(),

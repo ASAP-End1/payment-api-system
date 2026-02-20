@@ -77,10 +77,10 @@ class RefundServiceTest {
         refundReason = "단순 변심";
         portOneRefundId = "portone-refund-456";
 
-        // User 설정
+
         testUser = mock(User.class);
 
-        // Order 설정
+
         testOrder = Order.builder()
                 .user(testUser)
                 .orderNumber("ORD-20240101")
@@ -93,7 +93,7 @@ class RefundServiceTest {
                 .build();
         ReflectionTestUtils.setField(testOrder, "id", 100L);
 
-        // Payment 설정
+
         testPayment = Payment.builder()
                 .dbPaymentId("db1")
                 .order(testOrder)
@@ -108,7 +108,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("정상적인 환불 요청 성공")
     void refundAll_Success() {
-        // given
+
         given(testUser.getUserId()).willReturn(1L);
 
         RefundRequest refundRequest = createRefundRequest(refundReason);
@@ -126,10 +126,10 @@ class RefundServiceTest {
 
         ArgumentCaptor<Refund> refundCaptor = ArgumentCaptor.forClass(Refund.class);
 
-        // when
+
         RefundResponse response = refundService.refundAll(testPayment.getDbPaymentId(), refundRequest);
 
-        // then
+
         assertAll(
                 () -> assertThat(response).isNotNull(),
                 () -> assertThat(response.getOrderId()).isEqualTo(testOrder.getId()),
@@ -162,12 +162,12 @@ class RefundServiceTest {
     @Test
     @DisplayName("존재하지 않는 결제 ID로 환불 시도 시 예외 발생")
     void refundAll_PaymentNotFound() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
         given(paymentRepository.findByDbPaymentIdWithLock(testPayment.getDbPaymentId()))
                 .willReturn(Optional.empty());
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(testPayment.getDbPaymentId(), refundRequest))
                 .isInstanceOf(RefundException.class);
 
@@ -184,7 +184,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("이미 환불된 결제에 대해 환불 시도 시 예외 발생")
     void refundAll_AlreadyRefunded() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
         Payment refundedPayment = Payment.builder()
@@ -197,7 +197,7 @@ class RefundServiceTest {
         given(paymentRepository.findByDbPaymentIdWithLock(refundedPayment.getDbPaymentId()))
                 .willReturn(Optional.of(refundedPayment));
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(refundedPayment.getDbPaymentId(), refundRequest))
                 .isInstanceOf(RefundException.class);
 
@@ -207,7 +207,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("이미 취소된 주문에 대해 환불 시도 시 예외 발생")
     void refundAll_AlreadyCanceled() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
         Order cancelledOrder = Order.builder()
@@ -231,7 +231,7 @@ class RefundServiceTest {
         given(paymentRepository.findByDbPaymentIdWithLock(paymentWithCancelledOrder.getDbPaymentId()))
                 .willReturn(Optional.of(paymentWithCancelledOrder));
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(paymentWithCancelledOrder.getDbPaymentId(), refundRequest))
                 .isInstanceOf(RefundException.class);
 
@@ -241,7 +241,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("결제되지 않은 상태에서 환불 시도 시 예외 발생")
     void refundAll_NotPaidStatus() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
         Payment unpaidPayment = Payment.builder()
@@ -254,7 +254,7 @@ class RefundServiceTest {
         given(paymentRepository.findByDbPaymentIdWithLock(unpaidPayment.getDbPaymentId()))
                 .willReturn(Optional.of(unpaidPayment));
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(unpaidPayment.getDbPaymentId(), refundRequest))
                 .isInstanceOf(RefundException.class);
 
@@ -264,7 +264,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("주문 확인 대기 상태가 아닐 때 환불 시도 시 예외 발생")
     void refundAll_InvalidOrderStatus() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
         Order confirmedOrder = Order.builder()
@@ -288,7 +288,7 @@ class RefundServiceTest {
         given(paymentRepository.findByDbPaymentIdWithLock(paymentWithConfirmedOrder.getDbPaymentId()))
                 .willReturn(Optional.of(paymentWithConfirmedOrder));
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(paymentWithConfirmedOrder.getDbPaymentId(), refundRequest))
                 .isInstanceOf(RefundException.class);
 
@@ -298,7 +298,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("PortOne API 호출 실패 시 예외 발생 및 실패 이력 저장")
     void refundAll_PortOneApiFailure() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
         given(paymentRepository.findByDbPaymentIdWithLock(testPayment.getDbPaymentId()))
@@ -311,7 +311,7 @@ class RefundServiceTest {
         given(portOneClient.refundPayment(eq(testPayment.getPaymentId()), any(PortOneRefundRequest.class)))
                 .willThrow(portOneException);
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(testPayment.getDbPaymentId(), refundRequest))
                 .isInstanceOf(PortOneException.class)
                 .hasMessage("PortOne API 오류");
@@ -341,7 +341,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("PortOne 응답이 null일 때 예외 발생")
     void refundAll_PortOneResponseNull() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
         given(paymentRepository.findByDbPaymentIdWithLock(testPayment.getDbPaymentId()))
@@ -350,7 +350,7 @@ class RefundServiceTest {
         given(portOneClient.refundPayment(eq(testPayment.getPaymentId()), any(PortOneRefundRequest.class)))
                 .willReturn(null);
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(testPayment.getDbPaymentId(), refundRequest))
                 .isInstanceOf(PortOneException.class)
                 .hasMessageContaining("PortOne 응답이 비어있습니다");
@@ -367,7 +367,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("PortOne 응답의 Cancellation이 null일 때 예외 발생")
     void refundAll_PortOneCancellationNull() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
         given(paymentRepository.findByDbPaymentIdWithLock(testPayment.getDbPaymentId()))
@@ -378,7 +378,7 @@ class RefundServiceTest {
         given(portOneClient.refundPayment(eq(testPayment.getPaymentId()), any(PortOneRefundRequest.class)))
                 .willReturn(portOneResponse);
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(testPayment.getDbPaymentId(), refundRequest))
                 .isInstanceOf(PortOneException.class)
                 .hasMessageContaining("PortOne 응답이 비어있습니다");
@@ -395,7 +395,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("PortOne 환불 상태가 SUCCEEDED가 아닐 때 예외 발생")
     void refundAll_PortOneRefundFailed() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
         given(paymentRepository.findByDbPaymentIdWithLock(testPayment.getDbPaymentId()))
@@ -405,7 +405,7 @@ class RefundServiceTest {
         given(portOneClient.refundPayment(eq(testPayment.getPaymentId()), any(PortOneRefundRequest.class)))
                 .willReturn(portOneResponse);
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(testPayment.getDbPaymentId(), refundRequest))
                 .isInstanceOf(PortOneException.class);
 
@@ -421,7 +421,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("환불 완료 처리 중 서버 내부 오류 발생 시 실패 이력 저장")
     void refundAll_InternalServerError() {
-        // given
+
         RefundRequest refundRequest = createRefundRequest(refundReason);
 
         PortOneRefundResponse portOneResponse = createSuccessfulPortOneResponse();
@@ -435,7 +435,7 @@ class RefundServiceTest {
         given(refundRepository.save(any()))
                 .willThrow(new RuntimeException("DB 오류"));
 
-        // when & then
+
         assertThatThrownBy(() -> refundService.refundAll(testPayment.getDbPaymentId(), refundRequest))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("DB 오류");
@@ -452,7 +452,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("환불 완료 후 재고 복구가 정확히 이루어지는지 검증")
     void refundAll_StockRestoration() {
-        // given
+
         given(testUser.getUserId()).willReturn(1L);
 
         RefundRequest refundRequest = createRefundRequest(refundReason);
@@ -471,10 +471,10 @@ class RefundServiceTest {
         given(orderProductRepository.findByOrder_Id(testOrder.getId()))
                 .willReturn(orderProducts);
 
-        // when
+
         refundService.refundAll(testPayment.getDbPaymentId(), refundRequest);
 
-        // then
+
         verify(productService, times(1)).increaseStock(200L, 3);
         verify(productService, times(1)).increaseStock(201L, 5);
     }
@@ -482,7 +482,7 @@ class RefundServiceTest {
     @Test
     @DisplayName("환불 완료 후 멤버십 갱신이 정확히 이루어지는지 검증")
     void refundAll_MembershipUpdate() {
-        // given
+
         given(testUser.getUserId()).willReturn(1L);
 
         RefundRequest refundRequest = createRefundRequest(refundReason);
@@ -502,10 +502,10 @@ class RefundServiceTest {
         ArgumentCaptor<BigDecimal> amountCaptor = ArgumentCaptor.forClass(BigDecimal.class);
         ArgumentCaptor<Long> orderIdCaptor = ArgumentCaptor.forClass(Long.class);
 
-        // when
+
         refundService.refundAll(testPayment.getDbPaymentId(), refundRequest);
 
-        // then
+
         verify(membershipService, times(1))
                 .handleRefund(userIdCaptor.capture(), amountCaptor.capture(), orderIdCaptor.capture());
 

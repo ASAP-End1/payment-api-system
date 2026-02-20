@@ -26,15 +26,15 @@ public class Order extends BaseEntity {
     private String orderNumber;
 
     @Column(name = "total_amount", nullable = false, precision = 18, scale = 2)
-    private BigDecimal totalAmount; // 포인트 차감 전
+    private BigDecimal totalAmount;
 
     @Column(name = "used_points", nullable = false, precision = 18, scale = 2)
-    private BigDecimal usedPoints; // 사용한 포인트
+    private BigDecimal usedPoints;
 
     @Column(name = "final_amount", nullable = false, precision = 18, scale = 2)
-    private BigDecimal finalAmount; // 포인트 차감 후
+    private BigDecimal finalAmount;
 
-    // [추가 요청] 적립 예정 포인트 기록 (선택 사항이지만 데이터 정합성을 위해 권장)
+
     @Setter
     @Column(name = "earned_points", nullable = false, precision = 18, scale = 2)
     private BigDecimal earnedPoints;
@@ -58,7 +58,7 @@ public class Order extends BaseEntity {
         this.orderStatus = orderStatus;
     }
 
-    // 결제 완료 처리 (PENDING_PAYMENT → PENDING_CONFIRMATION)
+
     public void completePayment() {
         if (this.orderStatus != OrderStatus.PENDING_PAYMENT) {
             throw new IllegalStateException("결제 대기 상태의 주문만 결제 완료 처리할 수 있습니다.");
@@ -66,7 +66,7 @@ public class Order extends BaseEntity {
         this.orderStatus = OrderStatus.PENDING_CONFIRMATION;
     }
 
-    // 주문 취소 (확정된 주문과 취소된 주문은 취소 할 수 없음)
+
     public void cancel() {
         if (!this.orderStatus.canBeCancelled()) {
             if (this.orderStatus == OrderStatus.CONFIRMED) {
@@ -79,7 +79,7 @@ public class Order extends BaseEntity {
         this.orderStatus = OrderStatus.CANCELLED;
     }
 
-    // 주문 확정
+
     public void confirm() {
         if (this.orderStatus != OrderStatus.PENDING_CONFIRMATION) {
             throw new IllegalStateException("주문 확정 대기 상태의 주문만 확정할 수 있습니다.");
@@ -87,7 +87,7 @@ public class Order extends BaseEntity {
         this.orderStatus = OrderStatus.CONFIRMED;
     }
 
-    // confirmPayment 시 상태 변경
+
     public void pendingConfirmation() {
         if (this.orderStatus != OrderStatus.PENDING_PAYMENT) {
             throw new IllegalStateException("결제 대기 상태의 주문만 확정 대기할 수 있습니다.");
@@ -95,17 +95,17 @@ public class Order extends BaseEntity {
         this.orderStatus = OrderStatus.PENDING_CONFIRMATION;
     }
 
-    // 환불 시 주문 상태 검증
+
     public boolean isAwaitingConfirmation() {
         return this.orderStatus == OrderStatus.PENDING_CONFIRMATION;
     }
 
-    // 환불 시 주문 상태 검증
+
     public boolean isCanceled() {
         return this.orderStatus == OrderStatus.CANCELLED;
     }
 
-    // 포인트를 사용하기 위해서 구현한 로직 <- 윤민기
+
     public void applyPointDiscount(BigDecimal usagePoints) {
         if (usagePoints == null) {
             usagePoints = BigDecimal.ZERO;

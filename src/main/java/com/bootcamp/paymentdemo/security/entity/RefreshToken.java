@@ -31,7 +31,7 @@ public class RefreshToken extends Base {
     @Column(name = "revoked", nullable = false)
     private Boolean revoked = false;
 
-    // 정적 팩토리 메서드
+
     public static RefreshToken createToken(User user, String token, LocalDateTime expiresAt) {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.user = user;
@@ -41,18 +41,18 @@ public class RefreshToken extends Base {
         return refreshToken;
     }
 
-    // Refresh Token 무효화
+
     public void revoke() {
         this.revoked = true;
     }
 
-    // 만료 여부 확인
+
     public boolean isExpired() {
         return this.expiresAt.isBefore(LocalDateTime.now());
     }
 
 
-    // 유효성 확인 (무효화되지 않고 만료되지 않음)
+
     public boolean isValid() {
         return !this.revoked && !isExpired();
     }

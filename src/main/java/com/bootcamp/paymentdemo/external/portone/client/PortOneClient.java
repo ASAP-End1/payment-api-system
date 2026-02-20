@@ -74,7 +74,7 @@ public class PortOneClient {
         }
     }
 
-    // PortOne 환불 API 요청
+
     public PortOneRefundResponse refundPayment(String paymentId, PortOneRefundRequest request) {
         try {
             return restClient.post()

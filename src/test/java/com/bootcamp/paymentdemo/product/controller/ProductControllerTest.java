@@ -68,7 +68,7 @@ class ProductControllerTest {
     @DisplayName("GET /api/products - 상품 목록 조회 성공")
     @WithMockUser
     void getAllProducts_Success() throws Exception {
-        // when & then
+
         mockMvc.perform(get("/api/products")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -83,7 +83,7 @@ class ProductControllerTest {
     @DisplayName("GET /api/products/{productId} - 상품 단건 조회 성공")
     @WithMockUser
     void getProductById_Success() throws Exception {
-        // when & then
+
         mockMvc.perform(get("/api/products/{productId}", testProduct1.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
@@ -102,7 +102,7 @@ class ProductControllerTest {
     @DisplayName("GET /api/products/{productId} - 존재하지 않는 상품 조회 실패")
     @WithMockUser
     void getProductById_NotFound() throws Exception {
-        // when & then
+
         mockMvc.perform(get("/api/products/{productId}", 999999L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())

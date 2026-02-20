@@ -45,7 +45,7 @@ class PointControllerTest {
     @Test
     @DisplayName("포인트 내역 조회 - 성공")
     void getPointHistory_성공() throws Exception {
-        // given
+
         PointGetResponse response1 = new PointGetResponse(
                 1L, 1L, BigDecimal.valueOf(200), PointType.EARNED, LocalDateTime.now(), LocalDate.now().plusYears(1));
         PointGetResponse response2 = new PointGetResponse(
@@ -59,7 +59,7 @@ class PointControllerTest {
         given(pointService.getPointHistory(anyString(), any(Pageable.class)))
                 .willReturn(pageResponse);
 
-        // when & then
+
         mockMvc.perform(get("/api/points")
                         .with(user("test@test.com"))
                         .param("page", "0")
@@ -76,7 +76,7 @@ class PointControllerTest {
     @Test
     @DisplayName("포인트 내역 조회 - 실패 (인증X)")
     void getPointHistory_실패() throws Exception {
-        // when & then
+
         mockMvc.perform(get("/api/points")
                         .param("page", "0")
                         .param("size", "10"))

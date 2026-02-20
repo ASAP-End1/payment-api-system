@@ -17,7 +17,7 @@ public class CorsConfig {
         config.setAllowedMethods(Arrays.asList("*"));
         config.setAllowedHeaders(Arrays.asList("*"));
 
-        // 프론트엔드가 헤더를 읽을 수 있도록
+
         config.setExposedHeaders(Arrays.asList("Authorization"));
 
         config.setAllowCredentials(true);
